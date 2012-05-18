@@ -2,10 +2,11 @@
 use File::Spec;
 use Getopt::Long;
 use Cwd;
+use FindBin qw($RealBin);
 use strict;
 
 ##change $scripts to location of relocaTE scripts
-my $scripts = '~/bin/relocaTE_editing';
+my $scripts = $RealBin;
 
 if ( !defined @ARGV ) {
   &getHelp();
