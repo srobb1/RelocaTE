@@ -6,21 +6,21 @@ CharacTErizer: A companion tool compares the numbers of reads that flank the TE 
 
 
 ###RelocaTE Command Line Options:
-<table>
+<table width="100px">
   <tr>
     <td>-t File</td><td>Required. No default value.
-
-The file name of the fasta file containing the nucleotide sequence of one or many transposable elements.  The sequence should include the complete terminal inverted repeats (TIRs) [or LTR] but not include the target site in the sequence proper. The target site should be provided in the description portion of the fasta file in the following format, TSD=xyz. The TSD will be searched for in the both the forward and reverse strand. [[after testing the use of no TSD, write weather TSD= can be used]]
-
-SAMPLE TE FASTA
-`>mping TSD=TTA
-GGCCAGTCACAATGGGGGTTTCACTGGTGTGTCATGCACATTTAATAGGGGTAAGACTGAATAAAAAATGATTATTTGCATGAAATGGGGATGAGAGAGAAGGAAAGAGTTTCATCCTGGTGAAACTCGTCAGCGTCGTTTCCAAGTCCTCGGTAACAGAGTGAAACCCCCGTTGAGGCCGATTCGTTTCATTCACCGGATCTCTTGCGTCCGCCTCCGCCGTGCGACCTCCGCATTCTCCCGCGCCGCGCCGGATTTTGGGTACAAATGATCCCAGCAACTTGTATCAATTAAATGCTTTGCTTAGTCTTGGAAACGTCAAAGTGAAACCCCTCCACTGTGGGGATTGTTTCATAAAAGATTTCATTTGAGAGAAGATGGTATAATATTTTGGGTAGCCGTGCAATGACACTAGCCATTGTGACTGGCC`
-
-Must contain "TSD=", can be a Perl regular expression. 
-  Example: `these exact characters TTA: TSD=TTA` 
-  Example: `any 4 characters: TSD=....`
-  Example: `A or T followed by GCC: TSD=(A|T)GCC`
-  Example: `CGA followed by any character then an A then CT or G: TSD=CGA.A(CT|G)`
+<br>    
+<br>The file name of the fasta file containing the nucleotide sequence of one or many transposable elements.  The sequence should include the complete terminal inverted repeats (TIRs) [or LTR] but not include the target site in the sequence proper. The target site should be provided in the description portion of the fasta file in the following format, TSD=xyz. The TSD will be searched for in the both the forward and reverse strand. [[after testing the use of no TSD, write weather TSD= can be used]]
+<br>
+<br>SAMPLE TE FASTA
+<br>>mping TSD=TTA
+<br>GGCCAGTCACAATGGGGGTTTCACTGGTGTGTCATGCACATTTAATAGGGGTAAGACTGAATAAAAAATGATTATTTGCATGAAATGGGGATGAGAGAGAAGGAAAGAGTTTCATCCTGGTGAAACTCGTCAGCGTCGTTTCCAAGTCCTCGGTAACAGAGTGAAACCCCCGTTGAGGCCGATTCGTTTCATTCACCGGATCTCTTGCGTCCGCCTCCGCCGTGCGACCTCCGCATTCTCCCGCGCCGCGCCGGATTTTGGGTACAAATGATCCCAGCAACTTGTATCAATTAAATGCTTTGCTTAGTCTTGGAAACGTCAAAGTGAAACCCCTCCACTGTGGGGATTGTTTCATAAAAGATTTCATTTGAGAGAAGATGGTATAATATTTTGGGTAGCCGTGCAATGACACTAGCCATTGTGACTGGCC
+<br>
+<br>fasta must contain TSD=, can be a Perl regular expression. 
+<br>&nbsp;&nbsp;  Example: these exact characters TTA: TSD=TTA 
+<br>&nbsp;&nbsp;  Example: any 4 characters: TSD=....
+<br>&nbsp;&nbsp;  Example: A or T followed by GCC: TSD=(A|T)GCC
+<br>&nbsp;&nbsp;  Example: CGA followed by any character then an A then CT or G: TSD=CGA.A(CT|G)
     </td>
   </tr>
   <tr>
@@ -188,120 +188,32 @@ mping   Chr12:1045463..1045892
 
 	
 
-
-###Usage Statement
-
-Usage:
-
-./relocaTE.pl [-t TE_fasta_file][-g chromosome_genome_fasta][-d dir_of_fq][-e short_sample_name][-h] 
-
-
-options:
-
-
-**required:
-
--t file	fasta containing nucleotide sequences of transposable elements with TSD=xxx in the desc. [no default]
-
--d dir	directory of paired and unpaired fastq files (paired _p1.fq & _p2.fq) (.fq or .fastq is acceptable)  [no default]
-
-**recommended: 
-
--g file	genome (reference) fasta file path. If not provided will only align reads to TE and remove TE seq from short reads. [no default]
-
--e STR	Short sample name, will be used in the output files to create IDs for the insert (ex. A123) [not.given]
-
--o STR	name for directory to contain output directories and files, will be created for the run (ex. 04222012_A123) [outdir_teSearch]
-
-**optional:
-
--p INT	Break down the single big job of relocaTE into as many smaller jobs as possible. The alternative (0) would be to run one after the other (int, 0=false or 1=true) [1] 
-
--a INT	if -a 1, create qsub PBS array jobs to run the many shell scripts created in the -a 1 option. (see: man qsub option -t).(int, 0=false or 1=true) [1] 
-
--w dir	base working directory, needs to exist, will not create, full path [cwd] 
-
--l INT	len cutoff for the TE trimmed reads to be aligned [10] 
-
--m FRACTION	mismatch allowance for alignment to TE (ex 0.1) [0] 
-
--1 STR	string to uniquely identify mate 1 paired files ex: file_p1.fq [_p1]
-
--2 STR	pattern to uniquely identify mate 2 paired files ex: file_p2.fq [_p2]
-
--u STR	pattern to uniquely identify unpaired files ex: file.unPaired.fq [.unPaired] 
-
--bm INT	blat minScore value, used by blat in the comparison of reads to TE sequence [10]
-
--bt INT	blat tileSize value, used by blat in the comparison of reads to TE sequence  [7]
-
--f INT	length of the sequence flanking the found insertion to be returned. This sequence is taken from the reference genome [100]
-
--x STR	tab-delimited file containing the coordinates of TE insertions pre-existing in the reference sequence. [no defaul]
-
--h	this message
-
-
-SAMPLE Existing TE (the two columns are tab-delimited)
-
-mping   Chr12:839604..840033
-
-mping   Chr12:1045463..1045892
-
-SAMPLE TE FASTA
-`>mping TSD=TTA
-GGCCAGTCACAATGGGGGTTTCACTGGTGTGTCATGCACATTTAATAGGGGTAAGACTGAATAAAAAATGATTATTTGCATGAAATGGGGATGAGAGAGAAGGAAAGAGTTTCATCCTGGTGAAACTCGTCAGCGTCGTTTCCAAGTCCTCGGTAACAGAGTGAAACCCCCGTTGAGGCCGATTCGTTTCATTCACCGGATCTCTTGCGTCCGCCTCCGCCGTGCGACCTCCGCATTCTCCCGCGCCGCGCCGGATTTTGGGTACAAATGATCCCAGCAACTTGTATCAATTAAATGCTTTGCTTAGTCTTGGAAACGTCAAAGTGAAACCCCTCCACTGTGGGGATTGTTTCATAAAAGATTTCATTTGAGAGAAGATGGTATAATATTTTGGGTAGCCGTGCAATGACACTAGCCATTGTGACTGGCC`
-
-
-Must contain "TSD=", can be a Perl regular express.  
-
-  Example: `any 4 characters: TSD=....`
-
-  Example: `A or T followed by GCC: TSD=(A|T)GCC` 
-
-  Example: `CGA followed by any character then an A then CT or G: TSD=CGA.A(CT|G)`
-
-
-
 ###Quick Start Guide:
 
 1. Get the sequence of your TE, including the TIRs.  Create a fasta file with your sequence, TE name and the TSD. The `T`TSD=` is required. With DNA transposons, by definition, during an insertion event the target site is duplicated. Therefore the target site will be used to identify an insertion event.  The reverse complement of each read containing portions of the ends of the provided TE will also be searched for the TSD to identify insertion events. A specific sequence of nucleotides can be used or a perl regular expression. 
-
 >For example if the desired TSD is TT followed by an A or G followed by a C or GT the regular expression would be `TSD=TT[AG](C|GT)`. Also a very general pattern can be used: `any 4 bp TSD=....`  
-
-example: 
-
-`>mping TSD=TTA
+>
+>example: 
+>
+>`>mping TSD=TTA
 GGCCAGTCACAATGGGGGTTTCACTGGTGTGTCATGCACATTTAATAGGGGTAAGACTGAATAAAAAATGATTATTTGCATGAAATGGGGATGAGAGAGAAGGAAAGAGTTTCATCCTGGTGAAACTCGTCAGCGTCGTTTCCAAGTCCTCGGTAACAGAGTGAAACCCCCGTTGAGGCCGATTCGTTTCATTCACCGGATCTCTTGCGTCCGCCTCCGCCGTGCGACCTCCGCATTCTCCCGCGCCGCGCCGGATTTTGGGTACAAATGATCCCAGCAACTTGTATCAATTAAATGCTTTGCTTAGTCTTGGAAACGTCAAAGTGAAACCCCTCCACTGTGGGGATTGTTTCATAAAAGATTTCATTTGAGAGAAGATGGTATAATATTTTGGGTAGCCGTGCAATGACACTAGCCATTGTGACTGGCC`
 
 2. Get the short reads together.  
-
 >Dividing your reads files into many files of 1 million reads is a nice way to improve the speed of the analysis.  A script included in the package can be used to do this. It is called fastq_split.pl.
-
-	%% perl fastq_split.pl 
-
+>
+>%% perl fastq_split.pl 
  Please Provide: 
-
  -s int The number of sequences per file [1_000_000]
-
  -o dir The name of the directory to output the files
-
  followed by a list of files to be split
 
-
-
  Usage:
-
  ./fastq_split -o split_fq ~/somedir/someRandom.fq
-
  ./fastq_split -o split_fq ~/somedir/*fq
 
 
-
 >Check the name of your files. If they are paired they should have some indication of being pair 1 and pair 2. 
-
 >Determine the pattern to indicate the 1st and 2nd pair
-    
 	Example:
 	Flowcell25_lane1_pair1.fastq and Flowcell25_lane1_pair2.fastq
 
