@@ -23,13 +23,16 @@ TGATCCCAGCAACTTGTATCAATTAAATGCTTTGCTTAGTCTTGGAAACGTCAAAGTGAAACCCCTC
 CACTGTGGGGATTGTTTCATAAAAGATTTCATTTGAGAGAAGATGGTATAATATTTTGGGTAGCCGT
 GCAATGACACTAGCCATTGTGACTGGCC
 </pre>
-The fasta must contain TSD=. This can be a Perl regular expression.<br>
-&nbsp;&nbsp;  Example: these exact characters TTA: TSD=TTA <br>
-&nbsp;&nbsp;  Example: any 4 characters: TSD=....<br>
-&nbsp;&nbsp;  Example: A or T followed by GCC: TSD=(A|T)GCC<br>
-&nbsp;&nbsp;  Example: CGA followed by any character then an A then CT or G: TSD=CGA.A(CT|G)<br>
-
-####-d directory
+The fasta must contain TSD=
+<br>This can be a Perl regular expression.
+<br>
+<pre>
+Example: these exact characters TTA: TSD=TTA>
+Example: any 4 characters: TSD=....
+Example: A or T followed by GCC: TSD=(A|T)GCC
+Example: CGA followed by any character then an A then CT or G: TSD=CGA.A(CT|G)
+</pre>
+####-d directory of fq files
 
 Required. No default value.
 
@@ -45,57 +48,62 @@ The file name of the fasta file containing the genome sequence of the reference.
 If the genome sequence is not provided a series of files will be generated. One set will contain the intact reads that align to the TE. The second and third set of files will be made up of trimmed reads.  The second set will be only the trimmed portion of the reads in the first set that align to the TE. The third set will contain the trimmed portion of the reads that do not align to the TE, therefore the portion of the reads that should align to the genome sequence not containing a TE insertion.
 
 
-####-e Str
+####-e Sample identifier
 
 Optional, Recommended. The default value is not.given
 
 A short string for sample name. This string will be used in the output files to create IDs for the insert (ex. A123)
 
-####-o Str
+####-o output directory name
 
 Optional, Recommended. The default value is outdir_teSearch
 
 A short string for the output directory name. This string will be used to create a directory to contain the output files and directories in the current working directory. The complete path is not required, only the desired name for the directory. 
 
-####-1 Str
+####-1 unique mate/pair 1 string
 
 Optional, Recommended. The default value is _p1
 
 A string to identify mate 1 paired files. Should contain the unique text and any text between the unique text and the fq extension. This string will be used in a regular expression to identify the files as a mate 1 file, so the string should not be found in the mate 2 file or the unpaired files
 
-Ex:<br>
->If the files are named as such: file_1.fq<br>
->The string would be: _1<br>
-<br>
->File: file_1.noNumbers.fq <br>
->String: _1.noNumbers<br>
-<br>
-File: file_1_1.fq (and mate = file_1_2.fq)<br>
->String: _1<br>
+Example:
+<pre>
+If the files are named as such: file_1.fq
+The string would be:            _1
 
->Issue: _1 will recognize both mates.<br>
->Suggestion: rename files to file_1_p1.fq and file_1_p2.fq. Now the string _p1 can be used to uniquely identify all _p1 files and no _p2 files.
+File:                           file_1.noNumbers.fq
+String:                         _1.noNumbers
 
+File:                           file_1_1.fq (and mate = file_1_2.fq)
+String:                         _1
+
+Issue with last scenario:       _1 will recognize both mates.
+Suggestion:                     rename files to file_1_p1.fq and file_1_p2.fq. 
+                                Now the string _p1 can be used to uniquely 
+                                identify all _p1 files and no _p2 files.
+</pre>
 ####-2 Str
 
 Optional, Recommended. The default value is _p2
 
 See -1 for a more in depth explanation.
 
-Ex:
-File: file_p2.fq
-String: _p2
-
+Example:
+<pre>
+File:                            file_p2.fq
+String:                          _p2
+</pre>
 ####-u Str
 
 Optional, Recommended. The default value is .unPaired.
 
 See -1 for a more in depth explanation.
 
-Ex:
-File: file.unParied.fq
-String: .unParied
-
+Example:
+<pre>
+File:                           file.unParied.fq
+String:                         .unParied
+</pre>
 ####-p n
 
 Optional. Default value is 1.
