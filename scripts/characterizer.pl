@@ -2,6 +2,7 @@
 use strict;
 use Data::Dumper;
 use Cwd;
+use Getopt::Long;
 ## script take output from find_TE_insertion.pl pipeline : ***.te_insertion.all.txt
 ## and a bam file of the same reads used to id insertiosn
 ## aligned to reference genome to look for spanner
@@ -13,16 +14,45 @@ use Cwd;
 ## or
 ## mping_homozygous_heterozygous.pl A119.mping.te_insertion.all.txt ../bam_files/ > A119.inserts_characterized.txt
 ##
+## 052912 added getOpts long
 ## 031412 added a check for XM and NM tags in sam line, if >0 then it is not 100% Match
 ## 022712 changed the logic for calling 'homo', 'het', 'new ins/somat' 
 
-my $sites_file   = shift;
-my $bam_dir      = shift;
-my $genome_fasta = shift;
-my $cwd          = getcwd();
-my @bam_files
 
-  ;    ## can be a single .bam file or a direcotory containing .bam files
+#my $scripts = $RealBin;
+my $cwd          = getcwd();
+
+if ( !defined @ARGV ) {
+  getHelp();
+}
+
+my $sites_file ;
+my $bam_dir;
+my $genome_fasta;
+my @bam_files;    ## can be a single .bam file or a direcotory containing .bam files
+
+GetOptions(
+  's|sites_file:s'	=> \$sites_file,
+  'b|bam_dir:s'         => \$bam_dir,
+  'g|genome_fasta:s'    => \$genome_fasta,
+);
+
+sub getHelp {
+  print ' 
+usage:
+./characterizer.pl [-s relocaTE table output file][-b bam file or dir of bam files][-g reference genome fasta file][-h] 
+
+options:
+-s file		relocaTE output file: *.te_insertion.all.txt [no default]
+-b dir/file	bam file of the orginal reads aligned to reference (before TE was trimmed) or directory of bam files [no default]
+-g file		reference genome fasta file [no default]
+-h 		this help message
+
+For more information see documentation: http://docs........
+
+';
+  exit;
+}
 if ( -d $bam_dir ) {
 
   #remove trailing '/'
