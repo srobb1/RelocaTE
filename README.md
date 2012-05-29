@@ -136,7 +136,7 @@ n is a value for the length cutoff. This is the minimum length that a needs to b
  </td>
   </tr>
  <tr>
-  <td>-bm n	Optional. Default value is 10.
+  <td>-bm n</td><td>Optional. Default value is 10.
 
 n is used for the blat minScore value for the comparison of reads to the TE sequence.
 
