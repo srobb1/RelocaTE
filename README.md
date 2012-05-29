@@ -6,70 +6,78 @@ CharacTErizer: A companion tool compares the numbers of reads that flank the TE 
 
 
 ###RelocaTE Command Line Options:
-<table width="100px">
-  <tr>
-    <td>-t File</td><td>Required. No default value.
-<br>    
-<br>The file name of the fasta file containing the nucleotide sequence of one or many transposable elements.  The sequence should include the complete terminal inverted repeats (TIRs) [or LTR] but not include the target site in the sequence proper. The target site should be provided in the description portion of the fasta file in the following format, TSD=xyz. The TSD will be searched for in the both the forward and reverse strand. [[after testing the use of no TSD, write weather TSD= can be used]]
-<br>
-<br>SAMPLE TE FASTA
-<br>>mping TSD=TTA
-<br>GGCCAGTCACAATGGGGGTTTCACTGGTGTGTCATGCACATTTAATAGGGGTAAGACTGAATAAAAAATGATTATTTGCATGAAATGGGGATGAGAGAGAAGGAAAGAGTTTCATCCTGGTGAAACTCGTCAGCGTCGTTTCCAAGTCCTCGGTAACAGAGTGAAACCCCCGTTGAGGCCGATTCGTTTCATTCACCGGATCTCTTGCGTCCGCCTCCGCCGTGCGACCTCCGCATTCTCCCGCGCCGCGCCGGATTTTGGGTACAAATGATCCCAGCAACTTGTATCAATTAAATGCTTTGCTTAGTCTTGGAAACGTCAAAGTGAAACCCCTCCACTGTGGGGATTGTTTCATAAAAGATTTCATTTGAGAGAAGATGGTATAATATTTTGGGTAGCCGTGCAATGACACTAGCCATTGTGACTGGCC
-<br>
-<br>fasta must contain TSD=, can be a Perl regular expression. 
-<br>&nbsp;&nbsp;  Example: these exact characters TTA: TSD=TTA 
-<br>&nbsp;&nbsp;  Example: any 4 characters: TSD=....
-<br>&nbsp;&nbsp;  Example: A or T followed by GCC: TSD=(A|T)GCC
-<br>&nbsp;&nbsp;  Example: CGA followed by any character then an A then CT or G: TSD=CGA.A(CT|G)
-    </td>
-  </tr>
-  <tr>
-    <td>-d Dir</td><td>Required. No default value.
+####-t File
+
+Required. No default value.
+
+The file name of the fasta file containing the nucleotide sequence of one or many transposable elements.  The sequence should include the complete terminal inverted repeats (TIRs) [or LTR] but not include the target site in the sequence proper. The target site should be provided in the description portion of the fasta file in the following format, TSD=xyz. The TSD will be searched for in the both the forward and reverse strand. [[after testing the use of no TSD, write weather TSD= can be used]]
+
+SAMPLE TE FASTA
+>\>mping TSD=TTA<br>
+>GGCCAGTCACAATGGGGGTTTCACTGGTGTGTCATGCACATTTAATAGGGGTAAGACTGAATAAAAA
+>ATGATTATTTGCATGAAATGGGGATGAGAGAGAAGGAAAGAGTTTCATCCTGGTGAAACTCGTCAGC
+>GTCGTTTCCAAGTCCTCGGTAACAGAGTGAAACCCCCGTTGAGGCCGATTCGTTTCATTCACCGGAT
+>CTCTTGCGTCCGCCTCCGCCGTGCGACCTCCGCATTCTCCCGCGCCGCGCCGGATTTTGGGTACAAA
+>TGATCCCAGCAACTTGTATCAATTAAATGCTTTGCTTAGTCTTGGAAACGTCAAAGTGAAACCCCTC
+>CACTGTGGGGATTGTTTCATAAAAGATTTCATTTGAGAGAAGATGGTATAATATTTTGGGTAGCCGT
+>GCAATGACACTAGCCATTGTGACTGGCC
+
+The fasta must contain TSD=. This can be a Perl regular expression. 
+&nbsp;&nbsp;  Example: these exact characters TTA: TSD=TTA 
+&nbsp;&nbsp;  Example: any 4 characters: TSD=....
+&nbsp;&nbsp;  Example: A or T followed by GCC: TSD=(A|T)GCC
+&nbsp;&nbsp;  Example: CGA followed by any character then an A then CT or G: TSD=CGA.A(CT|G)
+
+####-d directory
+
+Required. No default value.
 
 The name of the directory of paired and unpaired fastq files (paired _p1.fq & _p2.fq). Both the .fq and .fastq extensions are accepted as extensions of fastq files. If something different is used RelocaTE will not recognize those files as being fastq files. 
-    </td>
-  </tr>
- <tr>
-    <td>-g File</td><td>Optional, Recommended. No default value.
+
+
+####-g reference genome fasta file
+
+Optional, Recommended. No default value.
 
 The file name of the fasta file containing the genome sequence of the reference. If it is provided, the locations of the insertion events will be reported relative to the reference genome coordinates. 
 
 If the genome sequence is not provided a series of files will be generated. One set will contain the intact reads that align to the TE. The second and third set of files will be made up of trimmed reads.  The second set will be only the trimmed portion of the reads in the first set that align to the TE. The third set will contain the trimmed portion of the reads that do not align to the TE, therefore the portion of the reads that should align to the genome sequence not containing a TE insertion.
-   </td>
-  </tr>
- <tr>
-    <td>-e Str</td><td>Optional, Recommended. The default value is not.given
+
+
+####-e Str
+
+Optional, Recommended. The default value is not.given
 
 A short string for sample name. This string will be used in the output files to create IDs for the insert (ex. A123)
-  </td>
-  </tr>
- <tr>
-    <td>-o Str</td><td>Optional, Recommended. The default value is outdir_teSearch
+
+####-o Str
+
+Optional, Recommended. The default value is outdir_teSearch
 
 A short string for the output directory name. This string will be used to create a directory to contain the output files and directories in the current working directory. The complete path is not required, only the desired name for the directory. 
- </td>
-  </tr>
- <tr>
-    <td>-1 Str</td><td>Optional, Recommended. The default value is _p1
+
+####-1 Str
+
+Optional, Recommended. The default value is _p1
 
 A string to identify mate 1 paired files. Should contain the unique text and any text between the unique text and the fq extension. This string will be used in a regular expression to identify the files as a mate 1 file, so the string should not be found in the mate 2 file or the unpaired files
 
-Ex:
-If the files are named as such: file_1.fq
-The string would be: _1
+Ex:<br>
+>If the files are named as such: file_1.fq<br>
+>The string would be: _1<br>
+<br>
+>File: file_1.noNumbers.fq <br>
+>String: _1.noNumbers<br>
+<br>
+File: file_1_1.fq (and mate = file_1_2.fq)<br>
+>String: _1<br>
 
-File: file_1.noNumbers.fq 
-String: _1.noNumbers
+>Issue: _1 will recognize both mates.<br>
+>Suggestion: rename files to file_1_p1.fq and file_1_p2.fq. Now the string _p1 can be used to uniquely identify all _p1 files and no _p2 files.
 
-File: file_1_1.fq (and mate = file_1_2.fq)
-String: _1
-Issue: _1 will recognize both mates.
-Suggestion: rename files to file_1_p1.fq and file_1_p2.fq. Now the string _p1 can be used to uniquely identify all _p1 files and no _p2 files.
+####-2 Str
 
- </td>
-  </tr>
- <tr>
-    <td>-2 Str</td><td>Optional, Recommended. The default value is _p2
+Optional, Recommended. The default value is _p2
 
 See -1 for a more in depth explanation.
 
@@ -77,10 +85,9 @@ Ex:
 File: file_p2.fq
 String: _p2
 
- </td>
-  </tr>
- <tr>
-    <td>-u Str</td><td>Optional, Recommended. The default value is .unPaired.
+####-u Str
+
+Optional, Recommended. The default value is .unPaired.
 
 See -1 for a more in depth explanation.
 
@@ -88,10 +95,9 @@ Ex:
 File: file.unParied.fq
 String: .unParied
 
- </td>
-  </tr>
- <tr>
-    <td>-p n</td><td>Optional. Default value is 1.
+####-p n
+
+Optional. Default value is 1.
 
 n is 0 or 1.
 
@@ -100,10 +106,9 @@ n is 0 or 1.
 
 Break down the single big job of relocaTE into as many smaller jobs as possible. If selected this option will cause the creation of shell scripts which can be manually ran or submitted to a queue. This enables the jobs to be run in parallel. The folders of shell scripts should be run as ordered. Step_1 needs to run and be complete before Step_2 jobs can be proper started.  If the genome fasta had already been split and indexed this job will be skipped. 
 
- </td>
-  </tr>
- <tr>
-    <td>-a n</td><td>Optional. Default value is 1.
+####-a n
+
+Optional. Default value is 1.
 
 n is 0 or 1.
 
@@ -116,46 +121,45 @@ Submit each array job one at a time, waiting for the previous job to be complete
 
 See run_these_jobs.sh for the array jobs.
 
- </td>
-  </tr>
- <tr>
-    <td>-w Dir</td><td>Optional. Default value is the current working directory.
+####-w Dir
+
+Optional. Default value is the current working directory.
 
 If a directory different form the cwd is given it needs to exist, will not create. Provide the full path. 
 
- </td>
-  </tr>
- <tr>
-    <td>-l n</td><td>Optional. Default value is 10.
+####-l n
+
+Optional. Default value is 10.
 
 n is a value for the length cutoff. This is the minimum length that a needs to be after the removal of TE sequence. This trimmed read will be aligned to the genome. When selecting a custom value consider these points:
   - value can not be greater than the read length
   - How many bps are needed to limit false alignments to the reference?
   - How many bps are needed to recognize the TE? 
   - The answer to the above two questions should not total more than the read length.
- </td>
-  </tr>
- <tr>
-  <td>-bm n</td><td>Optional. Default value is 10.
+ 
+
+####-bm n
+
+Optional. Default value is 10.
 
 n is used for the blat minScore value for the comparison of reads to the TE sequence.
 
 Excerpt directly from Blat manual:
 -minScore=N sets minimum score.  This is the matches minus the 
                mismatches minus some sort of gap penalty.
- </td>
-  </tr>
- <tr>
-    <td>-m n<=0</td><td>Optional. Default value is 0.
+
+####-m n\<=0
+
+Optional. Default value is 0.
 
 Any number less than or equal to 0.
 
 Fraction of the bps that aligned to the TE that are allowed to not be an exact match. For example, if 10 bp align to the TE and the allowance is 0.1, 1 bp can be a mismatch.
 
- </td>
-  </tr>
- <tr>
-    <td>-bt n</td><td>Optional. Default value is 7.
+ 
+####-bt n
+ 
+ Optional. Default value is 7.
 
 n is used for the blat tileSize valuefor the comparison of reads to the the TE sequence.
 
@@ -163,16 +167,16 @@ Excerpt directly from Blat manual:
 -tileSize=N sets the size of match that triggers an alignment.  
                Usually between 8 and 12
                Default is 11 for DNA and 5 for protein.
- </td>
-  </tr>
- <tr>
-    <td>-f n</td><td>Optional. Default value is 100.
+ 
+####-f n
+ 
+ Optional. Default value is 100.
 
 n is the length of the sequence flanking the found insertion site to be returned in an output fasta file and in the output gff file. This sequence is taken from the reference genome.
- </td>
-  </tr>
- <tr>
-    <td>-x File</td><td>Optional. No default value.
+
+####-x File
+
+Optional. No default value.
 
 This is the file name of a tab-delimited file containing the coordinates of existing TE in the reference.  If this file is provided a new file will be generated containing a list of these existing insertions found in the reads. The number of reads supporting the start and the end of the insertion will be reported. 
 
@@ -182,10 +186,8 @@ The format is two columns, neither column have any white space. The first colum 
 SAMPLE Existing TE (the two columns are tab-delimited):
 mping   Chr12:839604..840033
 mping   Chr12:1045463..1045892
-    </td>
-  </tr>
-</table>
-
+  
+  
 	
 
 ###Quick Start Guide:
