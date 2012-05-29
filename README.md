@@ -26,12 +26,12 @@ GCAATGACACTAGCCATTGTGACTGGCC
 The fasta must contain TSD=
 <br>This can be a Perl regular expression.
 <br>
-<pre>
+```
 Example: these exact characters TTA: TSD=TTA>
 Example: any 4 characters: TSD=....
 Example: A or T followed by GCC: TSD=(A|T)GCC
 Example: CGA followed by any character then an A then CT or G: TSD=CGA.A(CT|G)
-</pre>
+```
 ####-d directory of fq files
 
 Required. No default value.
@@ -67,7 +67,7 @@ Optional, Recommended. The default value is _p1
 A string to identify mate 1 paired files. Should contain the unique text and any text between the unique text and the fq extension. This string will be used in a regular expression to identify the files as a mate 1 file, so the string should not be found in the mate 2 file or the unpaired files
 
 Example:
-<pre>
+```
 If the files are named as such: file_1.fq
 The string would be:            _1
 
@@ -81,7 +81,7 @@ Issue with last scenario:       _1 will recognize both mates.
 Suggestion:                     rename files to file_1_p1.fq and file_1_p2.fq. 
                                 Now the string _p1 can be used to uniquely 
                                 identify all _p1 files and no _p2 files.
-</pre>
+```
 ####-2 Str
 
 Optional, Recommended. The default value is _p2
