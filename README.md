@@ -12,21 +12,22 @@ Required. No default value.
 
 The file name of the fasta file containing the nucleotide sequence of one or many transposable elements.  The sequence should include the complete terminal inverted repeats (TIRs) [or LTR] but not include the target site in the sequence proper. The target site should be provided in the description portion of the fasta file in the following format, TSD=xyz. The TSD will be searched for in the both the forward and reverse strand. [[after testing the use of no TSD, write weather TSD= can be used]]
 
-SAMPLE TE FASTA
->\>mping TSD=TTA<br>
->GGCCAGTCACAATGGGGGTTTCACTGGTGTGTCATGCACATTTAATAGGGGTAAGACTGAATAAAAA
->ATGATTATTTGCATGAAATGGGGATGAGAGAGAAGGAAAGAGTTTCATCCTGGTGAAACTCGTCAGC
->GTCGTTTCCAAGTCCTCGGTAACAGAGTGAAACCCCCGTTGAGGCCGATTCGTTTCATTCACCGGAT
->CTCTTGCGTCCGCCTCCGCCGTGCGACCTCCGCATTCTCCCGCGCCGCGCCGGATTTTGGGTACAAA
->TGATCCCAGCAACTTGTATCAATTAAATGCTTTGCTTAGTCTTGGAAACGTCAAAGTGAAACCCCTC
->CACTGTGGGGATTGTTTCATAAAAGATTTCATTTGAGAGAAGATGGTATAATATTTTGGGTAGCCGT
->GCAATGACACTAGCCATTGTGACTGGCC
-
-The fasta must contain TSD=. This can be a Perl regular expression. 
-&nbsp;&nbsp;  Example: these exact characters TTA: TSD=TTA 
-&nbsp;&nbsp;  Example: any 4 characters: TSD=....
-&nbsp;&nbsp;  Example: A or T followed by GCC: TSD=(A|T)GCC
-&nbsp;&nbsp;  Example: CGA followed by any character then an A then CT or G: TSD=CGA.A(CT|G)
+SAMPLE TE FASTA:
+<pre>
+>mping TSD=TTA
+GGCCAGTCACAATGGGGGTTTCACTGGTGTGTCATGCACATTTAATAGGGGTAAGACTGAATAAAAA
+ATGATTATTTGCATGAAATGGGGATGAGAGAGAAGGAAAGAGTTTCATCCTGGTGAAACTCGTCAGC
+GTCGTTTCCAAGTCCTCGGTAACAGAGTGAAACCCCCGTTGAGGCCGATTCGTTTCATTCACCGGAT
+CTCTTGCGTCCGCCTCCGCCGTGCGACCTCCGCATTCTCCCGCGCCGCGCCGGATTTTGGGTACAAA
+TGATCCCAGCAACTTGTATCAATTAAATGCTTTGCTTAGTCTTGGAAACGTCAAAGTGAAACCCCTC
+CACTGTGGGGATTGTTTCATAAAAGATTTCATTTGAGAGAAGATGGTATAATATTTTGGGTAGCCGT
+GCAATGACACTAGCCATTGTGACTGGCC
+</pre>
+The fasta must contain TSD=. This can be a Perl regular expression.<br>
+&nbsp;&nbsp;  Example: these exact characters TTA: TSD=TTA <br>
+&nbsp;&nbsp;  Example: any 4 characters: TSD=....<br>
+&nbsp;&nbsp;  Example: A or T followed by GCC: TSD=(A|T)GCC<br>
+&nbsp;&nbsp;  Example: CGA followed by any character then an A then CT or G: TSD=CGA.A(CT|G)<br>
 
 ####-d directory
 
