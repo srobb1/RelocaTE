@@ -26,7 +26,7 @@ Must contain "TSD=", can be a Perl regular expression.
   <tr>
     <td>-d Dir</td><td>Required. No default value.
 
-The name of the directory of paired and unpaired fastq files (paired _p1.fq & _p2.fq). Both the ‘.fq’ and ‘.fastq’ extensions are accepted as extensions of fastq files. If something different is used RelocaTE will not recognize those files as being fastq files. 
+The name of the directory of paired and unpaired fastq files (paired _p1.fq & _p2.fq). Both the .fq and .fastq extensions are accepted as extensions of fastq files. If something different is used RelocaTE will not recognize those files as being fastq files. 
     </td>
   </tr>
  <tr>
@@ -38,19 +38,19 @@ If the genome sequence is not provided a series of files will be generated. One 
    </td>
   </tr>
  <tr>
-    <td>-e Str</td><td>Optional, Recommended. The default value is ‘not.given’
+    <td>-e Str</td><td>Optional, Recommended. The default value is not.given
 
 A short string for sample name. This string will be used in the output files to create IDs for the insert (ex. A123)
   </td>
   </tr>
  <tr>
-    <td>-o Str</td><td>Optional, Recommended. The default value is ‘outdir_teSearch’.
+    <td>-o Str</td><td>Optional, Recommended. The default value is outdir_teSearch
 
 A short string for the output directory name. This string will be used to create a directory to contain the output files and directories in the current working directory. The complete path is not required, only the desired name for the directory. 
  </td>
   </tr>
  <tr>
-    <td>-1 Str</td><td>Optional, Recommended. The default value is ‘_p1’.
+    <td>-1 Str</td><td>Optional, Recommended. The default value is _p1
 
 A string to identify mate 1 paired files. Should contain the unique text and any text between the unique text and the fq extension. This string will be used in a regular expression to identify the files as a mate 1 file, so the string should not be found in the mate 2 file or the unpaired files
 
@@ -69,7 +69,7 @@ Suggestion: rename files to file_1_p1.fq and file_1_p2.fq. Now the string _p1 ca
  </td>
   </tr>
  <tr>
-    <td>-2 Str	Optional, Recommended. The default value is ‘_p2’.
+    <td>-2 Str</td><td>Optional, Recommended. The default value is _p2
 
 See -1 for a more in depth explanation.
 
@@ -80,7 +80,7 @@ String: _p2
  </td>
   </tr>
  <tr>
-    <td>-u Str</td><td>Optional, Recommended. The default value is ‘.unPaired’.
+    <td>-u Str</td><td>Optional, Recommended. The default value is .unPaired.
 
 See -1 for a more in depth explanation.
 
@@ -98,7 +98,7 @@ n is 0 or 1.
 0: means only one large job will be ran.
 1: many shell scripts will be generated for the user to run
 
-Break down the single big job of relocaTE into as many smaller jobs as possible. If selected this option will cause the creation of shell scripts which can be manually ran or submitted to a queue. This enables the jobs to be run in parallel. The folders of shell scripts should be run as ordered. Step_1 needs to run and be complete before Step_2 jobs can be proper started.  If the genome fasta had already been split and indexed this job will be skipped.  The alternative (0) would be to run one after the other (int, 0=false or 1=true) [1] 
+Break down the single big job of relocaTE into as many smaller jobs as possible. If selected this option will cause the creation of shell scripts which can be manually ran or submitted to a queue. This enables the jobs to be run in parallel. The folders of shell scripts should be run as ordered. Step_1 needs to run and be complete before Step_2 jobs can be proper started.  If the genome fasta had already been split and indexed this job will be skipped. 
 
  </td>
   </tr>
