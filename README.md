@@ -13,14 +13,14 @@ CharacTErizer: A companion tool compares the numbers of reads that flank the TE 
 The file name of the fasta file containing the nucleotide sequence of one or many transposable elements.  The sequence should include the complete terminal inverted repeats (TIRs) [or LTR] but not include the target site in the sequence proper. The target site should be provided in the description portion of the fasta file in the following format, TSD=xyz. The TSD will be searched for in the both the forward and reverse strand. [[after testing the use of no TSD, write weather TSD= can be used]]
 
 SAMPLE TE FASTA
->mping TSD=TTA
-GGCCAGTCACAATGGGGGTTTCACTGGTGTGTCATGCACATTTAATAGGGGTAAGACTGAATAAAAAATGATTATTTGCATGAAATGGGGATGAGAGAGAAGGAAAGAGTTTCATCCTGGTGAAACTCGTCAGCGTCGTTTCCAAGTCCTCGGTAACAGAGTGAAACCCCCGTTGAGGCCGATTCGTTTCATTCACCGGATCTCTTGCGTCCGCCTCCGCCGTGCGACCTCCGCATTCTCCCGCGCCGCGCCGGATTTTGGGTACAAATGATCCCAGCAACTTGTATCAATTAAATGCTTTGCTTAGTCTTGGAAACGTCAAAGTGAAACCCCTCCACTGTGGGGATTGTTTCATAAAAGATTTCATTTGAGAGAAGATGGTATAATATTTTGGGTAGCCGTGCAATGACACTAGCCATTGTGACTGGCC
+`>mping TSD=TTA
+GGCCAGTCACAATGGGGGTTTCACTGGTGTGTCATGCACATTTAATAGGGGTAAGACTGAATAAAAAATGATTATTTGCATGAAATGGGGATGAGAGAGAAGGAAAGAGTTTCATCCTGGTGAAACTCGTCAGCGTCGTTTCCAAGTCCTCGGTAACAGAGTGAAACCCCCGTTGAGGCCGATTCGTTTCATTCACCGGATCTCTTGCGTCCGCCTCCGCCGTGCGACCTCCGCATTCTCCCGCGCCGCGCCGGATTTTGGGTACAAATGATCCCAGCAACTTGTATCAATTAAATGCTTTGCTTAGTCTTGGAAACGTCAAAGTGAAACCCCTCCACTGTGGGGATTGTTTCATAAAAGATTTCATTTGAGAGAAGATGGTATAATATTTTGGGTAGCCGTGCAATGACACTAGCCATTGTGACTGGCC`
 
 Must contain "TSD=", can be a Perl regular expression. 
-  Example: these exact characters TTA: TSD=TTA 
-  Example: any 4 characters: TSD=....
-  Example: A or T followed by GCC: TSD=(A|T)GCC 
-  Example: CGA followed by any character then an A then CT or G: TSD=CGA.A(CT|G)
+  Example: `these exact characters TTA: TSD=TTA` 
+  Example: `any 4 characters: TSD=....`
+  Example: `A or T followed by GCC: TSD=(A|T)GCC`
+  Example: `CGA followed by any character then an A then CT or G: TSD=CGA.A(CT|G)`
     </td>
   </tr>
   <tr>
@@ -108,9 +108,9 @@ Break down the single big job of relocaTE into as many smaller jobs as possible.
 n is 0 or 1.
 
 0: Nothing will be done
-1: if –p 1 then array jobs will be created
+1: if `-p 1` then array jobs will be created
 
-If –p is 1 then –a can be 1, otherwise it will be 0. If 1, in addition to the shell scripts generated from –p 1, qsub PBS array job scripts will be made for easier submittion of the shell scripts to the queue. See “man qsub option –t” for more information.
+If `-p 1` then `-a can be 1`, otherwise it will be 0. If 1, in addition to the shell scripts generated from `-p 1`, qsub PBS array job scripts will be made for easier submittion of the shell scripts to the queue. See `man qsub option -t` for more information.
 
 Submit each array job one at a time, waiting for the previous job to be completed before submitting the next.
 
@@ -133,7 +133,10 @@ n is a value for the length cutoff. This is the minimum length that a needs to b
   - How many bps are needed to limit false alignments to the reference?
   - How many bps are needed to recognize the TE? 
   - The answer to the above two questions should not total more than the read length.
--bm n	Optional. Default value is 10.
+ </td>
+  </tr>
+ <tr>
+  <td>-bm n	Optional. Default value is 10.
 
 n is used for the blat minScore value for the comparison of reads to the TE sequence.
 
@@ -186,7 +189,7 @@ mping   Chr12:1045463..1045892
 	
 
 
-###Usage
+###Usage Statement
 
 Usage:
 ./relocaTE.pl [-t TE_fasta_file][-g chromosome_genome_fasta][-d dir_of_fq][-e short_sample_name][-h] 
@@ -226,21 +229,20 @@ SAMPLE TE FASTA
 GGCCAGTCACAATGGGGGTTTCACTGGTGTGTCATGCACATTTAATAGGGGTAAGACTGAATAAAAAATGATTATTTGCATGAAATGGGGATGAGAGAGAAGGAAAGAGTTTCATCCTGGTGAAACTCGTCAGCGTCGTTTCCAAGTCCTCGGTAACAGAGTGAAACCCCCGTTGAGGCCGATTCGTTTCATTCACCGGATCTCTTGCGTCCGCCTCCGCCGTGCGACCTCCGCATTCTCCCGCGCCGCGCCGGATTTTGGGTACAAATGATCCCAGCAACTTGTATCAATTAAATGCTTTGCTTAGTCTTGGAAACGTCAAAGTGAAACCCCTCCACTGTGGGGATTGTTTCATAAAAGATTTCATTTGAGAGAAGATGGTATAATATTTTGGGTAGCCGTGCAATGACACTAGCCATTGTGACTGGCC
 
 Must contain "TSD=", can be a Perl regular express.  
-  Example: any 4 characters: TSD=....
-  Example: A or T followed by GCC: TSD=(A|T)GCC 
-  Example: CGA followed by any character then an A then CT or G: TSD=CGA.A(CT|G)
+  Example: `any 4 characters: TSD=....`
+  Example: `A or T followed by GCC: TSD=(A|T)GCC` 
+  Example: `CGA followed by any character then an A then CT or G: TSD=CGA.A(CT|G)`
 
 
 
 ###Quick Start Guide:
 
 1.	Get the sequence of your TE, including the TIRs.  Create a fasta file with your sequence, TE name and the TSD. The “TSD=” is required. With DNA transposons, by definition, during an insertion event the target site is duplicated. Therefore the target site will be used to identify an insertion event.  The reverse complement of each read containing portions of the ends of the provided TE will also be searched for the TSD to identify insertion events. A specific sequence of nucleotides can be used or a perl regular expression. 
-a.	For example if the desired TSD is TT followed by an A or G followed by a C or GT the regular expression would be TSD=TT[AG](C|GT). Also a very general pattern can be used: any 4 bp TSD=....  
+a.	For example if the desired TSD is TT followed by an A or G followed by a C or GT the regular expression would be `TSD=TT[AG](C|GT)`. Also a very general pattern can be used: `any 4 bp TSD=....`  
 
 example: 
->mping TSD=TTA
-GGCCAGTCACAATGGGGGTTTCACTGGTGTGTCATGCACATTTAATAGGGGTAAGACTGAATAAAAAATGATTATTTGCATGAAATGGGGATGAGAGAGAAGGAAAGAGTTTCATCCTGGTGAAACTCGTCAGCGTCGTTTCCAAGTCCTCGGTAACAGAGTGAAACCCCCGTTGAGGCCGATTCGTTTCATTCACCGGATCTCTTGCGTCCGCCTCCGCCGTGCGACCTCCGCATTCTCCCGCGCCGCGCCGGATTTTGGGTACAAATGATCCCAGCAACTTGTATCAATTAAATGCTTTGCTTAGTCTTGGAAACGTCAAAGTGAAACCCCTCCACTGTGGGGATTGTTTCATAAAAGATTTCATTTGAGAGAAGATGGTATAATATTTTGGGTAGCCGTGCAATGACACTAGCCATTGTGACTGGCC
-
+`>mping TSD=TTA
+GGCCAGTCACAATGGGGGTTTCACTGGTGTGTCATGCACATTTAATAGGGGTAAGACTGAATAAAAAATGATTATTTGCATGAAATGGGGATGAGAGAGAAGGAAAGAGTTTCATCCTGGTGAAACTCGTCAGCGTCGTTTCCAAGTCCTCGGTAACAGAGTGAAACCCCCGTTGAGGCCGATTCGTTTCATTCACCGGATCTCTTGCGTCCGCCTCCGCCGTGCGACCTCCGCATTCTCCCGCGCCGCGCCGGATTTTGGGTACAAATGATCCCAGCAACTTGTATCAATTAAATGCTTTGCTTAGTCTTGGAAACGTCAAAGTGAAACCCCTCCACTGTGGGGATTGTTTCATAAAAGATTTCATTTGAGAGAAGATGGTATAATATTTTGGGTAGCCGTGCAATGACACTAGCCATTGTGACTGGCC`
 2.	Get the short reads together.  
 a.	Dividing your reads files into many files of 1 million reads is a nice way to improve the speed of the analysis.  A script included in the package can be used to do this. It is called fastq_split.pl.
 	%% perl fastq_split.pl 
