@@ -79,7 +79,7 @@ Optional, Recommended. The default value is outdir_teSearch
 
 A short string for the output directory name. This string will be used to create a directory to contain the output files and directories in the current working directory. The complete path is not required, only the desired name for the directory. 
 
-####<a name="1>-1 unique mate/pair 1 string</a>
+####<a name="1">-1 unique mate/pair 1 string</a>
 
 Optional, Recommended. The default value is _p1
 
@@ -101,7 +101,7 @@ Suggestion:                     rename files to file_1_p1.fq and file_1_p2.fq.
                                 Now the string _p1 can be used to uniquely 
                                 identify all _p1 files and no _p2 files.
 </pre>
-####<a name="2">-2 unique mate/pair 2 string</>
+####<a name="2">-2 unique mate/pair 2 string</a>
 
 Optional, Recommended. The default value is _p2
 
