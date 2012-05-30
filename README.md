@@ -4,9 +4,28 @@ RelocaTE is a collection of scripts in which short reads (paired or unpaired), a
 
 CharacTErizer: A companion tool compares the numbers of reads that flank the TE sequence and contain genomic sequence to the number of reads that span a predicted insertion site with no gaps. These spanners contain no TE sequence. The ratio of spanners to flankers is used to classify the insertion as homozygous, heterozygous, new (somatic) or other.
 
+<a href="#cmd">RelocaTE Command Line Options</a>
+- <a href="#t">-t Str:  TE FASTA File</a>
+- <a href="#d">-d Str: directory of fq files</a>
+- <a href="#g">-g Str: reference genome fasta file</a>
+- <a href="#e">-e Str: Sample identifier</a>
+- <a href="#o">-o Str: output directory name</a>
+- <a href="#1">-1 Str: unique mate/pair 1 string</a>
+- <a href="#2">-2 Str: unique mate/pair 2 string</a>
+- <a href="#u">-u Str: unique unPaired string</a>
+- <a href="#p">-p 0|1: split into many jobs</a>
+- <a href="#a">-a 0|1: create PBS array job script</a>
+- <a href="#w">-w Str: working directory name</a>
+- <a href="#l">-l n:  min length cutoff for alignment to reference</a>
+- <a href="#bm">-bm n: blat minScore for alignment to TE</a>
+- <a href="#m">-m n<=0:  mismatches allowed in blat alignment to TE</a>
+- <a href="#bt">-bt n: blat tileSize for alignmetn to TE</a>
+- <a href="#f">-f n: length of the insertion site flanking seq to be returned </a>
+- <a href="#x">-x Str: file name of file with locations of existing TE insertions in reference</a>
 
-###RelocaTE Command Line Options:
-####-t File
+
+###<a name="cmd">RelocaTE Command Line Options</a>:
+####<a name="t">-t TE Fasta File</t>
 
 Required. No default value.
 
@@ -27,19 +46,19 @@ The fasta must contain TSD=
 <br>This can be a Perl regular expression.
 <br>
 <pre>
-Example: these exact characters TTA: TSD=TTA>
+Example: these exact characters TTA: TSD=TTA
 Example: any 4 characters: TSD=....
 Example: A or T followed by GCC: TSD=(A|T)GCC
 Example: CGA followed by any character then an A then CT or G: TSD=CGA.A(CT|G)
 </pre>
-####-d directory of fq files
+####<a name="d">-d directory of fq files</a>
 
 Required. No default value.
 
 The name of the directory of paired and unpaired fastq files (paired _p1.fq & _p2.fq). Both the .fq and .fastq extensions are accepted as extensions of fastq files. If something different is used RelocaTE will not recognize those files as being fastq files. 
 
 
-####-g reference genome fasta file
+####<a name="g">-g reference genome fasta file</a>
 
 Optional, Recommended. No default value.
 
@@ -48,7 +67,7 @@ The file name of the fasta file containing the genome sequence of the reference.
 If the genome sequence is not provided a series of files will be generated. One set will contain the intact reads that align to the TE. The second and third set of files will be made up of trimmed reads.  The second set will be only the trimmed portion of the reads in the first set that align to the TE. The third set will contain the trimmed portion of the reads that do not align to the TE, therefore the portion of the reads that should align to the genome sequence not containing a TE insertion.
 
 
-####-e Sample identifier
+####<a name="e">-e Sample identifier</a>
 
 Optional, Recommended. The default value is not.given
 
@@ -60,7 +79,7 @@ Optional, Recommended. The default value is outdir_teSearch
 
 A short string for the output directory name. This string will be used to create a directory to contain the output files and directories in the current working directory. The complete path is not required, only the desired name for the directory. 
 
-####-1 unique mate/pair 1 string
+####<a name="1>-1 unique mate/pair 1 string</a>
 
 Optional, Recommended. The default value is _p1
 
@@ -82,7 +101,7 @@ Suggestion:                     rename files to file_1_p1.fq and file_1_p2.fq.
                                 Now the string _p1 can be used to uniquely 
                                 identify all _p1 files and no _p2 files.
 </pre>
-####-2 unique mate/pair 2 string
+####<a name="2">-2 unique mate/pair 2 string</>
 
 Optional, Recommended. The default value is _p2
 
@@ -93,7 +112,7 @@ Example:
 File:                            file_p2.fq
 String:                          _p2
 </pre>
-####-u unique unPaired string
+####<a name="u">-u unique unPaired string</a>
 
 Optional, Recommended. The default value is .unPaired.
 
@@ -105,7 +124,7 @@ File:                           file.unParied.fq
 String:                         .unParied
 </pre>
 
-####-p n
+####<a name="p">-p n</a>
 
 Optional. Default value is 1.
 
@@ -116,7 +135,7 @@ n is 0 or 1.
 
 Break down the single big job of relocaTE into as many smaller jobs as possible. If selected this option will cause the creation of shell scripts which can be manually ran or submitted to a queue. This enables the jobs to be run in parallel. The folders of shell scripts should be run as ordered. Step_1 needs to run and be complete before Step_2 jobs can be proper started.  If the genome fasta had already been split and indexed this job will be skipped. 
 
-####-a n
+####<a name="a">-a n</a>
 
 Optional. Default value is 1.
 
@@ -131,13 +150,13 @@ Submit each array job one at a time, waiting for the previous job to be complete
 
 See run_these_jobs.sh for the array jobs.
 
-####-w working directory name
+####<a name="w">-w working directory name</a>
 
 Optional. Default value is the current working directory.
 
 If a directory different form the cwd is given it needs to exist, will not create. Provide the full path. 
 
-####-l n
+####<a name="l">-l n</a>
 
 Optional. Default value is 10.
 
@@ -148,7 +167,7 @@ n is a value for the length cutoff. This is the minimum length that a needs to b
   - The answer to the above two questions should not total more than the read length.
  
 
-####-bm n
+####<a name="bm">-bm n</a>
 
 Optional. Default value is 10.
 
@@ -160,7 +179,7 @@ Excerpt directly from Blat manual:
 > -minScore=N sets minimum score.  This is the matches minus the 
 >               mismatches minus some sort of gap penalty.
 
-####-m n\<=0
+####<a name="m">-m n\<=0</a>
 
 Optional. Default value is 0.
 
@@ -169,24 +188,24 @@ Any number less than or equal to 0.
 Fraction of the bps that aligned to the TE that are allowed to not be an exact match. For example, if 10 bp align to the TE and the allowance is 0.1, 1 bp can be a mismatch.
 
  
-####-bt n
+####<a name="bt">-bt n</a>
  
  Optional. Default value is 7.
 
-n is used for the blat tileSize valuefor the comparison of reads to the the TE sequence.
+n is used for the blat tileSize value for the comparison of reads to the the TE sequence.
 
 Excerpt directly from Blat manual:
 > -tileSize=N sets the size of match that triggers an alignment.  
 >               Usually between 8 and 12
 >               Default is 11 for DNA and 5 for protein.
  
-####-f n
+####<a name="f">-f n</a>
  
  Optional. Default value is 100.
 
 n is the length of the sequence flanking the found insertion site to be returned in an output fasta file and in the output gff file. This sequence is taken from the reference genome.
 
-####-x File
+####<a name="x">-x File</a>
 
 Optional. No default value.
 
