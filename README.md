@@ -3,7 +3,7 @@ RelocaTE: A tool to identify the locations of transposable element insertion eve
 RelocaTE is a collection of scripts in which short reads (paired or unpaired), a fasta containing the sequences of transposable elements and a reference genome sequence are the input and the output is a series of files containing the locations (relative to the reference genome) of TE insertions in the short reads. These insertions are insertions that are present only in the short reads and not present in the reference genome. If a tab-delimited file containing the coordinates of TEs in the reference is provided a list of the number of reads that support the presence of existing TE insertions is produced.
 
 CharacTErizer: A companion tool compares the numbers of reads that flank the TE sequence and contain genomic sequence to the number of reads that span a predicted insertion site with no gaps. These spanners contain no TE sequence. The ratio of spanners to flankers is used to classify the insertion as homozygous, heterozygous, new (somatic) or other.
-
+<a href="#req">Prerequisites</a>
 <a href="#cmd">RelocaTE Command Line Options</a>
 - <a href="#t">-t Str:  TE FASTA File</a>
 - <a href="#d">-d Str: directory of fq files</a>
@@ -22,7 +22,15 @@ CharacTErizer: A companion tool compares the numbers of reads that flank the TE 
 - <a href="#bt">-bt n: blat tileSize for alignmetn to TE</a>
 - <a href="#f">-f n: length of the insertion site flanking seq to be returned </a>
 - <a href="#x">-x Str: file name of file with locations of existing TE insertions in reference</a>
+<a href="#quick">RelocaTE: Quick Start Guide</a>
+<a href="#characterizer">CharacTErizer</a>
 
+
+###<a name="req">Prerequisites</a>:
+- Blat
+- Bowtie
+- Bioperl
+- Samtools
 
 ###<a name="cmd">RelocaTE Command Line Options</a>:
 ####<a name="t">-t TE Fasta File</t>
@@ -160,7 +168,7 @@ If a directory different form the cwd is given it needs to exist, will not creat
 
 Optional. Default value is 10.
 
-n is a value for the length cutoff. This is the minimum length that a needs to be after the removal of TE sequence. This trimmed read will be aligned to the genome. When selecting a custom value consider these points:
+n is a value for the length cutoff. This is the minimum length that a read needs to be after the removal of TE sequence. This trimmed read will be aligned to the genome. When selecting a custom value consider these points:
   - value can not be greater than the read length
   - How many bps are needed to limit false alignments to the reference?
   - How many bps are needed to recognize the TE? 
@@ -222,7 +230,7 @@ mping   Chr12:1045463..1045892
   
 	
 
-###Quick Start Guide:
+<a name="quick">###Quick Start Guide</a>:
 
 1.&nbsp;&nbsp;Get the sequence of your TE, including the TIRs.  Create a fasta file with your sequence, TE name and the TSD. The TSD= is required. With DNA transposons, by definition, during an insertion event the target site is duplicated. Therefore the target site will be used to identify an insertion event.  The reverse complement of each read containing portions of the ends of the provided TE will also be searched for the TSD to identify insertion events. A specific sequence of nucleotides can be used or a perl regular expression. 
 For example: 
@@ -289,7 +297,8 @@ mping   Chr12:1045463..1045892
 7.&nbsp;&nbsp;You are now ready to run relocaTE.pl with your data. If you run the program without any command line options, it will print out a list of the options and short descriptions.
 
 	
-###CharacTErizer:
+###<a name="characterizer">CharacTErizer</a>:
+
 <pre>
 usage:
 ./characterizer.pl [-s relocaTE table output file][-b bam file or dir of bam files][-g reference genome fasta file][-h] 
@@ -299,13 +308,11 @@ options:
 -b dir/file     bam file of the orginal reads aligned to reference (before TE was trimmed) or directory of bam files [no default]
 -g file         reference genome fasta file [no default]
 -h              this help message
+
+For more information see documentation: http://srobb1.github.com/RelocaTE/
 </pre>
 
-###Requirements:
-- blat
-- bowtie
-- bioperl
-- samtools
+
  
 ###What does relocaTE.pl actually do?
   1. it splits the supplied reference genome fasta into individual files, one file for each sequence.
@@ -318,4 +325,3 @@ options:
   8. it runs relocaTE_insertionFinder.pl: one job for every TE for every sequence of the reference fasta. shell scripts and array jobs will be created if -p 1 and -a 1.
   9. it will concatenate the results of each reference sequence into one file: one job for every TE. shell scripts and array jobs will be created if -p 1 and -a 1.
 
-For more information see documentation: http://docs........
