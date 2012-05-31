@@ -160,28 +160,28 @@ usage:
 options:
 
 **required:
--g STR          genome fasta file path. If not provided will only align reads to TE and remove TE seq from short reads. [no default]
--t STR          fasta containing nucleotide sequences of transposable elements with TSD=xxx in the desc. [no default]
--d STR          directory of paired and unpaired fastq files (paired _1.fq & _2.fq) (.fq or .fastq is acceptable)  [no default]
+-t file		fasta containing nucleotide sequences of transposable elements with TSD=xxx in the desc. [no default]
+-d dir		directory of paired and unpaired fastq files (paired _p1.fq & _p2.fq) (.fq or .fastq is acceptable)  [no default]
 
-**recommended:
--e STR          Short sample name, will be used in the output files to create IDs for the insert (ex. A123) [not.given]
--o STR          name for directory to contain output directories and files, will be created for the run (ex. 04222012_A123) [outdir_teSearch]
+**recommended: 
+-g file		genome (reference) fasta file path. If not provided will only align reads to TE and remove TE seq from short reads. [no default]
+-e STR		Short sample name, will be used in the output files to create IDs for the insert (ex. A123) [not.given]
+-o STR		name for directory to contain output directories and files, will be created for the run (ex. 04222012_A123) [outdir_teSearch]
 
 **optional:
--p INT          run each genome sequence separetly, parallel. The alternative (0) would be to run one after the other (int, 0=false or 1=true) [1] 
--a INT          if running in parallel, run jobs as a qsub PBS array when many are creaated (see: man qsub option -t).(int, 0=false or 1=true) [1] 
--w STR          base working directory, needs to exist, will not create, full path [cwd] 
--l INT          len cutoff for the TE trimmed reads to be aligned [10] 
--m FRACTION     mismatch allowance for alignment to TE (ex 0.1) [0] 
--1 STR		regular expression to identify mate 1 paired files ex: file_p1.fq or file_1.noNumbers.fq [\'_p1\']
--2 STR          regular expression to identify mate 2 paired files ex: file_p2.fq or file_2.noNumbers.fq [\'_p2\']
--u STR          regular expression to identify unpaired files ex: file.unPaired.fq[\'.unPaired\'] 
--bm INT		blat minScore value, in comparison of reads to TE sequence [10]
--bt INT		blat tileSize value, in comparison of reads to TE sequence  [7]
+-p INT		Break down the single big job of relocaTE into as many smaller jobs as possible. The alternative (0) would be to run one after the other (int, 0=false or 1=true) [1] 
+-a INT		if \'-a 1\' , create qsub PBS array jobs to run the many shell scripts created in the \'-a 1\' option. (see: man qsub option -t).(int, 0=false or 1=true) [1] 
+-w dir		base working directory, needs to exist, will not be creates, full path required [cwd] 
+-l INT		len cutoff for the TE trimmed reads to be aligned [10] 
+-m FRACTION	mismatch allowance for alignment to TE (ex 0.1) [0] 
+-1 STR		string to uniquely identify mate 1 paired files ex: file_p1.fq [_p1]
+-2 STR		pattern to uniquely identify mate 2 paired files ex: file_p2.fq [_p2]
+-u STR		pattern to uniquely identify unpaired files ex: file.unPaired.fq [.unPaired] 
+-bm INT		blat minScore value, used by blat in the comparison of reads to TE sequence [10]
+-bt INT		blat tileSize value, used by blat in the comparison of reads to TE sequence  [7]
 -f INT		length of the sequence flanking the found insertion to be returned. This sequence is taken from the reference genome [100]
--x STR		tab-delimited file containing the coordinates of existing TE.
--h              this message
+-x STR		tab-delimited file containing the coordinates of TE insertions pre-existing in the reference sequence. [no default]
+-h		this message
 
 SAMPLE Existing TE (the two columns are tab-delimited)
 mping   Chr12:839604..840033
@@ -198,9 +198,12 @@ TTCATAAAAGATTTCATTTGAGAGAAGATGGTATAATATTTTGGGTAGCCGTGCAATGACACTAGCCATT
 GTGACTGGCC
 
 Must contain "TSD=", can be a Perl regular express.  
+  Example: these exact characters TTA: TSD=TTA 
   Example: any 4 characters: TSD=....
   Example: A or T followed by GCC: TSD=(A|T)GCC 
   Example: CGA followed by any character then an A then CT or G: TSD=CGA.A(CT|G) 
+
+See documentation for more information. http://docs......
 
 ';
 
