@@ -1,7 +1,9 @@
 #!/usr/bin/perl -w
 use strict;
 ##blat parser and fq trimmer
-## April 21, 2012: changed the behavior of more than one blat hit to same query seq.
+## 053012: changed the test for mismatches from ($mismatches/$len) <= $mismatch_allowance
+##    to ($mismatches / ($matches + $mismatches)) <= $mismatch_allowance
+## 042112: changed the behavior of more than one blat hit to same query seq.
 ## if on the same strand keep best TE hit
 ## if on diff strands, this is a likely tandem insert, throw out reads, make a list
 ## of potential tandem insert reads
@@ -139,7 +141,7 @@ while ( my $line = <INFQ> ) {
     if (
       $tStart == 0
       and ( ( $len - ( $match + $mismatch ) ) > $len_cutoff )
-      and ( $mismatch / $len ) <= $mismatch_allowance
+      and ( $mismatch / ($match + $mismatch) ) <= $mismatch_allowance
       )
     {
       my ( $tS, $tE, $qS, $qE ) =
