@@ -3,8 +3,13 @@ RelocaTE: A tool to identify the locations of transposable element insertion eve
 RelocaTE is a collection of scripts in which short reads (paired or unpaired), a fasta containing the sequences of transposable elements and a reference genome sequence are the input and the output is a series of files containing the locations (relative to the reference genome) of TE insertions in the short reads. These insertions are insertions that are present only in the short reads and not present in the reference genome. If a tab-delimited file containing the coordinates of TEs in the reference is provided a list of the number of reads that support the presence of existing TE insertions is produced.
 
 CharacTErizer: A companion tool compares the numbers of reads that flank the TE sequence and contain genomic sequence to the number of reads that span a predicted insertion site with no gaps. These spanners contain no TE sequence. The ratio of spanners to flankers is used to classify the insertion as homozygous, heterozygous, new (somatic) or other.
-<a href="#req">Prerequisites</a>
-<a href="#cmd">RelocaTE Command Line Options</a>
+
+
+----------------------------------------------------------------------------
+----------------------------------------------------------------------------
+###Table of Contents:<br>
+#####<a href="#req">Prerequisites</a><br>
+#####<a href="#cmd">RelocaTE Command Line Options</a>
 - <a href="#t">-t Str:  TE FASTA File</a>
 - <a href="#d">-d Str: directory of fq files</a>
 - <a href="#g">-g Str: reference genome fasta file</a>
@@ -22,15 +27,20 @@ CharacTErizer: A companion tool compares the numbers of reads that flank the TE 
 - <a href="#bt">-bt n: blat tileSize for alignmetn to TE</a>
 - <a href="#f">-f n: length of the insertion site flanking seq to be returned </a>
 - <a href="#x">-x Str: file name of file with locations of existing TE insertions in reference</a>
-<a href="#quick">RelocaTE: Quick Start Guide</a>
-<a href="#characterizer">CharacTErizer</a>
 
-
+#####<a href="#quick">RelocaTE: Quick Start Guide</a><br>
+#####<a href="#characterizer">CharacTErizer</a>
+<br>
+---
+---
+<br>
 ###<a name="req">Prerequisites</a>:
+
 - Blat
 - Bowtie
 - Bioperl
 - Samtools
+<br><br>
 
 ###<a name="cmd">RelocaTE Command Line Options</a>:
 ####<a name="t">-t TE Fasta File</t>
@@ -81,7 +91,7 @@ Optional, Recommended. The default value is not.given
 
 A short string for sample name. This string will be used in the output files to create IDs for the insert (ex. A123)
 
-####-o output directory name
+####<a name="o">-o output directory name</a>
 
 Optional, Recommended. The default value is outdir_teSearch
 
@@ -227,10 +237,9 @@ SAMPLE Existing TE File:
 mping   Chr12:839604..840033
 mping   Chr12:1045463..1045892
 </pre>  
-  
-	
-
-<a name="quick">###Quick Start Guide</a>:
+<br>
+<br>
+###<a name="quick">Quick Start Guide</a>:
 
 1.&nbsp;&nbsp;Get the sequence of your TE, including the TIRs.  Create a fasta file with your sequence, TE name and the TSD. The TSD= is required. With DNA transposons, by definition, during an insertion event the target site is duplicated. Therefore the target site will be used to identify an insertion event.  The reverse complement of each read containing portions of the ends of the provided TE will also be searched for the TSD to identify insertion events. A specific sequence of nucleotides can be used or a perl regular expression. 
 For example: 
@@ -295,8 +304,8 @@ mping   Chr12:1045463..1045892
 &nbsp;&nbsp;&nbsp; - Make sure to submit the array jobs in order and wait for the job to complete before submitting the next one.
 
 7.&nbsp;&nbsp;You are now ready to run relocaTE.pl with your data. If you run the program without any command line options, it will print out a list of the options and short descriptions.
-
-	
+<br>
+<br>
 ###<a name="characterizer">CharacTErizer</a>:
 
 <pre>
@@ -324,4 +333,3 @@ For more information see documentation: http://srobb1.github.com/RelocaTE/
   7. it runs relocaTE_align.pl: one job for the one reference fasta. a shell script created if -p 1 and -a 1
   8. it runs relocaTE_insertionFinder.pl: one job for every TE for every sequence of the reference fasta. shell scripts and array jobs will be created if -p 1 and -a 1.
   9. it will concatenate the results of each reference sequence into one file: one job for every TE. shell scripts and array jobs will be created if -p 1 and -a 1.
-
