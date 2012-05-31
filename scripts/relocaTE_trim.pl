@@ -167,7 +167,7 @@ while ( my $line = <INFQ> ) {
     #query read overlaps 3' end of database TE & trimmed seq > cutoff
     elsif ( ( $tEnd == $tLen - 1 )
       and ( $len - ( $match + $mismatch ) > $len_cutoff )
-      and ( $mismatch / $len ) <= $mismatch_allowance
+      and ( $mismatch / ($match + $mismatch) ) <= $mismatch_allowance
       ) 
     {
       my ( $tS, $tE, $qS, $qE ) =
