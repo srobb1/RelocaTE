@@ -4,7 +4,12 @@ RelocaTE is a collection of scripts in which short reads (paired or unpaired), a
 
 CharacTErizer: A companion tool compares the numbers of reads that flank the TE sequence and contain genomic sequence to the number of reads that span a predicted insertion site with no gaps. These spanners contain no TE sequence. The ratio of spanners to flankers is used to classify the insertion as homozygous, heterozygous, new (somatic) or other.
 
-<a href="#cmd">RelocaTE Command Line Options</a>
+
+----------------------------------------------------------------------------
+----------------------------------------------------------------------------
+###Table of Contents:<br>
+#####<a href="#req">Prerequisites</a><br>
+#####<a href="#cmd">RelocaTE Command Line Options</a>
 - <a href="#t">-t Str:  TE FASTA File</a>
 - <a href="#d">-d Str: directory of fq files</a>
 - <a href="#g">-g Str: reference genome fasta file</a>
@@ -23,6 +28,19 @@ CharacTErizer: A companion tool compares the numbers of reads that flank the TE 
 - <a href="#f">-f n: length of the insertion site flanking seq to be returned </a>
 - <a href="#x">-x Str: file name of file with locations of existing TE insertions in reference</a>
 
+#####<a href="#quick">RelocaTE: Quick Start Guide</a><br>
+#####<a href="#characterizer">CharacTErizer</a>
+<br>
+---
+---
+<br>
+###<a name="req">Prerequisites</a>:
+
+- Blat
+- Bowtie
+- Bioperl
+- Samtools
+<br><br>
 
 ###<a name="cmd">RelocaTE Command Line Options</a>:
 ####<a name="t">-t TE Fasta File</t>
@@ -73,7 +91,7 @@ Optional, Recommended. The default value is not.given
 
 A short string for sample name. This string will be used in the output files to create IDs for the insert (ex. A123)
 
-####-o output directory name
+####<a name="o">-o output directory name</a>
 
 Optional, Recommended. The default value is outdir_teSearch
 
@@ -160,7 +178,7 @@ If a directory different form the cwd is given it needs to exist, will not creat
 
 Optional. Default value is 10.
 
-n is a value for the length cutoff. This is the minimum length that a needs to be after the removal of TE sequence. This trimmed read will be aligned to the genome. When selecting a custom value consider these points:
+n is a value for the length cutoff. This is the minimum length that a read needs to be after the removal of TE sequence. This trimmed read will be aligned to the genome. When selecting a custom value consider these points:
   - value can not be greater than the read length
   - How many bps are needed to limit false alignments to the reference?
   - How many bps are needed to recognize the TE? 
@@ -219,10 +237,9 @@ SAMPLE Existing TE File:
 mping   Chr12:839604..840033
 mping   Chr12:1045463..1045892
 </pre>  
-  
-	
-
-###Quick Start Guide:
+<br>
+<br>
+###<a name="quick">Quick Start Guide</a>:
 
 1.&nbsp;&nbsp;Get the sequence of your TE, including the TIRs.  Create a fasta file with your sequence, TE name and the TSD. The TSD= is required. With DNA transposons, by definition, during an insertion event the target site is duplicated. Therefore the target site will be used to identify an insertion event.  The reverse complement of each read containing portions of the ends of the provided TE will also be searched for the TSD to identify insertion events. A specific sequence of nucleotides can be used or a perl regular expression. 
 For example: 
@@ -280,16 +297,17 @@ mping   Chr12:839604..840033
 mping   Chr12:1045463..1045892
 </pre>
 
-5.&nbsp;&nbsp;Do you have a queue system available to you, or do you have multiple processors? If so, you can select the –p 1 option. This will create a series of shell scripts that you can submit to the queue or run on multiple processors.<br> 
+5.&nbsp;&nbsp;Do you have a queue system available to you, or do you have multiple processors? If so, you can select the ?p 1 option. This will create a series of shell scripts that you can submit to the queue or run on multiple processors.<br> 
 &nbsp;&nbsp;&nbsp; - These should be run in order. For example all of step_1 should be run and completed before the shell scripts of step_2 are run, and so on.
 
-6.&nbsp;&nbsp;Do you have a queue system available and is it PBS? If so, you can select the –a 1 option to generate array job scripts. These jobs can be submitted to the queue instead of submitting hundreds of individual shell scripts. The array job will submit the hundreds of scripts for you.  
+6.&nbsp;&nbsp;Do you have a queue system available and is it PBS? If so, you can select the ?a 1 option to generate array job scripts. These jobs can be submitted to the queue instead of submitting hundreds of individual shell scripts. The array job will submit the hundreds of scripts for you.  
 &nbsp;&nbsp;&nbsp; - Make sure to submit the array jobs in order and wait for the job to complete before submitting the next one.
 
 7.&nbsp;&nbsp;You are now ready to run relocaTE.pl with your data. If you run the program without any command line options, it will print out a list of the options and short descriptions.
+<br>
+<br>
+###<a name="characterizer">CharacTErizer</a>:
 
-	
-###CharacTErizer:
 <pre>
 usage:
 ./characterizer.pl [-s relocaTE table output file][-b bam file or dir of bam files][-g reference genome fasta file][-h] 
@@ -299,13 +317,11 @@ options:
 -b dir/file     bam file of the orginal reads aligned to reference (before TE was trimmed) or directory of bam files [no default]
 -g file         reference genome fasta file [no default]
 -h              this help message
+
+For more information see documentation: http://srobb1.github.com/RelocaTE/
 </pre>
 
-###Requirements:
-- blat
-- bowtie
-- bioperl
-- samtools
+
  
 ###What does relocaTE.pl actually do?
   1. it splits the supplied reference genome fasta into individual files, one file for each sequence.
@@ -317,5 +333,3 @@ options:
   7. it runs relocaTE_align.pl: one job for the one reference fasta. a shell script created if -p 1 and -a 1
   8. it runs relocaTE_insertionFinder.pl: one job for every TE for every sequence of the reference fasta. shell scripts and array jobs will be created if -p 1 and -a 1.
   9. it will concatenate the results of each reference sequence into one file: one job for every TE. shell scripts and array jobs will be created if -p 1 and -a 1.
-
-For more information see documentation: http://docs........
