@@ -5,8 +5,8 @@ RelocaTE is a collection of scripts in which short reads (paired or unpaired), a
 CharacTErizer: A companion tool compares the numbers of reads that flank the TE sequence and contain genomic sequence to the number of reads that span a predicted insertion site with no gaps. These spanners contain no TE sequence. The ratio of spanners to flankers is used to classify the insertion as homozygous, heterozygous, new (somatic) or other.
 
 
-----------------------------------------------------------------------------
-----------------------------------------------------------------------------
+---------------------------------------------------------------------------
+---------------------------------------------------------------------------
 ###Table of Contents:<br>
 #####<a href="#req">Prerequisites</a><br>
 #####<a href="#cmd">RelocaTE Command Line Options</a>
