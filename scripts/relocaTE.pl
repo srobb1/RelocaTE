@@ -66,20 +66,16 @@ if ( !defined $genomeFasta ) {
 }
 elsif ( $genomeFasta eq 'NONE' ) {
   print
-"You did not provide a genome fasta, if you proceed only reads containing the TE will be found, no mapping of insertions will be performed\n";
-  print "Proceed without mapping?\n";
-  my $answer;
-  while ( $answer = <STDIN> ) {
-
-    #Exit if it was just spaces (or just an enter)
-    last if $answer =~ /^\s*|\n$/;
-  }
+"A reference genome fasta was NOT provided. Proceeding without a reference will result in only the reads containing the TE being identified, no mapping of insertions will be performed\n";
+  print "Proceed without mapping? (y|n) \n";
+  my $answer = <STDIN>;
   if ( $answer =~ /n/i ) {
     &getHelp();
   }
-  else {
+  elsif ($answer =~ /y/i) {
     $mapping = 0;
   }
+  print "Great, proceeding without aligning to a reference genome.\n";
 }
 elsif ( !-e $genomeFasta ) {
   print "$genomeFasta does not exist. Check file name.\n";
@@ -219,7 +215,7 @@ if ($qsub_array) {
 }
 ##split genome file into individual fasta files
 my @genome_fastas;
-if ($mapping) {
+if ($mapping > 0) {
   open( INFASTA, "$genome_path" ) || die "$!\n";
   my $i      = 0;
   my $exists = 0;
@@ -491,7 +487,7 @@ foreach my $te_path (@te_fastas) {
       my $target = $1;
       $genome_path =~ /.+\/(.+)\.fa$/;
       my $ref           = $1;
-      my $merged_bowtie = "$path/$ref/bowtie_aln/$ref.$TE.bowtie.out";
+      my $merged_bowtie = "$path/bowtie_aln/$ref.$TE.bowtie.out";
       my $cmd =
 "$scripts/relocaTE_insertionFinder.pl $merged_bowtie $target $genome_file $TE $outregex $exper $flanking_seq_len $existing_TE_path";
       if ( !$parallel ) {
