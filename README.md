@@ -30,6 +30,7 @@ CharacTErizer: A companion tool compares the numbers of reads that flank the TE 
 
 #####<a href="#quick">RelocaTE: Quick Start Guide</a><br>
 #####<a href="#characterizer">CharacTErizer</a>
+#####<a href="#issue">Report an Issue</a>
 <br>
 ---
 ---
@@ -333,3 +334,13 @@ For more information see documentation: http://srobb1.github.com/RelocaTE/
   7. it runs relocaTE_align.pl: one job for the one reference fasta. a shell script created if -p 1 and -a 1
   8. it runs relocaTE_insertionFinder.pl: one job for every TE for every sequence of the reference fasta. shell scripts and array jobs will be created if -p 1 and -a 1.
   9. it will concatenate the results of each reference sequence into one file: one job for every TE. shell scripts and array jobs will be created if -p 1 and -a 1.
+
+###<a name="issue">Report an Issue</a>:
+For any of the listed reasons, or anything else, please leave us a <a href"http://github.com/srobb1/RelocaTE/issues?page=1&sort=comments&state=open">message here</a> 
+1. Is there a bug?
+2. Did you find confusing documentation or a missing topic?
+3. Do you have an awesome idea to share?
+4. Is an improvement needed?
+
+<a href"http://github.com/srobb1/RelocaTE/issues?page=1&sort=comments&state=open">Leave a message here</a>
+
