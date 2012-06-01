@@ -84,10 +84,11 @@ $genome_fa =~ /(.+)\.fa$/;
 my $target     = $1;
 my $target_dir = "$path/$target";
 ##make new directories for file output
-`mkdir -p $target_dir`;
-`mkdir -p $path/$target/bowtie_aln`;
+#`mkdir -p $target_dir`;
+#`mkdir -p $path/$target/bowtie_aln`;
+`mkdir -p $path/bowtie_aln`;
 my $te_dir_path = $path;
-$path = $target_dir;
+#$path = $target_dir;
 my @bowtie_out_files;
 
 ##align each newly created flanking fq files to the genome
