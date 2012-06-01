@@ -5,8 +5,8 @@ RelocaTE is a collection of scripts in which short reads (paired or unpaired), a
 CharacTErizer: A companion tool compares the numbers of reads that flank the TE sequence and contain genomic sequence to the number of reads that span a predicted insertion site with no gaps. These spanners contain no TE sequence. The ratio of spanners to flankers is used to classify the insertion as homozygous, heterozygous, new (somatic) or other.
 
 
----------------------------------------------------------------------------
----------------------------------------------------------------------------
+<hr>
+<hr>
 ###Table of Contents:<br>
 #####<a href="#req">Prerequisites</a><br>
 #####<a href="#cmd">RelocaTE Command Line Options</a>
@@ -32,8 +32,8 @@ CharacTErizer: A companion tool compares the numbers of reads that flank the TE 
 #####<a href="#characterizer">CharacTErizer</a>
 #####<a href="#issue">Report an Issue</a>
 <br>
----
----
+<hr>
+<hr>
 <br>
 ###<a name="req">Prerequisites</a>:
 
@@ -286,7 +286,7 @@ _pair2 would match the second paired file
 </pre>
 
 3.&nbsp;&nbsp;Get the reference genome fasta. This will be one file containing all the reference sequences of your organism.<br>
-4.&nbsp;&nbsp;If you want to determine if you short reads contain the same TE insertions as the reference, create a file with the existing TE insertions found in the reference.
+4.&nbsp;&nbsp;If you want to determine if your short reads contain the same TE insertions as the reference, create a file with the existing TE insertions found in the reference.
 
 This file name is tab-delimited containing the coordinates of existing TE in the reference.  If this file is provided a new file will be generated containing a list of these existing insertions found in the reads. The number of reads supporting the start and the end of the insertion will be reported. 
 
@@ -336,11 +336,11 @@ For more information see documentation: http://srobb1.github.com/RelocaTE/
   9. it will concatenate the results of each reference sequence into one file: one job for every TE. shell scripts and array jobs will be created if -p 1 and -a 1.
 
 ###<a name="issue">Report an Issue</a>:
-For any of the listed reasons, or anything else, please leave us a <a href"http://github.com/srobb1/RelocaTE/issues?page=1&sort=comments&state=open">message here</a> 
-1. Is there a bug?
-2. Did you find confusing documentation or a missing topic?
-3. Do you have an awesome idea to share?
-4. Is an improvement needed?
+For any of the listed reasons, or anything else, please leave us a <a href="https://github.com/srobb1/RelocaTE/issues?page=1&sort=comments&state=open">message here</a><br>
+- Is there a bug?
+- Did you find confusing documentation or a missing topic?
+- Do you have an awesome idea to share?
+- Is an improvement needed?
 
-<a href"http://github.com/srobb1/RelocaTE/issues?page=1&sort=comments&state=open">Leave a message here</a>
+<a href="https://github.com/srobb1/RelocaTE/issues?page=1&sort=comments&state=open">Leave a message here</a>
 
