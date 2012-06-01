@@ -148,15 +148,13 @@ foreach my $line (@sorted_bowtie) {
         $last_end   = $end;
     }
 }
-
+##outdir/te/bowtie/bowtie_file
 my $event = 0;
 my @path = split '/' , $bowtie;
-my $bowtie_file_name = pop @path; #throw out filename
-my $path = join '/' , @path;
-my $ref_dir = pop @path;
-my $te_dir = pop @path;
-my $top_dir_path = join '/' , @path;
-my $results_dir = "$top_dir_path/results";
+pop @path; #throw out filename
+pop @path; #throwout bowtie dir
+my $te_dir = join '/' , @path;
+my $results_dir = "$te_dir/results";
 `mkdir -p $results_dir`;
 open OUTFASTA, ">$results_dir/$usr_target.$TE.te_insertion_sites.fa"         or die $!;
 open OUTALL,   ">$results_dir/$usr_target.$TE.te_insertion.all.txt"         or die $!;
