@@ -14,6 +14,7 @@ use Getopt::Long;
 ## or
 ## mping_homozygous_heterozygous.pl A119.mping.te_insertion.all.txt ../bam_files/ > A119.inserts_characterized.txt
 ##
+## 061312 changed the values for calling homo, het, new
 ## 052912 added getOpts long
 ## 031412 added a check for XM and NM tags in sam line, if >0 then it is not 100% Match
 ## 022712 changed the logic for calling 'homo', 'het', 'new ins/somat' 
@@ -51,7 +52,7 @@ options:
 For more information see documentation: http://docs........
 
 ';
-  exit;
+  exit 1;
 }
 if ( -d $bam_dir ) {
 
@@ -68,7 +69,7 @@ my $filename = pop @dir_path;
 $cwd =~ s/\/$//;    #remove trailing /
 open OUTGFF, ">$cwd/$filename.homo_het.gff";
 print
-  "strain\tTE\tTSD\tchromosome.pos\tavg_flankers\tspanners\tstatus\n"; #\t$Smatch\t$cigar_all\n";
+  "strain\tTE\tTSD\tchromosome.pos\tavg_flankers\tspanners\tstatus\n";
 my %matches;
 
 while ( my $line = <INSITES> ) {
@@ -77,8 +78,6 @@ while ( my $line = <INSITES> ) {
   chomp $line;
 
   # mping   A119    Chr1    1448    C:1     R:0     L:1
-  #my ( $te, $exp, $chromosome, $pos, $total_string, $right_string, $left_string ) = split /\t/, $line;
-  #my $TSD = 'TTA';
   my ($te,$TSD,$exp,$chromosome, $pos, $total_string, $right_string, $left_string) = split /\t/, $line;
   my ($total_count) = $total_string =~ /C:(\d+)/;
   my ($left_count)  = $left_string  =~ /L:(\d+)/;
@@ -86,15 +85,11 @@ while ( my $line = <INSITES> ) {
 
   my $Mmatch = 0;
   my $cigar_all;
-  if ( $left_count > 1 and $right_count > 1 ) {
+  if ( $left_count >= 1  and $right_count >=  1 and $total_count >= 2) {
     my @sam_all;
     foreach my $bam_file (@bam_files) {
       ## get any alignments that overlap the insertion site
       my @sam_out = `samtools view $bam_file \'$chromosome:$pos-$pos\'`;
-
-#my @header = `samtools view -HT $genome_fasta $bam_file \'$chromosome:$pos-$pos\'`;
-#my $header = join "\n" , @header;
-#$matches{"$chromosome.pos"}{header} = $header;
       push @sam_all, @sam_out;
     }
 
@@ -123,7 +118,6 @@ while ( my $line = <INSITES> ) {
       next unless $end >= $pos + 5;
       next unless $start <= $pos - 5;
       ## must be a all M match no soft clipping
-      #if ( $cigar =~ /^[1-3]?S?\d+M[1-3]?S?$/ ) { ##allow for a couple of soft clippings
       if ( $cigar =~ /^\d+M$/ ) {
         my ($NM) = $sam_line =~ /NM:i:(\d+)/; ## edit distance used
         my ($XM) = $sam_line =~ /XM:i:(\d+)/; ## bwa specific: mismatch count, often the same as NM, have not seen a XM>0 and NM==0
@@ -137,33 +131,50 @@ while ( my $line = <INSITES> ) {
           $matches{"$chromosome.$pos"}{sam}{$sam_line} = 1;
         }
       }
-      #elsif ( $cigar !~ /S/ and $cigar =~ /[IND]/ ) {
       elsif ( $cigar =~ /[IND]/ ) {
-
-        #push @{$matches{"$chromosome.$pos"}{sam}} , $sam_line;
         $matches{"$chromosome.$pos"}{sam}{$sam_line} = 1;
       }else {
         $matches{"$chromosome.$pos"}{sam}{$sam_line} = 1;
 
       }
-
-      #$cigar_all.="$cigar,";
     }
     my $spanners         = $Mmatch;
     my $average_flankers = $total_count / 2;
     my $status           = 0;
-    ## this characterization needs some statistics
-    #if ( $average_flankers < 5 and ( ( $spanners - $average_flankers ) >= 10 ) )
-    #{
-    #  $status = 'new_insertion';
-    #}
-    #elsif ( ( ( $average_flankers - $spanners ) > 10 )
-    #  and $spanners < 5 )
-    #{
-    #  $status = 'somatic_excision';
-    #}
-    ##avg_flankers already has to be (left>1 right>1 therefore atleast 2+2/2 =>) 2
+    
     if ( $spanners == 0 ) {
+      $status = 'homozygous';
+    }
+    elsif ( $average_flankers >= 5 and $spanners < 5 ) {
+      $status = 'homozygous?';
+    }
+    elsif ($spanners < ($average_flankers * .2) and $spanners <= 10){
+      $status = 'homozygous?';
+    }
+    elsif ($average_flankers <= 2 and $spanners > 10){
+      $status = 'new_insertion';
+    }
+    elsif ( abs( $average_flankers - $spanners ) <= 5 ) {
+      $status = 'heterozygous';
+    }
+    elsif (
+      abs( $average_flankers - $spanners ) -
+      ( ( $average_flankers + $spanners ) / 2 )  <= 10 ) {
+      $status = 'heterozygous?';
+    }
+    elsif ($average_flankers > 10 and $spanners > 10){
+      $status = 'heterozygous';
+    }
+    elsif (( ($spanners - $average_flankers) > ($spanners + $average_flankers)/2  )and( $average_flankers <= 10)){
+      $status = 'new_insertion';
+    }
+    else{
+      $status = 'other';
+    }
+
+
+=cut #original criteria
+   if ( $spanners == 0 ) {
       $status = 'homozygous';
     }
     elsif ( ($spanners - $average_flankers) > ($spanners + $average_flankers)/2){
@@ -187,9 +198,7 @@ while ( my $line = <INSITES> ) {
     elsif ($spanners < ($average_flankers * .2) and $spanners <= 10){
       $status = 'homozygous?';
     }
-    #elsif ( ( $spanners - $average_flankers ) > 10 ) {
-    #  $status = 'new_insertion?';
-    #}
+=cut
     $matches{"$chromosome.$pos"}{status} = $status;
     print "$exp\t$te\t$TSD\t$chromosome.$pos\t$average_flankers\t$spanners\t$status\n"
       ;    #\t$Smatch\t$cigar_all\n";
