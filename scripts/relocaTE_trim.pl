@@ -154,12 +154,20 @@ while ( my $line = <INFQ> ) {
         ## start at the end of the match and go to end of string
         $trimmed_seq  = substr $seq,  $end + 1;
         $trimmed_qual = substr $qual, $end + 1;
+        ##te was removed from the end of the read
+        my ($id, $desc) = $header=~/^(\S+)(.*)/;
+        $id .= ':start';
+        $header = $id.$desc;
       }
       else {    ## strand is positive
         $trimmed_seq  = substr $seq,  0, $start;
         $trimmed_qual = substr $qual, 0, $start;
+        ##te was removed from the start of the read
+        my ($id, $desc) = $header=~/^(\S+)(.*)/;
+        $id .= ':end';
+        $header = $id.$desc;
       }
-      next if length $trimmed_seq < $len_cutoff;
+      next if length $trimmed_seq <= $len_cutoff;
       print OUTTE5
 ">$header $qS..$qE matches $TE:$tS..$tE mismatches:$mismatch\n$te_subseq\n"
         if !$outte5;
@@ -177,12 +185,20 @@ while ( my $line = <INFQ> ) {
         $trimmed_seq  = substr $seq,  0, $start;
         $trimmed_qual = substr $qual, 0, $start;
         ( $te_subseq = reverse $te_subseq ) =~ tr/AaGgTtCcNn/TtCcAaGgNn/;
+        ##te was removed from the start of the read
+        my ($id, $desc) = $header=~/^(\S+)(.*)/;
+        $id .= ':end';
+        $header = $id.$desc;
       }
       else {    ## strand is +
         $trimmed_seq  = substr $seq,  $end + 1;
         $trimmed_qual = substr $qual, $end + 1;
+        ##te was removed from the end of the read
+        my ($id, $desc) = $header=~/^(\S+)(.*)/;
+        $id .= ':start';
+        $header = $id.$desc;
       }
-      next if length $trimmed_seq < $len_cutoff;
+      next if length $trimmed_seq <= $len_cutoff;
       print OUTTE3
 ">$header $qS..$qE matches $TE:$tS..$tE mismatches:$mismatch\n$te_subseq\n"
         if !$outte3;
