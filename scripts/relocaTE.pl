@@ -125,7 +125,7 @@ else {
     &getHelp();
   }
 }
-my $existing_TE_path;
+my $existing_TE_path = 'NONE';
 if ( $existing_TE ne 'NONE' ) {
   if ( !-e $existing_TE ) {
     print "The existing_TE file:$existing_TE, you provided can be not found\n";
