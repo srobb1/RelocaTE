@@ -9,9 +9,9 @@
 
 use strict;
 
-my $required_reads = 3; ## rightReads + leftReads needs to be > or = to this value
-my $required_left_reads = 1; ## needs to be > to this value
-my $required_right_reads = 1; ## needs to be > to this value
+my $required_reads = 1; ## rightReads + leftReads needs to be > to this value
+my $required_left_reads = 1; ## needs to be >= to this value
+my $required_right_reads = 1; ## needs to be >= to this value
 my $bowtie  = shift;
 my $usr_target  = shift;
 my $genome_path = shift;
@@ -128,19 +128,21 @@ foreach my $line (@sorted_bowtie) {
     {
         push @bin, $start, $end;
         @bin = sort @bin;
-        my $first_TSD = uc( substr $seq, 0, $TSD_len );
-        my $last_TSD = uc( substr $seq, (-1 * $TSD_len) );
-        TSD_check( $count, $first_TSD, $start,   'left',  $name , $TSD);
-        TSD_check( $count, $last_TSD,  $end - ($TSD_len - 1), 'right', $name , $TSD);
+        #my $first_TSD = uc( substr $seq, 0, $TSD_len );
+        #my $last_TSD = uc( substr $seq, (-1 * $TSD_len) );
+        #TSD_check( $count, $first_TSD, $start,   'left',  $name , $TSD);
+        #TSD_check( $count, $last_TSD,  $end - ($TSD_len - 1), 'right', $name , $TSD);
+        new_TSD_check( $count, $seq, $start,  $name , $TSD);
     }
     else {
         ## if start and end do not fall within last start and end
         ## we now have a different insertion event
         $count++;
-        my $first_TSD = uc( substr $seq, 0, $TSD_len );
-        my $last_TSD = uc( substr $seq, (-1 * $TSD_len) );
-        TSD_check( $count, $first_TSD, $start,   'left',  $name , $TSD);
-        TSD_check( $count, $last_TSD,  $end - ($TSD_len - 1), 'right', $name ,$TSD);
+        #my $first_TSD = uc( substr $seq, 0, $TSD_len );
+        #my $last_TSD = uc( substr $seq, (-1 * $TSD_len) );
+        #TSD_check( $count, $first_TSD, $start,   'left',  $name , $TSD);
+        #TSD_check( $count, $last_TSD,  $end - ($TSD_len - 1), 'right', $name ,$TSD);
+        new_TSD_check( $count, $seq, $start,  $name , $TSD);
 
         #reset last_start, last_end, @bin
         @bin        = ( $start, $end );
@@ -179,9 +181,9 @@ foreach my $insertionEvent ( sort { $a <=> $b } keys %teInsertions ) {
         my @reads       = @{ $teInsertions{$insertionEvent}{$foundTSD}{$start}{reads} };
 
         if ( ( defined $left_count and defined $right_count) 
-              and ($left_count  >  $required_left_reads)
-              and ($right_count >  $required_right_reads )
-              and (($right_count + $left_count) >= $required_reads)
+              and ($left_count  >=  $required_left_reads)
+              and ($right_count >=  $required_right_reads )
+              and (($right_count + $left_count) > $required_reads)
             ) {
             $event++;
             my $coor                  = $start + ($TSD_len - 1);
@@ -237,9 +239,10 @@ sub TSD_check {
     my $result = 0;
     my $TSD;
     if ($TSD_pattern and ($seq =~ /($tsd)/ or $rev_seq =~ /($tsd)/ ) ) {
+
 	$result = 1;
         $TSD = $1;
-    }elsif (!$TSD_pattern and ($seq eq $tsd or $rev_seq eq $tsd) ) {
+    }elsif (!$TSD_pattern and (($seq eq $tsd) or ($rev_seq eq $tsd)) ) {
     	$result = 1;
         $TSD = $tsd;
     }
@@ -259,4 +262,46 @@ sub TSD_check {
           push @{ $teInsertions{$event}{$TSD}{$start}{reads} }, $read;
         }
    }
+}
+sub new_TSD_check { 
+  ##$seq is entire trimmd read, not just the TSD portion of the read
+  ##$start is the first postition of the entire read match to ref
+  my ( $event, $seq, $seq_start, $read_name, $tsd ) = @_;   
+  $seq = uc $seq;
+  my $rev_seq =  reverse $seq;
+  $rev_seq =~ tr /ATGC/TACG/;
+  my $result = 0;
+  my $TSD;
+  my $pos;
+  my $start; ## first base of TSD 
+  ##start means that the TE was removed from the start of the read
+  if ($read_name =~/start$/ and ($seq =~ /^($tsd)/ or $rev_seq =~ /($tsd)$/)){
+    $result = 1;
+    $TSD = $1;
+    $pos = "right";
+    $start = $seq_start;
+  }
+  ##end means that the TE was removed from the end of the read
+  elsif ( $read_name =~ /end$/ and ($seq =~ /($tsd)$/ or $rev_seq =~ /^($tsd)/) ) {
+    $result = 1;
+    $TSD = $1;
+    $pos = "left";
+    $start = $seq_start + ( (length $seq) - (length $TSD));
+  }
+  if ( $result ) {
+    my ($tir1_end, $tir2_end) = ( ($start + (length $TSD)) , ($start - 1));
+    if (exists $existingTE{$TE}{start}{$tir1_end}){
+      my $te_id = $existingTE{$TE}{start}{$tir1_end};
+      $existingTE_found{$te_id}{start}++;
+    }
+    elsif (exists $existingTE{$TE}{end}{$tir2_end}){
+      my $te_id = $existingTE{$TE}{end}{$tir2_end};
+      $existingTE_found{$te_id}{end}++;
+    }else{
+      $teInsertions{$event}{$TSD}{$start}{count}++;
+      $teInsertions{$event}{$TSD}{$start}{$pos}++;
+      $read_name =~ s/:start|:end//;
+      push @{ $teInsertions{$event}{$TSD}{$start}{reads} }, $read_name;
+    }
+  }
 }
