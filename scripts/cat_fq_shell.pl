@@ -12,7 +12,17 @@ use File::Spec;
 
 if ( !defined @ARGV ) {
   die
-"run command like this: for i in `seq 1 12` ; do cat_fq_shell.pl Chr\$i prefix [/tmp_dir default:/sractch] [clean 1|0 default:1]; done\n";
+"for a single directory: 
+            cat_fq_shell.pl dir_of_fq_files prefix [tempDir:/scratch] [clean 1|0 default:1]
+for multiple directories:
+            for i in `ls` ; do cat_fq_shell.pl \$i prefix [tempDir:/scratch] [clean 1|0 default:1]; done
+or if you have numbered ref seqs, ex Chr1, Chr2 ... Chr12:
+            for i in `seq 1 12` ; do cat_fq_shell.pl Chr\$i prefix [tempDir:/scratch] [clean 1|0 default:1]; done
+
+Note: \'clean\' means that the resulting fq files will be matched, and any unparied seqs will be put into an unParied.fq file
+
+Then run each shell script individually or in parallel\n\n";
+
 }
 
 my $dir     = shift;
