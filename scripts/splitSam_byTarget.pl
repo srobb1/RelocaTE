@@ -6,6 +6,8 @@ use Getopt::Long;
 ##takes a sam file and splits it into separate files based on the
 ##targets sequences.
 
+## 06192012: writing all matches for one read to the appropriate target file.
+
 my $sam_file;
 my $sam_dir;
 my $current     = File::Spec->curdir();
@@ -111,7 +113,7 @@ foreach my $in_sam (@sam_files) {
       ##this will also collect unmapped reads, to target *
       ##when printing files get both right and left for each target
       $targets{$target}{$seq}++;
-      $seqs{$seq}{$left_right} = $line;
+      push @{$seqs{$seq}{$left_right}} ,  $line;
     }
   }
 
@@ -148,7 +150,9 @@ foreach my $in_sam (@sam_files) {
 #print both lft and right read even if only one of the 2 was actullly mapped to this target
     foreach my $seq ( sort keys %{ $targets{$target} } ) {
       foreach my $left_right ( sort keys %{ $seqs{$seq} } ) {
-        print OUTSAM $seqs{$seq}{$left_right}, "\n";
+        foreach my $sam_line (@{$seqs{$seq}{$left_right}}){
+         print OUTSAM $sam_line, "\n";
+        }
       }
     }
   }
