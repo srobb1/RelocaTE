@@ -6,11 +6,13 @@ use File::Spec;
 #provide a directory of bam files to merge
 
 if ( !defined @ARGV ) {
-  print
-"for a single directory: merge_bam_and_create_merged_sam_shell.pl dir_of_bam_files prefix [tempDir:/scratch]\n";
-  print "for multiple directories:
-            for i in `ls` ; do ~/bin/merge_bam_and_create_merged_sam_shell.pl \$i prefix [tempDir:/scratch]; done
-or:         for i in `seq 1 12` ; do ~/bin/merge_bam_and_create_merged_sam_shell.pl Chr\$i prefix [tempDir:/scratch]; done
+ die 
+"for a single directory: 
+            merge_bam_and_create_merged_sam_shell.pl dir_of_bam_files prefix [tempDir:/scratch]
+for multiple directories:
+            for i in `ls` ; do merge_bam_and_create_merged_sam_shell.pl \$i prefix [tempDir:/scratch]; done
+or if you have numbered ref seqs, ex Chr1, Chr2 ... Chr12:
+            for i in `seq 1 12` ; do merge_bam_and_create_merged_sam_shell.pl Chr\$i prefix [tempDir:/scratch]; done
 
 Then run each shell script individually or in parallel\n\n";
 }
