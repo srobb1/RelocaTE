@@ -13,11 +13,12 @@ my $sam_dir;
 my $current     = File::Spec->curdir();
 my $current_dir = File::Spec->rel2abs($current);
 my $out_dir     = "$current_dir/split_by_target";
-
+my $all_hits     = 1;
 GetOptions(
   's|sam:s' => \$sam_file,
   'd|dir:s' => \$sam_dir,
   'o|out:s' => \$out_dir,
+  'a|all_hits:s' => \$all_hits,
   'h|help'  => \&getHelp,
 );
 
@@ -30,6 +31,7 @@ options:
 -s STR          sam file [no default]
 -d STR          directory of sam files [no default]
 -o STR		directory for the new sam files [current_dir/split_by_target]
+-a INT		include all hits in XA:Z tag of BWA samfile. 0 for no, 1 for yes. (0|1) [default=1]	
 -h              this message
 ";
   exit 1;
@@ -114,6 +116,18 @@ foreach my $in_sam (@sam_files) {
       ##when printing files get both right and left for each target
       $targets{$target}{$seq}++;
       push @{$seqs{$seq}{$left_right}} ,  $line;
+      
+      ##get other hits
+      ##XA:Z:Chr12,-20582630,101M,0;Chr12,-20680151,101M,0;
+      if ($line =~/XA:Z:(.+)\s*/ and $all_hits){
+        my $otherHits = $1;
+        my @otherHits = split ';' , $otherHits;
+        foreach my $otherHit (@otherHits){
+          my ($otherTarget) = split ',' , $otherHit;
+          ##add to list of potential targets for this seq
+          $targets{$otherTarget}{$seq}++;
+        }
+      }
     }
   }
 

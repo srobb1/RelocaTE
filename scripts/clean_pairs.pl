@@ -52,18 +52,18 @@ my %pairs;
 open INFASTQ_1, "$file_1" or die "problem opening $file_1 $!";
 my $fq_1 = $file_1;
 my $fq_2 = $file_2;
-$fq_1 =~ s/\.fq//;
-$fq_2 =~ s/\.fq//;
+$fq_1 =~ s/\.f.*q//;
+$fq_2 =~ s/\.f.*q//;
 open OUTFASTQ_1, ">$fq_1.matched.fq";
 open OUTFASTQ_2, ">$fq_2.matched.fq";
 
 while ( my $header = <INFASTQ_1> ) {
   chomp $header;
   my $header_to_store;
-  if ( $header =~ /(\S+)(\.r|\.f)/ ) {
+  if ( $header =~ /(\S+)(\.r|\.f)\s*/ ) {
     $header_to_store = $1;
   }
-  elsif ( $header =~ /(\S+)(\/1|\/2)/ ) {
+  elsif ( $header =~ /(\S+)(\/1|\/2)\s*/ ) {
     $header_to_store = $1;
   }
   elsif ( $header =~ /(\S+)/ ) {
@@ -91,10 +91,10 @@ my $no_match_file_to_print;
 while ( my $header = <INFASTQ_2> ) {
   chomp $header;
   my $header_to_store;
-  if ( $header =~ /(\S+)(\.r|\.f)/ ) {
+  if ( $header =~ /(\S+)(\.r|\.f)\s*/ ) {
     $header_to_store = $1;
   }
-  elsif ( $header =~ /(\S+)(\/1|\/2)/ ) {
+  elsif ( $header =~ /(\S+)(\/1|\/2)\s*/ ) {
     $header_to_store = $1;
   }
   elsif ( $header =~ /(\S+)/ ) {

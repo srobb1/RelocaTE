@@ -1,5 +1,11 @@
 #!/usr/bin/perl -w
 
+## need to add the abilty to filter based on bowtie column 7 (number of times this
+## reads aligns to exactly the same sequence of the reference)
+## ---
+## 07132012: added the ability to filter the aligned reads while taking strand into 
+## account
+## ---
 ## 04212012: added the ability to use a tab-delimited list of existing TE locations 
 ## to identify if the reference TE-insertion is present in the reads 
 ## ----
@@ -132,7 +138,7 @@ foreach my $line (@sorted_bowtie) {
         #my $last_TSD = uc( substr $seq, (-1 * $TSD_len) );
         #TSD_check( $count, $first_TSD, $start,   'left',  $name , $TSD);
         #TSD_check( $count, $last_TSD,  $end - ($TSD_len - 1), 'right', $name , $TSD);
-        new_TSD_check( $count, $seq, $start,  $name , $TSD);
+        new_TSD_check( $count, $seq, $start,  $name , $TSD, $strand);
     }
     else {
         ## if start and end do not fall within last start and end
@@ -142,7 +148,7 @@ foreach my $line (@sorted_bowtie) {
         #my $last_TSD = uc( substr $seq, (-1 * $TSD_len) );
         #TSD_check( $count, $first_TSD, $start,   'left',  $name , $TSD);
         #TSD_check( $count, $last_TSD,  $end - ($TSD_len - 1), 'right', $name ,$TSD);
-        new_TSD_check( $count, $seq, $start,  $name , $TSD);
+        new_TSD_check( $count, $seq, $start,  $name , $TSD, $strand);
 
         #reset last_start, last_end, @bin
         @bin        = ( $start, $end );
@@ -266,7 +272,7 @@ sub TSD_check {
 sub new_TSD_check { 
   ##$seq is entire trimmd read, not just the TSD portion of the read
   ##$start is the first postition of the entire read match to ref
-  my ( $event, $seq, $seq_start, $read_name, $tsd ) = @_;   
+  my ( $event, $seq, $seq_start, $read_name, $tsd , $strand) = @_;   
   $seq = uc $seq;
   my $rev_seq =  reverse $seq;
   $rev_seq =~ tr /ATGC/TACG/;
@@ -275,18 +281,35 @@ sub new_TSD_check {
   my $pos;
   my $start; ## first base of TSD 
   ##start means that the TE was removed from the start of the read
-  if ($read_name =~/start$/ and ($seq =~ /^($tsd)/ or $rev_seq =~ /($tsd)$/)){
-    $result = 1;
-    $TSD = $1;
-    $pos = "right";
-    $start = $seq_start;
-  }
-  ##end means that the TE was removed from the end of the read
-  elsif ( $read_name =~ /end$/ and ($seq =~ /($tsd)$/ or $rev_seq =~ /^($tsd)/) ) {
-    $result = 1;
-    $TSD = $1;
-    $pos = "left";
-    $start = $seq_start + ( (length $seq) - (length $TSD));
+  if ($strand eq '+'){
+    if ($read_name =~/start$/ and ($seq =~ /^($tsd)/ or $rev_seq =~ /($tsd)$/)){
+      $result = 1;
+      $TSD = $1;
+      $pos = "right";
+      $start = $seq_start;
+    }
+    ##end means that the TE was removed from the end of the read
+    elsif ( $read_name =~ /end$/ and ($seq =~ /($tsd)$/ or $rev_seq =~ /^($tsd)/) ) {
+      $result = 1;
+      $TSD = $1;
+      $pos = "left";
+      $start = $seq_start + ( (length $seq) - (length $TSD));
+    }
+  }elsif($strand eq '-'){
+    if ($read_name =~/start$/ and ($seq =~ /($tsd)$/ or $rev_seq =~ /^($tsd)/)){
+      $result = 1;
+      $TSD = $1;
+      $pos = "left";
+      $start = $seq_start + ( (length $seq) - (length $TSD));
+    }
+    ##end means that the TE was removed from the end of the read
+    elsif ( $read_name =~ /end$/ and ($seq =~ /^($tsd)/ or $rev_seq =~ /($tsd)$/) ) {
+      $result = 1;
+      $TSD = $1;
+      $pos = "right";
+      $start = $seq_start;
+    }
+
   }
   if ( $result ) {
     my ($tir1_end, $tir2_end) = ( ($start + (length $TSD)) , ($start - 1));
