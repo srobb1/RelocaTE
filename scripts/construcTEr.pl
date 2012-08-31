@@ -41,6 +41,9 @@ while ( my $line = <TE_FA> ) {
 }
 my %seq_storage;
 my @blat_files = <$working_dir/blat_output/*blatout>;
+if (scalar @blat_files == 0 ){
+  die "Can't find blatout files in $working_dir/blat_output/*blatout\n";
+} 
 foreach my $blat_file (@blat_files) {
   next if $blat_file =~ /unpaired/i;
   my @file_path = split '/', $blat_file;
@@ -51,12 +54,15 @@ foreach my $blat_file (@blat_files) {
   my $te_mate = $FA;
   $te_mate =~ s/\.fa//;
   my $prefix = $te_mate.'.fq';
+  #my $prefix = $te_mate;
   if ( $prefix =~ /$mate_1_pattern/ ) {
       $prefix =~ s/$mate_1_pattern//;
   }elsif ($prefix =~ /$mate_2_pattern/) {
     $prefix =~ s/$mate_2_pattern//;
   }
+  $prefix =~ s/\.fq//;
   my @dbs = `ls $all_records_dir/$prefix*fa`;
+  print "$prefix: @dbs\n";
   ## @db should only be p1 and p2 == 2 files
   chomp @dbs;
   ##blat parser
