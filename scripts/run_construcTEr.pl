@@ -4,8 +4,11 @@ use Getopt::Long;
 use Cwd;
 use strict;
 use Data::Dumper;
+use FindBin qw($RealBin);
+
 ##change $scripts to location of relocaTE scripts
-my $scripts = '~/bin/relocaTE_editing';
+my $scripts = $RealBin;
+
 
 if ( !defined @ARGV ) {
   &getHelp();
@@ -17,12 +20,14 @@ my $te_fq_dir;
 my $workingdir;
 my $outdir   = 'construcTEr';
 my $parallel = 1;
+my $arrayJob = 1;
 my $mate_file_1        = '_1\D*?fq';
 my $mate_file_2        = '_2\D*?fq';
 #my $unpaired        = 'unPaired\D*?fq';
 my $insert_file = 0;
 GetOptions(
   'p|parallel:i'    => \$parallel,
+  'a|arrayJob:i'    => \$arrayJob,
   'i|insert_file:s' => \$insert_file,    
   'w|workingdir:s'  => \$workingdir,
   'o|outdir:s'      => \$outdir,
@@ -116,6 +121,7 @@ options:
 -i STR          name of the file that contains insert positions,relocaTE:all.$te.te_insertion_sites.table.txt (TE<tab>.<tab>ref<tab>pos)
 -o STR          name for directory to contain output directories and files, will be created for the run (ex. 04222012_A123) [construcTEr]
 -p INT          run each genome sequence separetly, parallel. The alternative (0) would be to run one after the other (int, 0=false or 1=true) [1] 
+-a INT          create an array job script for the shellscripts created with -p 1? (int, 0=false or 1=true) [1] 
 -w STR          base working directory, needs to exist, will not create, full path [cwd] 
 -h              this message
 
@@ -156,7 +162,12 @@ if ($parallel){
   $shell_dir = "$current_dir/$top_dir/shellscripts/step_$shell_script_count";
   `mkdir -p $shell_dir`;
 }
+if ($arrayJob and $parallel){
+  open ARRAY , ">$current_dir/$top_dir/run.these.jobs.sh" or die "Can't open $current_dir/$top_dir/run.these.jobs.sh for writing\n";
+}
 my $file_count = 0;
+my $format = 0;
+my $fq2fa = 0;
 foreach my $fq (@fq_files) {
   next if $fq =~ /unparied/i;
   my $cmd;
@@ -167,6 +178,7 @@ foreach my $fq (@fq_files) {
   if ( $fa =~ s/\.(fq|fastq)$/.fa/ ) {
     push @fa, $fa;
     if ( !-e $fa ) {
+        $fq2fa = 1;
         $cmd = "$scripts/relocaTE_fq2fa.pl $fq_path $fa";
         if ($parallel){
           my $outsh = "$shell_dir/$file_count" . "fq2fa.sh";
@@ -178,6 +190,7 @@ foreach my $fq (@fq_files) {
          }
      }
      if (!-e "$fa.nin"){
+        $format = 1;
         $cmd = "formatdb -i $fa -p F -o T";
        if ($parallel){
          my $outsh = "$shell_dir/$file_count" . ".fa4formatdb.sh";
@@ -196,6 +209,17 @@ foreach my $fq (@fq_files) {
   }
   $file_count++;
 }
+
+
+if ($parallel and $arrayJob and ($format or $fq2fa)){
+  #$shell_script_count++;
+  my $sh = "$shell_dir/run_construcTEr.step_" . $shell_script_count . ".sh";
+  open SH , ">$sh";
+  print SH "sh $shell_dir/\$PBS_ARRAYID.fa4formatdb.sh\n";
+  print ARRAY "qsub -t 0-" , $file_count-1 , " $shell_dir/run_construcTEr.step_", $shell_script_count ,".sh\n";
+  close SH;
+}
+
 ##split TE fasta into single record fastas
 my @te_fastas;
 
@@ -230,8 +254,12 @@ while ( my $line = <INFASTA> ) {
 close(INFASTA);
 close(OUTFASTA);
 
+
 #foreach TE fasta blat against target chromosome and parse and find insertion sites
-$shell_script_count++ if $parallel;
+
+if ($parallel){
+  $shell_script_count++;
+}
 foreach my $te_path (@te_fastas) {
   my @path     = split '/', $te_path;
   my $te_fasta = pop @path;
@@ -239,6 +267,10 @@ foreach my $te_path (@te_fastas) {
   my $TE       = $te_fasta;
   $TE =~ s/\.fa//;
   `mkdir -p $path/blat_output`;
+   if ($parallel) {
+    $shell_dir = "$current_dir/$top_dir/shellscripts/step_$shell_script_count/$TE";
+    `mkdir -p $shell_dir`;
+   }
 
   #blat fa files against te.fa
   my $file_count = 0;
@@ -248,8 +280,8 @@ foreach my $te_path (@te_fastas) {
     my $fa_name = pop @fa_path;
     $fa_name =~ s/\.fa$//;
     if ($parallel) {
-      my $shell_dir = "$current_dir/$top_dir/shellscripts/step_$shell_script_count/$TE";
-      `mkdir -p $shell_dir`;
+      #$shell_dir = "$current_dir/$top_dir/shellscripts/step_$shell_script_count/$TE";
+     #`mkdir -p $shell_dir`;
       open OUTSH, ">$shell_dir/$file_count.blat.sh";
     }
     if ( !-e "$path/blat_output/$fa_name.te_$TE.blatout" ) {
@@ -260,10 +292,20 @@ foreach my $te_path (@te_fastas) {
     }
     $file_count++;
   }
+  if ($parallel and $arrayJob){
+    #$shell_script_count++;
+    my $sh = "$shell_dir/run_construcTEr.$TE.step_" . $shell_script_count .".sh";
+    open SH , ">$sh";
+    print SH "sh $shell_dir/\$PBS_ARRAYID.blat.sh\n";
+    print ARRAY "qsub -t 0-" , $file_count-1 , " $shell_dir/run_construcTEr.$TE.step_", $shell_script_count ,".sh\n";
+    close SH;
+  }
 }
-$shell_script_count++ if $parallel;
-foreach my $te_path (@te_fastas) {
 
+if ($parallel){
+  $shell_script_count++;
+}
+foreach my $te_path (@te_fastas) {
   my @te_path = split '/' , $te_path;
   pop @te_path;
   my $TE = pop @te_path; 
@@ -272,11 +314,14 @@ foreach my $te_path (@te_fastas) {
   print OUTREGEX  "$mate_file_1\t$mate_file_2";
   my $cmd =  "$scripts/construcTEr.pl $fq_dir $genome_file $te_path $current_dir/$top_dir/$TE $outregex $insert_file";
   if ($parallel) {
-    my $shell_dir = "$current_dir/$top_dir/shellscripts/step_$shell_script_count/$TE";
+    $shell_dir = "$current_dir/$top_dir/shellscripts/step_$shell_script_count/$TE";
     `mkdir -p $shell_dir`;
     open OUTSH, ">$shell_dir/$TE.construcTEr.sh" or die "Can't open $shell_dir/$TE.construcTEr.sh";
     print OUTSH $cmd;
   }else{
     `$cmd`;
+  }
+  if ($parallel and $arrayJob){
+    print ARRAY "qsub $shell_dir/$TE.construcTEr.sh";
   }
 }
