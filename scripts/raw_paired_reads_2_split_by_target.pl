@@ -163,6 +163,7 @@ foreach my $sample ( sort keys %files ) {
   print OUTFILE "cd \$tmp_dir\n";
 
   #foreach single file write the trim and filter and the aln commands
+  print OUTFILE "ln -s $dir_path/$sample.unPaired.fq \$tmp_dir/. \n" if -e "$dir_path/$sample.unPaired.fq";
   foreach my $file ( sort @${ $files{$sample} } ) {
     if ($filter_trim) {
       push @trim_filter,
@@ -184,7 +185,7 @@ foreach my $sample ( sort keys %files ) {
   if ( $pairs == 2 ) {
     ( $pair1, $pair2 ) = sort @${ $files{$sample} };
     push @clean,
-"$scripts_dir/clean_pairs.pl -1 \$tmp_dir/$pair1$desc$ext -2 \$tmp_dir/$pair2$desc$ext > \$tmp_dir/$sample.unPaired.fq";
+"$scripts_dir/clean_pairs.pl -1 \$tmp_dir/$pair1$desc$ext -2 \$tmp_dir/$pair2$desc$ext >> \$tmp_dir/$sample.unPaired.fq";
     ##after cleaning the 2 paired files a file of unPaired reads is generated
     ##run bwa aln on this file
     ##and bwa samse
@@ -272,6 +273,13 @@ foreach my $sample ( sort keys %files ) {
   print OUTFILE "cp \$tmp_dir/$sample.sam $current_dir/sam_for_all_reads\n";
   print OUTFILE
 "echo \"$sample end cp \$tmp_dir/$sample.sam $current_dir/sam_for_all_reads \"\n";
+
+print OUTFILE "if [ -e \$tmp_dir/$sample.unPaired.sam ] ; then 
+samtools view -h -b -S -T $genome_path \$tmp_dir/$sample.unPaired.sam >  \$tmp_dir/$sample.unPaired.bam
+samtools sort  \$tmp_dir/$sample.unPaired.bam  \$tmp_dir/$sample.unPaired.sorted
+samtools index  \$tmp_dir/$sample.unPaired.sorted.bam
+cp \$tmp_dir/$sample.unPaired.sorted.bam* $current_dir/bam_for_all_reads/. ; fi \n";
+
   print OUTFILE
 "if [ -f \"\$tmp_dir/$sample.sam\" ] && [ ! -f \"$current_dir/sam_for_all_reads/$sample.sam\" ] ; then echo \" $sample.sam did not copy to $current_dir/sam_for_all_reads\" ; fi\n";
   print OUTFILE
@@ -312,6 +320,7 @@ foreach my $sample ( sort keys %files ) {
 "for i in `ls \$tmp_dir/split_by_target` ; do mkdir -m 0775 -p $current_dir/bam_split_by_chromosome/\$i ; done\n";
     print OUTFILE
 "for i in `ls \$tmp_dir/split_by_target` ; do $scripts_dir/move_files.pl \$tmp_dir/split_by_target/\$i $current_dir; done\n";
+
   }
   print OUTFILE "cd $current_dir\n";
 
