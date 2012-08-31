@@ -9,7 +9,7 @@ if ( $infq !~ /\.(fq|fastq)$/ ) {
 "Was expecting a fq file to convert to a fa file, but I have this instead $infq\n";
 }
 
-open INFQ,  $infq     or die $!;
+open INFQ,  $infq     or die "Can't open $infq $!";
 open OUTFA, ">$outfa" or die $!;
 
 while ( my $header = <INFQ> ) {
