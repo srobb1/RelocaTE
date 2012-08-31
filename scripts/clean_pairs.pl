@@ -52,8 +52,8 @@ my %pairs;
 open INFASTQ_1, "$file_1" or die "problem opening $file_1 $!";
 my $fq_1 = $file_1;
 my $fq_2 = $file_2;
-$fq_1 =~ s/\.f.*q//;
-$fq_2 =~ s/\.f.*q//;
+$fq_1 =~ s/(\.fq|\.fastq)$//;
+$fq_2 =~ s/(\.fq|\.fastq)$//;
 open OUTFASTQ_1, ">$fq_1.matched.fq";
 open OUTFASTQ_2, ">$fq_2.matched.fq";
 
