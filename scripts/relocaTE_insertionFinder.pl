@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
-## need to add the abilty to filter based on bowtie column 7 (number of times this
-## reads aligns to exactly the same sequence of the reference)
+## 07272012: added the abilty to filter based on bowtie column 7 (number of times this
+## reads aligns to exactly the same sequence of the reference), only uniq matches allowed
 ## ---
 ## 07132012: added the ability to filter the aligned reads while taking strand into 
 ## account
@@ -112,7 +112,13 @@ foreach my $line (@sorted_bowtie) {
         $name,  $strand, $target, $start, $seq,
         $qual,  $M, $mismatch
     ) = split /\t/, $line;
-    $start = $start + 1 ; #0 offset
+    ## column 7 = $M
+    ## this column contains the number of other instances where the same sequence aligned against 
+    ## the same reference characters as were aligned against in the reported alignment. This is 
+    ## not the number of other places the read aligns with the same number of mismatches.
+    next if $M > 0;
+    ## 0 offset, change to 1 offset 
+    $start = $start + 1 ; 
     my $len = length $seq;
     ## format offset:reference-base>read-base
     my @mismatches = split ',' , $mismatch;
@@ -134,21 +140,13 @@ foreach my $line (@sorted_bowtie) {
     {
         push @bin, $start, $end;
         @bin = sort @bin;
-        #my $first_TSD = uc( substr $seq, 0, $TSD_len );
-        #my $last_TSD = uc( substr $seq, (-1 * $TSD_len) );
-        #TSD_check( $count, $first_TSD, $start,   'left',  $name , $TSD);
-        #TSD_check( $count, $last_TSD,  $end - ($TSD_len - 1), 'right', $name , $TSD);
-        new_TSD_check( $count, $seq, $start,  $name , $TSD, $strand);
+        TSD_check( $count, $seq, $start,  $name , $TSD, $strand);
     }
     else {
         ## if start and end do not fall within last start and end
         ## we now have a different insertion event
         $count++;
-        #my $first_TSD = uc( substr $seq, 0, $TSD_len );
-        #my $last_TSD = uc( substr $seq, (-1 * $TSD_len) );
-        #TSD_check( $count, $first_TSD, $start,   'left',  $name , $TSD);
-        #TSD_check( $count, $last_TSD,  $end - ($TSD_len - 1), 'right', $name ,$TSD);
-        new_TSD_check( $count, $seq, $start,  $name , $TSD, $strand);
+        TSD_check( $count, $seq, $start,  $name , $TSD, $strand);
 
         #reset last_start, last_end, @bin
         @bin        = ( $start, $end );
@@ -238,38 +236,7 @@ if (scalar ( keys %existingTE_found ) > 0){
   }
 }
 
-sub TSD_check {
-    my ( $event, $seq, $start, $pos, $read, $tsd ) = @_;
-    my $rev_seq =  reverse $seq;
-    $rev_seq =~ tr /AaTtGgCc/TtAaCcGg/;
-    my $result = 0;
-    my $TSD;
-    if ($TSD_pattern and ($seq =~ /($tsd)/ or $rev_seq =~ /($tsd)/ ) ) {
-
-	$result = 1;
-        $TSD = $1;
-    }elsif (!$TSD_pattern and (($seq eq $tsd) or ($rev_seq eq $tsd)) ) {
-    	$result = 1;
-        $TSD = $tsd;
-    }
-    if ( $result ) {
-        my ($tir1_end, $tir2_end) = ( ($start + (length $seq)) , ($start - 1));
-        if (exists $existingTE{$TE}{start}{$tir1_end}){
-          my $te_id = $existingTE{$TE}{start}{$tir1_end};
-          $existingTE_found{$te_id}{start}++;
-        }
-        elsif (exists $existingTE{$TE}{end}{$tir2_end}){
-          my $te_id = $existingTE{$TE}{end}{$tir2_end};
-          $existingTE_found{$te_id}{end}++;
-        }else{
-          $teInsertions{$event}{$TSD}{$start}{count}++;
-          $teInsertions{$event}{$TSD}{$start}{left}++  if $pos eq 'left';
-          $teInsertions{$event}{$TSD}{$start}{right}++ if $pos eq 'right';
-          push @{ $teInsertions{$event}{$TSD}{$start}{reads} }, $read;
-        }
-   }
-}
-sub new_TSD_check { 
+sub TSD_check { 
   ##$seq is entire trimmd read, not just the TSD portion of the read
   ##$start is the first postition of the entire read match to ref
   my ( $event, $seq, $seq_start, $read_name, $tsd , $strand) = @_;   
