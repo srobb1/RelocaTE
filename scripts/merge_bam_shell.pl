@@ -45,6 +45,7 @@ print SH
 "samtools sort  \$tmp_dir/$lowest_dir.merged.bam  \$tmp_dir/$lowest_dir.merged.sorted\n";
 print SH "samtools index  \$tmp_dir/$lowest_dir.merged.sorted.bam\n";
 
+=cut
 #convert merged and sorted bam to a sam
 print SH
 "samtools view -h \$tmp_dir/$lowest_dir.merged.sorted.bam -o \$tmp_dir/$lowest_dir.merged.sorted.sam\n";
@@ -52,7 +53,9 @@ print SH
 "if [ ! -d \"$two_up/sam_split_by_chromosome\" ]; then mkdir $two_up/sam_split_by_chromosome ; fi\n";
 print SH
 "for i in `ls *.sam*` ; do cp \$tmp_dir/\$i $two_up/sam_split_by_chromosome/$prefix\$i ; done\n";
+=cut
+
 print SH
-  "for i in `ls *.bam*` ; do cp \$tmp_dir/\$i $one_up/$prefix\$i ; done\n";
+  "for i in `ls *merged.sorted.bam*` ; do cp \$tmp_dir/\$i $one_up/$prefix\$i ; done\n";
 print SH "cd $current_dir\n";
 print SH "rm -rf \$tmp_dir\n";
