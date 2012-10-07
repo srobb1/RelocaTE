@@ -73,10 +73,15 @@ while ( my $header = <INFASTQ_1> ) {
     $header_to_store = $header;
   }
   my $seq = <INFASTQ_1>;
+  warn "$file_1 at record $header has a bad format\n" if !defined $seq;
   chomp $seq;
+  
   my $qual_header = <INFASTQ_1>;
+  warn "$file_1 at record $header has a bad format\n" if !defined $qual_header;
   chomp $qual_header;
+
   my $qual = <INFASTQ_1>;
+  warn "$file_1 at record $header has a bad format\n" if !defined $qual;
   chomp $qual;
   $seq = "$header\n$seq\n$qual_header\n$qual";
   $pairs{$header_to_store} = $seq;
@@ -104,12 +109,15 @@ while ( my $header = <INFASTQ_2> ) {
     $header_to_store = $header;
   }
   my $seq_2 = <INFASTQ_2>;
+  warn "$file_2 at record $header has a bad format\n" if !defined $seq_2;
   chomp $seq_2;
 
   my $qual_header = <INFASTQ_2>;
+  warn "$file_2 at record $header has a bad format\n" if !defined $qual_header;
   chomp $qual_header;
 
   my $qual = <INFASTQ_2>;
+  warn "$file_2 at record $header has a bad format\n" if !defined $qual;
   chomp $qual;
   $seq_2 = "$header\n$seq_2\n$qual_header\n$qual";
 
