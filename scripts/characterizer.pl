@@ -233,6 +233,8 @@ if ($excision) {
         my $aln_end_ref_near_insert_pos    = 0;
         my $aln_end_strain_near_insert_pos = 0;
         my $aln_start_near_insert_pos      = 0;
+        my $insert_bwt_ends = 0;
+        my $all_values_after_insertion = 0;
 
         if (  ( $aln_start <= $TSD_len + 1 )
           and ( ( $aln_start * -1 <= $TSD_len + 1 ) ) )
@@ -249,19 +251,30 @@ if ($excision) {
         {
           $aln_end_strain_near_insert_pos = 1;
         }
+        my ($end_ref, $end_strain)  = (($first_base+ length($ref_seq)-1) , ($first_base+length($strain_seq)+1)); 
+        if (($end_ref < $insert_pos and $end_strain > $insert_pos) 
+           or ($end_strain < $insert_pos and $end_ref > $insert_pos)){
+           $insert_bwt_ends = 1;
+        }
+        if ( (($first_base - $TSD_len + 1) > $insert_pos) and ($end_ref > $insert_pos) and ($end_strain > $insert_pos)){
+           $all_values_after_insertion = 1;
+        }
         ## if the alignment end in ref or in strain is close to the insertion postion,
         ## or if one is before and one is after the insertion postion,
         ## it is a potential excision with footprint
         if (
           ( $aln_end_ref_near_insert_pos or $aln_end_strain_near_insert_pos )
-          or ( $aln_end_ref_near_insert_pos * $aln_end_strain_near_insert_pos <=
-            0 )
+          or ( $insert_bwt_ends  ) 
           )
         {
-          print EXCISION "$insert_ref.$insert_pos\t$line\n";
-          my $status = $toPrint{$insert_ref}{$insert_pos}{$TSD}{status};
-          $toPrint{$insert_ref}{$insert_pos}{$TSD}{status} =
-            $status . "/excision_with_footprint";
+          ##make sure all values are not after the insertion
+          if (!$all_values_after_insertion){
+            print EXCISION "$insert_ref.$insert_pos\t$line\n";
+            my $status = $toPrint{$insert_ref}{$insert_pos}{$TSD}{status};
+            ##only append if it already itsnt there
+            $toPrint{$insert_ref}{$insert_pos}{$TSD}{status} =
+              $status . "/excision_with_footprint" if $status !~ /\/excision_with_footprint/; 
+          }
         }
     }
   }
