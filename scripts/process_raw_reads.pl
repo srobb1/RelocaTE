@@ -17,6 +17,7 @@ my $Q             = 33;
 my $insertLength  = 500;
 my $mate_1_id     = "_p1";
 my $mate_2_id     = "_p2";
+my $unpaired_id     = ".unPaired";
 my $split         = 0;
 my $filter_trim   = 1;
 my $tempDir       = $current_dir;
@@ -27,6 +28,7 @@ GetOptions(
   'd|dir:s'           => \$dir,
   '1|mate_1_id:s'     => \$mate_1_id,
   '2|mate_2_id:s'     => \$mate_2_id,
+  'u|unpaired_id:s'     => \$unpaired_id,
   'g|genomeFasta:s'   => \$genomeFasta,
   'l|minLength:i'     => \$minLength,
   'q|minQuality:i'    => \$minQuality,
@@ -53,7 +55,7 @@ usage:
 ./raw_paired_reads_2_split_by_target.pl [-d fq_file_directory] [-1 mate_pair_file_1_id][-2 mate_pair_file_2_id][-l minLength] [-q minQuality] [-p minPercent] [-s quality_offset] [-i insert_size] [-h] 
 
 options:
--d STR		directory of original raw fq files (.fq not .fastq) [.]
+-d STR		directory of original raw fq files (must be .fq or .fastq) [.]
 -r STR		prefix for merged bam and fq files (ex. A123) [none]
 -g STR		genome fasta file path [no default]
 -l INT		min length for fastq_quality_trimmer [50]
@@ -63,6 +65,7 @@ options:
 -i INT		insert library length [500]
 -1 STR		file containing mate 1 id (ex reads_1.fq). If not paired end use 'NONE'. [_p1]
 -2 STR		file containing mate 2 id (ex reads_2.fq). If not paried end use 'NONE'. [_p2]
+-u STR		file containing unparied (ex reads.unPaired.fq). If no id use 'NONE' (ex reads.fq) . [.unPaired]
 -b INT	        split the sam and bam files and organize by chromosome yes=1 no=0 [1]	
 -x INT	        split fq file into smaller files (1,000,000/file) yes=1 no=0 [0]	
 -f INT	        run fastq_quality_filter and fastq_quality_trimmer yes=1 no=0 [1]	
@@ -93,7 +96,11 @@ print JOBS_SH "sh $current_dir/p\$PBS_ARRAYID.process_raw_reads.sh";
 open ARRAY_SH, ">$current_dir/$date.arrayJob.sh";
 
 my $genome_path = File::Spec->rel2abs($genomeFasta);
-my $bwa_index = "bwa index -a bwtsw $genome_path";
+my $bwa_c_switch = '';
+if ($Q eq 64){
+  $bwa_c_switch = '-c';
+}
+my $bwa_index = "bwa index $bwa_c_switch -a bwtsw $genome_path";
 unless ( -e "$genome_path.rsa" ) {
   open GINDEX, ">$current_dir/genome_indexing.sh";
   print GINDEX "#!/bin/bash\n\n";
@@ -122,6 +129,9 @@ if ($mate_1_id =~ /NONE/i){
   @filelist_1  = < $mate_1_path >;
   @filelist_2  = < $mate_2_path >;
 }
+if ($unpaired_id =~ /NONE/i){
+  $unpaired_id = '';
+}
 if ( !@filelist_1 ) {
   print
 "Cannot find any files in $dir_path that are similar to your mate_file_1 pattern $mate_1_id\n";
@@ -131,6 +141,10 @@ if ( $paired  and !@filelist_2 ) {
   print
 "Cannot find any files in $dir_path that are similar to your mate_file_2 pattern $mate_2_id\n";
   &getHelp();
+}
+my $bwa_I_switch = '';
+if ($Q eq 64){
+  $bwa_I_switch = '-I';  
 }
 
 my %files;
@@ -171,17 +185,8 @@ foreach my $file ( readdir(DIR) ) {
   $fq_ext = $suffix;
 }
 
-my $desc;
-my $ext;
-if ($filter_trim) {
-  #$desc = ".trimmed.filtered";
-  $desc = "";
-  $ext  = ".fq";
-}
-else {
-  $desc = "";
-  $ext  = ".fq";
-}
+my $ext = ".fq";
+
 my $count = 0;
 foreach my $sample ( sort keys %files ) {
   open OUTFILE, ">$current_dir/p$count.process_raw_reads.sh";
@@ -199,21 +204,23 @@ foreach my $sample ( sort keys %files ) {
   print OUTFILE "tmp_dir=`mktemp --tmpdir=$tempDir -d`\n";
   print OUTFILE "cd \$tmp_dir\n";
 
+  #for unpaired, unlabeled in name files reads.fq
+  print OUTFILE "for i in \`ls $dir_path/$sample$unpaired_id.f*q\` ; do ln -s \$i \$tmp_dir/$sample.unPaired.fq ; done\n" if $paired ;
+
   #foreach single file write the trim and filter and the aln commands
-  print OUTFILE "ln -s $dir_path/$sample.unPaired.fq \$tmp_dir/. \n" if -e "$dir_path/$sample.unPaired.fq";
   foreach my $file ( sort @${ $files{$sample} } ) {
     if ($filter_trim) {
       push @trim_filter,
-"fastq_quality_trimmer -Q$Q -l $minLength -t $minQuality -i $dir_path/$file.$fq_ext |fastq_quality_filter -Q$Q -q $minQuality -p $minPercent -v -o \$tmp_dir/$file$desc$ext";
+"fastq_quality_trimmer -Q$Q -l $minLength -t $minQuality -i $dir_path/$file.$fq_ext |fastq_quality_filter -Q$Q -q $minQuality -p $minPercent -v -o \$tmp_dir/$file$ext";
       push @aln,
-"bwa aln -t 8 $genome_path \$tmp_dir/$file$desc.matched$ext > \$tmp_dir/$file$desc.matched.sai";
+"bwa aln -t 8 $bwa_I_switch $genome_path \$tmp_dir/$file$ext > \$tmp_dir/$file.sai";
     }
     else {
-      print OUTFILE "ln -s $dir_path/$file.$fq_ext \$tmp_dir/.\n";
+      print OUTFILE "ln -s $dir_path/$file.$fq_ext \$tmp_dir/$file$ext\n";
       push @aln,
-"bwa aln -t 8 -q 10 $genome_path \$tmp_dir/$file$desc.$fq_ext > \$tmp_dir/$file$desc.sai" if !$paired;
+"bwa aln -t 8 -q 10 $bwa_I_switch $genome_path \$tmp_dir/$file$ext > \$tmp_dir/$file.sai" if !$paired;
       push @aln,
-"bwa aln -t 8 -q 10 $genome_path \$tmp_dir/$file$desc.matched$ext > \$tmp_dir/$file$desc.matched.sai" if $paired;
+"bwa aln -t 8 -q 10 $bwa_I_switch $genome_path \$tmp_dir/$file$ext > \$tmp_dir/$file.sai" if $paired;
     }
   }
 
@@ -223,19 +230,21 @@ foreach my $sample ( sort keys %files ) {
   if ( $pairs == 2 ) {
     ( $pair1, $pair2 ) = sort @${ $files{$sample} };
     push @clean,
-"$scripts_dir/clean_pairs.pl -1 \$tmp_dir/$pair1$desc$ext -2 \$tmp_dir/$pair2$desc$ext >> \$tmp_dir/$sample.unPaired.fq";
+"$scripts_dir/clean_pairs.pl -1 \$tmp_dir/$pair1$ext -2 \$tmp_dir/$pair2$ext >> \$tmp_dir/$sample.unPaired.fq";
+    push @clean, "mv \$tmp_dir/$pair1.matched$ext \$tmp_dir/$pair1$ext";
+    push @clean, "mv \$tmp_dir/$pair2.matched$ext \$tmp_dir/$pair2$ext";
     ##after cleaning the 2 paired files a file of unPaired reads is generated
     ##run bwa aln on this file
     ##and bwa samse
     push @clean,
-"if [ -s \$tmp_dir/$sample.unPaired.fq ] ; then bwa aln -t 8 $genome_path \$tmp_dir/$sample.unPaired.fq > \$tmp_dir/$sample.unPaired.sai ; fi";
+"if [ -s \$tmp_dir/$sample.unPaired.fq ] ; then bwa aln -t 8 $bwa_I_switch $genome_path \$tmp_dir/$sample.unPaired.fq > \$tmp_dir/$sample.unPaired.sai ; fi";
     push @clean,
-"if [ -e \$tmp_dir/$sample.unPaired.sai ] ; then bwa samse  $genome_path \$tmp_dir/$sample.unPaired.sai \$tmp_dir/$sample.unPaired.fq   > \$tmp_dir/$sample.unPaired.sam ; fi";
+"if [ -e \$tmp_dir/$sample.unPaired.sai ] ; then bwa samse  $genome_path \$tmp_dir/$sample.unPaired.sai \$tmp_dir/$sample.unPaired.fq   > \$tmp_dir/$sample.unPaired.sam ; fi" if $paired;
     push @split_sam_by_target,
 "if [ -e \$tmp_dir/$sample.unPaired.sam ] ; then $scripts_dir/splitSam_byTarget.pl -s \$tmp_dir/$sample.unPaired.sam ; fi"
       if $bin_per_chrom;
     push @sam,
-"bwa sampe -a $insertLength $genome_path \$tmp_dir/$pair1$desc.matched.sai \$tmp_dir/$pair2$desc.matched.sai \$tmp_dir/$pair1$desc.matched$ext \$tmp_dir/$pair2$desc.matched$ext  > \$tmp_dir/$sample.sam";
+"bwa sampe -a $insertLength $genome_path \$tmp_dir/$pair1.sai \$tmp_dir/$pair2.sai \$tmp_dir/$pair1$ext \$tmp_dir/$pair2$ext  > \$tmp_dir/$sample.sam";
     if ($bin_per_chrom) {
       push @split_sam_by_target,
         "$scripts_dir/splitSam_byTarget.pl -s \$tmp_dir/$sample.sam";
@@ -248,7 +257,7 @@ foreach my $sample ( sort keys %files ) {
   elsif ( $pairs == 1 ) {
     ( $pair1, $pair2 ) = sort @${ $files{$sample} };
     push @sam,
-"bwa samse $genome_path \$tmp_dir/$pair1$desc.sai \$tmp_dir/$pair1$desc.$fq_ext   > \$tmp_dir/$sample.sam";
+"bwa samse $genome_path \$tmp_dir/$pair1.sai \$tmp_dir/$pair1$ext   > \$tmp_dir/$sample.sam";
     push @split_sam_by_target,
       "$scripts_dir/splitSam_byTarget.pl -s \$tmp_dir/$sample.sam" if $bin_per_chrom;
   }
@@ -325,7 +334,7 @@ cp \$tmp_dir/$sample.unPaired.sorted.bam* $current_dir/bam_for_all_reads/. ; fi 
   if ($filter_trim) {
     print OUTFILE "mkdir -m 0775 -p $current_dir/fq_split_by_number_filtered\n";
     print OUTFILE
-"cp \$tmp_dir/*.matched.fq \$tmp_dir/*unPaired.fq $current_dir/fq_split_by_number_filtered\n";
+"cp \$tmp_dir/*.fq \$tmp_dir/*unPaired.fq $current_dir/fq_split_by_number_filtered\n";
   }
   if ($bin_per_chrom) {
     print OUTFILE "##make directories
@@ -336,7 +345,7 @@ for i in `cat \$tmp_dir/list.txt` ; do mkdir -m 0775 -p $current_dir/bam_split_b
 for i in `cat \$tmp_dir/list.txt` ; do mkdir -m 0775 -p $current_dir/fq_split_by_chromosome/\$i ; done
 
 ##move bam to user dir
-for i in `cat \$tmp_dir/list.txt` ; do cp  \$tmp_dir/split_by_target/\$i/*\$i*.bam $current_dir/bam_split_by_chromosome/\$i/. ; done
+for i in `cat \$tmp_dir/list.txt` ; do cp  \$tmp_dir/split_by_target/\$i/*\$i*sorted.bam $current_dir/bam_split_by_chromosome/\$i/. ; done
 
 ##move fq files
 for i in `cat \$tmp_dir/list.txt` ; do cp  \$tmp_dir/split_by_target/\$i/*fq $current_dir/fq_split_by_chromosome/\$i/. ; done
