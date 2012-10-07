@@ -1,6 +1,10 @@
 #!/usr/bin/perl -w
 use strict;
 use File::Spec;
+use FindBin qw($RealBin);
+
+##change $scripts to location of relocaTE scripts
+my $scripts = $RealBin;
 
 #combines all the fq files in one directory. Create shell scripts that can be run individually or in parallel
 
@@ -60,7 +64,7 @@ print SH
 
 if ($clean) {
   print SH
-"clean_pairs.pl -1 \$tmp_dir/$mate_1 -2 \$tmp_dir/$mate_2 > \$tmp_dir/$unpaired.tmp2\n";
+"$scripts/clean_pairs.pl -1 \$tmp_dir/$mate_1 -2 \$tmp_dir/$mate_2 > \$tmp_dir/$unpaired.tmp2\n";
   print SH
 "if [ -e \$tmp_dir/$unpaired.tmp ] ; then cat \$tmp_dir/$unpaired.tmp \$tmp_dir/$unpaired.tmp2 > \$tmp_dir/$unpaired ; else mv \$tmp_dir/$unpaired.tmp2 \$tmp_dir/$unpaired ; fi\n";
   $mate_1 = "$lowest_dir" . "_p1.matched.fq";
