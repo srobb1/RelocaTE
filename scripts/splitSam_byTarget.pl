@@ -115,7 +115,8 @@ foreach my $in_sam (@sam_files) {
       ##this will also collect unmapped reads, to target *
       ##when printing files get both right and left for each target
       $targets{$target}{$seq}++;
-      push @{$seqs{$seq}{$left_right}} ,  $line;
+      #push @{$seqs{$seq}{$left_right}} ,  $line;
+      $seqs{$seq}{$left_right}{$line}++;
       
       ##get other hits
       ##XA:Z:Chr12,-20582630,101M,0;Chr12,-20680151,101M,0;
@@ -161,11 +162,13 @@ foreach my $in_sam (@sam_files) {
     }
     print OUTSAM $PGline, "\n" if defined $PGline;
 
-#print both lft and right read even if only one of the 2 was actullly mapped to this target
+    #print both lft and right read even if only one of the 2 was actullly mapped to this target
+    ##$seqs{$seq}{$left_right}{$line}++;
     foreach my $seq ( sort keys %{ $targets{$target} } ) {
       foreach my $left_right ( sort keys %{ $seqs{$seq} } ) {
-        foreach my $sam_line (@{$seqs{$seq}{$left_right}}){
-         print OUTSAM $sam_line, "\n";
+        foreach my $sam_line (sort keys %{$seqs{$seq}{$left_right}}){
+        #foreach my $sam_line (@{$seqs{$seq}{$left_right}}){
+          print OUTSAM $sam_line, "\n";
         }
       }
     }
