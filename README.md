@@ -1,4 +1,6 @@
-RelocaTE: A tool to identify the locations of transposable element insertion events that are present in DNA short read data but absent in the reference genome sequence.
+<A href="http://srobb1.github.com/RelocaTE/">RelocaTE</a>: A tool to identify the locations of transposable element insertion events that are present in DNA short read data but absent in the reference genome sequence.
+
+
 
 RelocaTE is a collection of scripts in which short reads (paired or unpaired), a fasta containing the sequences of transposable elements and a reference genome sequence are the input and the output is a series of files containing the locations (relative to the reference genome) of TE insertions in the short reads. These insertions are insertions that are present only in the short reads and not present in the reference genome. If a tab-delimited file containing the coordinates of TEs in the reference is provided a list of the number of reads that support the presence of existing TE insertions is produced.
 
