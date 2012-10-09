@@ -31,7 +31,7 @@
     <!-- MAIN CONTENT -->
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
-        <p>RelocaTE: A tool to identify the locations of transposable element insertion events that are present in DNA short read data but absent in the reference genome sequence.</p>
+        <p><a href="http://srobb1.github.com/RelocaTE/">RelocaTE</a>: A tool to identify the locations of transposable element insertion events that are present in DNA short read data but absent in the reference genome sequence.</p>
 
 <p>RelocaTE is a collection of scripts in which short reads (paired or unpaired), a fasta containing the sequences of transposable elements and a reference genome sequence are the input and the output is a series of files containing the locations (relative to the reference genome) of TE insertions in the short reads. These insertions are insertions that are present only in the short reads and not present in the reference genome. If a tab-delimited file containing the coordinates of TEs in the reference is provided a list of the number of reads that support the presence of existing TE insertions is produced.</p>
 
@@ -299,7 +299,7 @@ mping   Chr12:1045463..1045892
 <h3>
 <a name="quick">Quick Start Guide</a>:</h3>
 
-<p>1.  Get the sequence of your TE, including the TIRs.  Create a fasta file with your sequence, TE name and the TSD. The TSD= is required. With DNA transposons, by definition, during an insertion event the target site is duplicated. Therefore the target site will be used to identify an insertion event.  The reverse complement of each read containing portions of the ends of the provided TE will also be searched for the TSD to identify insertion events. A specific sequence of nucleotides can be used or a perl regular expression. 
+<p>1.  Get the sequence of your TE, including the TIRs.  Create a fasta file with your sequence, TE name and the TSD. The TSD= is required. With DNA transposons, by definition, during an insertion event the target site is duplicated. Therefore the target site will be used to identify an insertion event.  The reverse complement of each read containing portions of the ends of the provided TE will also be searched for the TSD to identify insertion events. A specific sequence of nucleotides can be used or a perl regular expression. 
 For example: </p>
 
 <ul>
@@ -321,8 +321,8 @@ CCCTCCACTGTGGGGATTGTTTCATAAAAGATTTCATTTGAGAGAAGATGGTATAATATTTTGGGT
 AGCCGTGCAATGACACTAGCCATTGTGACTGGCC
 </pre>
 
-<p>2.  Get the short reads together.<br>
-    - Dividing your reads files into many files of 1 million reads is a nice way to improve the speed of the analysis.  A script included in the package can be used to do this. It is called fastq_split.pl.</p>
+<p>2.  Get the short reads together.<br>
+    - Dividing your reads files into many files of 1 million reads is a nice way to improve the speed of the analysis.  A script included in the package can be used to do this. It is called fastq_split.pl.</p>
 
 <pre>
 perl fastq_split.pl 
@@ -336,8 +336,8 @@ perl fastq_split.pl
  ./fastq_split -o split_fq ~/somedir/*fq
 </pre>
 
-<p>    -  Check the name of your files. If they are paired they should have some indication of being pair 1 and pair 2.<br>
-    -  Determine the pattern to indicate the 1st and 2nd pair<br>
+<p>    -  Check the name of your files. If they are paired they should have some indication of being pair 1 and pair 2.<br>
+    -  Determine the pattern to indicate the 1st and 2nd pair<br>
     Example:</p>
 
 <pre>
@@ -346,8 +346,8 @@ _pair1 would match the first paired file
 _pair2 would match the second paired file
 </pre>
 
-<p>3.  Get the reference genome fasta. This will be one file containing all the reference sequences of your organism.<br>
-4.  If you want to determine if your short reads contain the same TE insertions as the reference, create a file with the existing TE insertions found in the reference.</p>
+<p>3.  Get the reference genome fasta. This will be one file containing all the reference sequences of your organism.<br>
+4.  If you want to determine if your short reads contain the same TE insertions as the reference, create a file with the existing TE insertions found in the reference.</p>
 
 <p>This file name is tab-delimited containing the coordinates of existing TE in the reference.  If this file is provided a new file will be generated containing a list of these existing insertions found in the reads. The number of reads supporting the start and the end of the insertion will be reported. </p>
 
@@ -360,13 +360,13 @@ mping   Chr12:839604..840033
 mping   Chr12:1045463..1045892
 </pre>
 
-<p>5.  Do you have a queue system available to you, or do you have multiple processors? If so, you can select the ?p 1 option. This will create a series of shell scripts that you can submit to the queue or run on multiple processors.<br> 
-    - These should be run in order. For example all of step_1 should be run and completed before the shell scripts of step_2 are run, and so on.</p>
+<p>5.  Do you have a queue system available to you, or do you have multiple processors? If so, you can select the ?p 1 option. This will create a series of shell scripts that you can submit to the queue or run on multiple processors.<br> 
+    - These should be run in order. For example all of step_1 should be run and completed before the shell scripts of step_2 are run, and so on.</p>
 
-<p>6.  Do you have a queue system available and is it PBS? If so, you can select the ?a 1 option to generate array job scripts. These jobs can be submitted to the queue instead of submitting hundreds of individual shell scripts. The array job will submit the hundreds of scripts for you.<br>
-    - Make sure to submit the array jobs in order and wait for the job to complete before submitting the next one.</p>
+<p>6.  Do you have a queue system available and is it PBS? If so, you can select the ?a 1 option to generate array job scripts. These jobs can be submitted to the queue instead of submitting hundreds of individual shell scripts. The array job will submit the hundreds of scripts for you.<br>
+    - Make sure to submit the array jobs in order and wait for the job to complete before submitting the next one.</p>
 
-<p>7.  You are now ready to run relocaTE.pl with your data. If you run the program without any command line options, it will print out a list of the options and short descriptions.
+<p>7.  You are now ready to run relocaTE.pl with your data. If you run the program without any command line options, it will print out a list of the options and short descriptions.
 <br><br></p>
 
 <h3>
@@ -423,4 +423,3 @@ For more information see documentation: http://srobb1.github.com/RelocaTE/
 
   </body>
 </html>
-
