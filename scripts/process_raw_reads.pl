@@ -201,7 +201,12 @@ foreach my $sample ( sort keys %files ) {
     @sam2bam,     @mergeBam,            @catfq
   );
 
-  print OUTFILE "tmp_dir=`mktemp --tmpdir=$tempDir -d`\n";
+  print OUTFILE "
+if [ -d $tempDir ]; then
+ tmp_dir=`mktemp --tmpdir=$tempDir -d`
+else
+ tmp_dir=`mktemp --tmpdir=/tmp -d`
+fi\n";
   print OUTFILE "cd \$tmp_dir\n";
 
   #for unpaired, unlabeled in name files reads.fq
