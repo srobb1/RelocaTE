@@ -28,6 +28,7 @@ my $qsub_array = 1;
 my ( $blat_minScore, $blat_tileSize ) = ( 10, 7 );
 my $flanking_seq_len = 100;
 my $existing_TE      = 'NONE';
+my $genome_split_done = 0;
 GetOptions(
   'p|parallel:i'         => \$parallel,
   'a|qsub_array:i'       => \$qsub_array,
@@ -44,6 +45,7 @@ GetOptions(
   'u|unpaired_id:s'      => \$mate_file_unpaired,
   'bm|blat_minScore:i'   => \$blat_minScore,
   'bt|blat_tileSize:i'   => \$blat_tileSize,
+  'gs|genome_split_done:i'   => \$genome_split_done,
   'f|flanking_seq_len:i' => \$flanking_seq_len,
   'x|existing_TE:s'      => \$existing_TE,
   'h|help'               => \&getHelp,
@@ -215,7 +217,7 @@ if ($qsub_array) {
 }
 ##split genome file into individual fasta files
 my @genome_fastas;
-if ($mapping > 0) {
+if ($mapping > 0 and $genome_split_done ==0) {
   open( INFASTA, "$genome_path" ) || die "$!\n";
   my $i      = 0;
   my $exists = 0;
@@ -260,6 +262,7 @@ $line\n";
   }
   close(INFASTA);
   close(OUTFASTA);
+  $genome_split_done = 1;
 
   #create bowtie index
   my $cmd;
