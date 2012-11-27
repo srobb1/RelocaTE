@@ -45,7 +45,7 @@ GetOptions(
   'u|unpaired_id:s'      => \$mate_file_unpaired,
   'bm|blat_minScore:i'   => \$blat_minScore,
   'bt|blat_tileSize:i'   => \$blat_tileSize,
-  'gs|genome_split_done:i'   => \$genome_split_done,
+#  'gs|genome_split_done:i'   => \$genome_split_done,
   'f|flanking_seq_len:i' => \$flanking_seq_len,
   'x|existing_TE:s'      => \$existing_TE,
   'h|help'               => \&getHelp,
@@ -529,10 +529,38 @@ foreach my $te_path (@te_fastas) {
     if ($parallel){
       `mkdir -p $current_dir/$top_dir/shellscripts/step_6/$TE`;
       open FINISH , ">$current_dir/$top_dir/shellscripts/step_6/$TE/step_6.$TE.finishing.sh";
-      print FINISH 
-"echo \"TE\tTSD\tExper\tchromosome\tinsertion_site\tleft_flanking_read_count\tright_flanking_read_count\tleft_flanking_seq\tright_flanking_seq\" > $path/results/temp
+      print FINISH "
+`mkdir -p $path/results/all_files`
+
+#combine confident insertions to one file
+echo \"TE\tTSD\tExper\tchromosome\tinsertion_site\tleft_flanking_read_count\tright_flanking_read_count\tleft_flanking_seq\tright_flanking_seq\" > $path/results/temp
 for i in \`ls $path/results/*.$TE.te_insertion_sites.table.txt\` ; do grep -v flanking_read_count \$i >> $path/results/temp ; done
-mv $path/results/temp $path/results/all.$TE.te_insertion_sites.table.txt\n";
+mv $path/results/temp $path/results/$exper.confident.$TE.txt
+mv $path/results/*.$TE.te_insertion_sites.table.txt $path/results/all_files
+
+#combine all insertions to one file
+echo \"TE\tTSD\tExper\tchromosome\tinsertion_site\tcombined_read_count\tright_flanking_read_count\tleft_flanking_read_count\" > $path/results/temp2
+for i in \`ls $path/results/*.$TE.te_insertion.all.txt\` ; do grep -v total \$i | grep -v Note >> $path/results/temp2 ; done
+mv $path/results/temp2 $path/results/$exper.all.$TE.txt
+mv $path/results/*.$TE.te_insertion.all.txt $path/results/all_files
+
+#combine confident insertions ref seqs to one file
+for i in \`ls $path/results/*.$TE.te_insertion_sites.fa\` ; do cat \$i  >> $path/results/temp3 ; done
+mv $path/results/temp3 $path/results/$exper.confident.$TE.ref_sites.fa
+mv $path/results/*.$TE.te_insertion_sites.fa $path/results/all_files
+
+#combine confident insertions gff to one file
+echo \"##gff-version 3\" > $path/results/temp4
+for i in \`ls $path/results/*.$TE.te_insertion_sites.gff\` ; do grep -v gff \$i  >> $path/results/temp4 ; done        
+mv $path/results/temp4 $path/results/$exper.confident.$TE.gff
+mv $path/results/*.$TE.te_insertion_sites.gff $path/results/all_files
+
+#combine confident insertions reads to one file
+for i in \`ls $path/results/*.$TE.te_insertion_sites.reads.list\` ; do cat \$i  >> $path/results/temp5 ; done
+mv $path/results/temp5 $path/results/$exper.confident.$TE.reads.txt
+mv $path/results/*.$TE.te_insertion_sites.reads.list $path/results/all_files
+
+";
       `chmod +x $current_dir/$top_dir/shellscripts/step_6/$TE/step_6.$TE.finishing.sh`;
     }
     if ($qsub_array){
@@ -540,13 +568,54 @@ mv $path/results/temp $path/results/all.$TE.te_insertion_sites.table.txt\n";
     }
     if (!$parallel and !$qsub_array){
       ##do it now
-      `echo \"TE\tTSD\tExper\tchromosome\tinsertion_site\tleft_flanking_read_count\tright_flanking_read_count\tleft_flanking_seq\tright_flanking_seq\" > $path/results/temp`;
+       ##combine and delete individual chr files for confident sites
+      `echo \"TE\tTSD\tEper\tchromosome\tinsertion_site\tleft_flanking_read_count\tright_flanking_read_count\tleft_flanking_seq\tright_flanking_seq\" > $path/results/temp`;
         my @files = `ls $path/results/*.$TE.te_insertion_sites.table.txt`;
         foreach my $file (@files){
           chomp $file;
          `grep -v flanking_read_count $file  >> $path/results/temp`;
+          unlink $file;
         } 
-       `mv $path/results/temp $path/results/all.$TE.te_insertion_sites.table.txt`;
+       `mv $path/results/temp $path/results/$exper.confident.$TE.txt`;
+
+
+       ##combine and delete individual chr files for all sites
+       `echo \"TE\tTSD\tExper\tchromosome\tinsertion_site\tcombined_read_count\tright_flanking_read_count\tleft_flanking_read_count\" > $path/results/temp2`;        
+        @files = `ls $path/results/*.$TE.te_insertion.all.txt`;
+        foreach my $file (@files){
+          chomp $file;
+         `grep -v total $file | grep -v Note  >> $path/results/temp2`;
+          unlink $file;
+        } 
+       `mv $path/results/temp2 $path/results/$exper.all.$TE.txt`;
+
+       ##combine and delete individual chr fasta files
+        @files = `ls $path/results/*.$TE.te_insertion_sites.fa`;
+        foreach my $file (@files){
+          chomp $file;
+         `cat $file >> $path/results/temp3`;
+          unlink $file;
+        } 
+       `mv $path/results/temp3 $path/results/$exper.confident.$TE.ref_sites.fa`;
+
+       ##combine and delete individual chr gff files 
+       `echo \"##gff-version 3\" > $path/results/temp4`;        
+        @files = `ls $path/results/*.$TE.te_insertion_sites.gff`;
+        foreach my $file (@files){
+          chomp $file;
+         `grep -v gff $file >> $path/results/temp4`;
+          unlink $file;
+        } 
+       `mv $path/results/temp4 $path/results/$exper.confident.$TE.gff`;
+
+       ##combine and delete individual chr reads list
+        @files = `ls $path/results/*.$TE.te_insertion_sites.reads.list`;
+        foreach my $file (@files){
+          chomp $file;
+         `cat $file >> $path/results/temp5`;
+          unlink $file;
+        } 
+       `mv $path/results/temp5 $path/results/$exper.confident.$TE.reads.txt`;
      }
     close FINISH;
 }
