@@ -77,8 +77,10 @@ my %matches;
 my %TSDs;
 my %toPrint;
 while ( my $line = <INSITES> ) {
-  next if $line =~ /=/;
-  next if $line =~ /^\s/;
+  next if $line =~ /TE.TSD.Exper.chromosome.insertion_site/;
+  next if $line =~ /total confident insertions/;
+  next if $line =~ /Note:C=total read count, R=right/;
+  next if $line =~ /^\s*$/;
   chomp $line;
 
   # mping   A119    Chr1    1448    C:1     R:0     L:1
@@ -271,7 +273,7 @@ if ($excision) {
           if (!$all_values_after_insertion){
             print EXCISION "$insert_ref.$insert_pos\t$line\n";
             my $status = $toPrint{$insert_ref}{$insert_pos}{$TSD}{status};
-            ##only append if it already itsnt there
+            ##only append if it already isnt there
             $toPrint{$insert_ref}{$insert_pos}{$TSD}{status} =
               $status . "/excision_with_footprint" if $status !~ /\/excision_with_footprint/; 
           }
