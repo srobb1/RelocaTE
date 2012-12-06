@@ -278,7 +278,7 @@ Note:C=total read count, R=right hand read count, L=left hand read count\n"
   foreach my $found ( keys %existingTE_found ) {
     my $end_count = $existingTE_found{$found}{end};
     my $start_count = $existingTE_found{$found}{start};
-    my ($ref,$s,$e) = $found =~ /(.+)\:(\d+)\.\.(\d+)/;
+    my ($ref,$s,$e) = $found =~ /(\S+)\:(\d+)\.\.(\d+)/;
     if ($start_count > 0 or $end_count > 0){
       print FOUNDGFF "$ref\t$exper\ttransposable_element_insertion_site\t$s\t$e\t.\t.\t.\tID=$TE.te_insertion_site.$ref.$s..$e;TE_Name=$TE;left_flanking_read_count=$start_count;right_flanking_read_count=$end_count\n";
     }
