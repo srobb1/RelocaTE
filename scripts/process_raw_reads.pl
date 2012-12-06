@@ -23,6 +23,7 @@ my $filter_trim   = 1;
 my $tempDir       = $current_dir;
 my $bin_per_chrom = 1;
 my $prefix = 'none';
+my $bwa_quality = 10;
 
 GetOptions(
   'd|dir:s'           => \$dir,
@@ -40,6 +41,7 @@ GetOptions(
   't|tempDir:s'       => \$tempDir,
   'b|bin_per_chrom:i' => \$bin_per_chrom,
   'r|prefix:s'        => \$prefix,
+  'bq|bwa_quality:i'  => \$bwa_quality,
   'h|help'            => \&getHelp,
 );
 
@@ -223,9 +225,9 @@ fi\n";
     else {
       print OUTFILE "ln -s $dir_path/$file.$fq_ext \$tmp_dir/$file$ext\n";
       push @aln,
-"bwa aln -t 8 -q 10 $bwa_I_switch $genome_path \$tmp_dir/$file$ext > \$tmp_dir/$file.sai" if !$paired;
+"bwa aln -t 8 -q $bwa_quality $bwa_I_switch $genome_path \$tmp_dir/$file$ext > \$tmp_dir/$file.sai" if !$paired;
       push @aln,
-"bwa aln -t 8 -q 10 $bwa_I_switch $genome_path \$tmp_dir/$file$ext > \$tmp_dir/$file.sai" if $paired;
+"bwa aln -t 8 -q $bwa_quality $bwa_I_switch $genome_path \$tmp_dir/$file$ext > \$tmp_dir/$file.sai" if $paired;
     }
   }
 
