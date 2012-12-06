@@ -225,7 +225,11 @@ See documentation for more information. http://docs......
 
   exit 1;
 }
-$outdir =~ s/\/$//;
+if ($outdir eq '' or $outdir =~ /^\s+$/ or !defined $outdir){
+  die "your -o option has an incorrect value, it needs to be something\n";
+}else{
+  $outdir =~ s/\/$//;
+}
 my $te_path = File::Spec->rel2abs($te_fasta);
 my @outdir = split /\// , $outdir;
 $outdir = pop @outdir;
