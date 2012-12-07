@@ -12,23 +12,24 @@ CharacTErizer: A companion tool compares the numbers of reads that flank the TE 
 ###Table of Contents:<br>
 #####<a href="#req">Prerequisites</a><br>
 #####<a href="#cmd">RelocaTE Command Line Options</a>
-- <a href="#t">-t Str:  TE FASTA File</a>
-- <a href="#d">-d Str: directory of fq files</a>
-- <a href="#g">-g Str: reference genome fasta file</a>
-- <a href="#e">-e Str: Sample identifier</a>
-- <a href="#o">-o Str: output directory name</a>
-- <a href="#1">-1 Str: unique mate/pair 1 string</a>
-- <a href="#2">-2 Str: unique mate/pair 2 string</a>
-- <a href="#u">-u Str: unique unPaired string</a>
-- <a href="#p">-p 0|1: split into many jobs</a>
-- <a href="#a">-a 0|1: create PBS array job script</a>
-- <a href="#w">-w Str: working directory name</a>
-- <a href="#l">-l n:  min length cutoff for alignment to reference</a>
-- <a href="#bm">-bm n: blat minScore for alignment to TE</a>
-- <a href="#m">-m n<=0:  mismatches allowed in blat alignment to TE</a>
-- <a href="#bt">-bt n: blat tileSize for alignmetn to TE</a>
-- <a href="#f">-f n: length of the insertion site flanking seq to be returned </a>
-- <a href="#x">-x Str: file name of file with locations of existing TE insertions in reference</a>
+- <a href="#t">-t | --te_fasta       Str: TE FASTA File</a>
+- <a href="#d">-d | --fq_dir         Str: directory of fq files</a>
+- <a href="#g">-g | --genome_fasta   Str: reference genome fasta file</a>
+- <a href="#e">-e | --exper          Str: Sample identifier</a>
+- <a href="#o">-o | --outdir         Str: output directory name</a>
+- <a href="#1">-1 | --mate_1_id      Str: unique mate/pair 1 string</a>
+- <a href="#2">-2 | --mate_2_id      Str: unique mate/pair 2 string</a>
+- <a href="#u">-u | --unpaired_id    Str: unique unPaired string</a>
+- <a href="#p">-p | --parallel       0|1: split into many jobs</a>
+- <a href="#a">-a | --qsub_array     0|1: create PBS array job script</a>
+- <a href="#w">-w | --workingdir     Str: working directory name</a>
+- <a href="#l">-l | --len_cutoff       n: min length cutoff for alignment to reference</a>
+- <a href="#bm">-bm|--blat_minScore    n: blat minScore for alignment to TE</a>
+- <a href="#bt">-bt|--blat_tileSize    n: blat tileSize for alignmetn to TE</a>
+- <a href="#m">-m|--mismatch        n<=0: fraction mismatches allowed in blat alignment to TE</a>
+- <a href="#f">-f|--flanking_seq_len   n: length of the insertion site flanking seq to be returned </a>
+- <a href="#x">-r|--reference_ins    Str: To identify reference and shared insertions (reference and reads) choose option-1 or option-2. option-1) use '-x 1' to have RelocaTE find the location of your TE in the reference. option-2) input the file name of a tab-delimited file containing the coordinates of TE insertions pre-existing in the reference sequence. [no default]</a>
+
 
 #####<a href="#quick">RelocaTE: Quick Start Guide</a><br>
 #####<a href="#characterizer">CharacTErizer</a>
