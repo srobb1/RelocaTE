@@ -198,14 +198,14 @@ pop @path;    #throwout bowtie dir
 my $te_dir = join '/', @path;
 my $results_dir = "$te_dir/results";
 `mkdir -p $results_dir`;
-open OUTFASTA, ">$results_dir/$usr_target.$TE.te_insertion_sites.fa"
+open OUTFASTA, ">$results_dir/$usr_target.$TE.confident_nonref_genomeflank.fa"
   or die $!;
-open OUTALL, ">$results_dir/$usr_target.$TE.te_insertion.all.txt" or die $!;
-open OUTGFF, ">$results_dir/$usr_target.$TE.te_insertion_sites.gff"
+open OUTALL, ">$results_dir/$usr_target.$TE.all_nonref_insert.txt" or die $!;
+open OUTGFF, ">$results_dir/$usr_target.$TE.all_insert.gff"
   or die $!;
-open OUTTABLE, ">$results_dir/$usr_target.$TE.te_insertion_sites.table.txt"
+open OUTTABLE, ">$results_dir/$usr_target.$TE.confident_nonref_insert.txt"
   or die $!;
-open OUTLIST, ">$results_dir/$usr_target.$TE.te_insertion_sites.reads.list"
+open OUTLIST, ">$results_dir/$usr_target.$TE.confident_nonref_insert_reads_list.txt"
   or die $!;
 print OUTGFF "##gff-version	3\n";
 ##output in tab delimited table
@@ -213,6 +213,7 @@ my $tableHeader =
 "TE\tTSD\tExper\tchromosome\tinsertion_site\tleft_flanking_read_count\tright_flanking_read_count\tleft_flanking_seq\tright_flanking_seq\n";
 print OUTTABLE $tableHeader;
 
+my $note;
 foreach my $insertionEvent ( sort { $a <=> $b } keys %teInsertions ) {
   foreach my $foundTSD ( sort keys %{ $teInsertions{$insertionEvent} } ) {
     foreach my $start (
@@ -242,11 +243,12 @@ foreach my $insertionEvent ( sort { $a <=> $b } keys %teInsertions ) {
           $flank_len;
         my $right_flanking_ref_seq = substr $genome_seq,
           $zero_base_coor + 1, $flank_len;
+        $note = "Non-reference, not found in reference";
         my $tableLine =
 "$TE\t$foundTSD\t$exper\t$usr_target\t$coor\t$left_count\t$right_count\t$left_flanking_ref_seq\t$right_flanking_ref_seq\n";
         print OUTTABLE $tableLine;
         print OUTGFF
-"$usr_target\t$exper\ttransposable_element_insertion_site\t$coor\t$coor\t.\t.\t.\tID=$TE.te_insertion_site.$usr_target.$coor;left_flanking_read_count=$left_count;right_flanking_read_count=$right_count;left_flanking_seq=$left_flanking_ref_seq;right_flanking_seq=$right_flanking_ref_seq;TSD=$foundTSD\n";
+"$usr_target\t$exper\ttransposable_element_insertion_site\t$coor\t$coor\t.\t.\t.\tID=$TE.te_insertion_site.$usr_target.$coor;Note=$note;left_flanking_read_count=$left_count;right_flanking_read_count=$right_count;left_flanking_seq=$left_flanking_ref_seq;right_flanking_seq=$right_flanking_ref_seq;TSD=$foundTSD\n";
         print OUTFASTA
 ">$exper.$usr_target.$coor TSD=$foundTSD $usr_target:$seq_start..$seq_end\n$left_flanking_ref_seq$right_flanking_ref_seq\n";
         print OUTALL
@@ -269,19 +271,23 @@ Note:C=total read count, R=right hand read count, L=left hand read count\n"
   if $event > 0;
 
 
-  open FOUNDGFF, ">>$results_dir/$exper.existing.$TE.found.gff" or die $!;
-  open ALLEXISTING, ">>$results_dir/$exper.existing.$TE.all.txt" or die $!;
+  #open FOUNDGFF, ">>$results_dir/$exper.existing.$TE.found.gff" or die $!;
+  my $allexisting = "$results_dir/$exper.$TE.all_reference.txt";
+  open ALLEXISTING, ">>$allexisting" or die $!;
   print ALLEXISTING "strain\tTE\texistingTE_coor\treads_align_2_start\treads_align_2_end\n" 
-    if -s "$results_dir/$exper.existing.$TE.all.txt" < 10;
-  print FOUNDGFF
-    "##gff-version 3\n" if -s "$results_dir/$exper.existing.$TE.found.gff" < 10;
+    if -s "$allexisting" < 10;
+  #print OUTGFF
+  #  "##gff-version 3\n" if -s "$results_dir/$exper.existing.$TE.found.gff" < 10;
   foreach my $found ( keys %existingTE_found ) {
     my $end_count = $existingTE_found{$found}{end};
     my $start_count = $existingTE_found{$found}{start};
     my ($ref,$s,$e) = $found =~ /(\S+)\:(\d+)\.\.(\d+)/;
     if ($start_count > 0 or $end_count > 0){
-      print FOUNDGFF "$ref\t$exper\ttransposable_element_insertion_site\t$s\t$e\t.\t.\t.\tID=$TE.te_insertion_site.$ref.$s..$e;TE_Name=$TE;left_flanking_read_count=$start_count;right_flanking_read_count=$end_count\n";
+      $note = "Shared, in ref and reads";
+    }else{
+      $note = "Reference-only, only present in reference";
     }
+      print OUTGFF "$ref\t$exper\ttransposable_element_insertion_site\t$s\t$e\t.\t.\t.\tID=$TE.te_insertion_site.$ref.$s..$e;TE_Name=$TE;Note=$note;left_flanking_read_count=$start_count;right_flanking_read_count=$end_count\n";
     print ALLEXISTING "$exper\t$found\t$start_count\t$end_count\n";
   }
 sub TSD_check {

@@ -599,7 +599,8 @@ echo \$$jobName\n";
       $genome_path =~ /.+\/(.+)\.fa$/;
       my $ref = $1;
       #`mkdir -p $shell_dir`;
-      mkdir $shell_dir;
+      make_path( $shell_dir, { mode => 0755 } );
+      #mkdir $shell_dir;
       open OUTSH, ">$shell_dir/step_4.$ref.$TE.align.sh";
       print OUTSH "$cmd\n";
       print PARALLEL "sh $shell_dir/step_4.$ref.$TE.align.sh\n" if !$qsub_array;
@@ -640,8 +641,7 @@ echo \$$jobName\n";
       }
       else {
         my $shell_dir = "$shellscripts/step_5/$TE";
-        #`mkdir -p $shell_dir`;
-        mkdir $shell_dir;
+        make_path( $shell_dir, { mode => 0755 } );
         open OUTSH, ">$shell_dir/$genome_count.$TE.findSites.sh";
         print OUTSH "$cmd\n";
         close OUTSH;
@@ -702,8 +702,8 @@ foreach my $te_path (@te_fastas) {
   my $TE       = $te_fasta;
   $TE =~ s/\.fa//;
   if ($parallel) {
-    #`mkdir -p $shellscripts/step_6/$TE`;
-    mkdir "$shellscripts/step_6/$TE";
+    my $shell_dir = "$shellscripts/step_6/$TE";
+    make_path( $shell_dir, { mode => 0755 } );
     open FINISH, ">$shellscripts/step_6/$TE/step_6.$TE.finishing.sh";
     print PARALLEL "sh $shellscripts/step_6/$TE/step_6.$TE.finishing.sh\n"
       if !$qsub_array;
@@ -714,31 +714,31 @@ foreach my $te_path (@te_fastas) {
 
 #combine confident insertions to one file
 echo \"TE\tTSD\tExper\tchromosome\tinsertion_site\tleft_flanking_read_count\tright_flanking_read_count\tleft_flanking_seq\tright_flanking_seq\" > $path/results/temp
-for i in \`ls $path/results/*.$TE.te_insertion_sites.table.txt\` ; do grep -v flanking_read_count \$i >> $path/results/temp ; done
-mv $path/results/temp $path/results/$exper.confident.$TE.txt
-mv $path/results/*.$TE.te_insertion_sites.table.txt $path/results/all_files
+for i in \`ls $path/results/*.$TE.confident_nonref_insert.txt\` ; do grep -v flanking_read_count \$i >> $path/results/temp ; done
+mv $path/results/temp $path/results/$exper.$TE.confident_nonref.txt
+mv $path/results/*.$TE.confident_nonref_insert.txt $path/results/all_files
 
 #combine all insertions to one file
 echo \"TE\tTSD\tExper\tchromosome\tinsertion_site\tcombined_read_count\tright_flanking_read_count\tleft_flanking_read_count\" > $path/results/temp2
-for i in \`ls $path/results/*.$TE.te_insertion.all.txt\` ; do grep -v total \$i | grep -v Note >> $path/results/temp2 ; done
-mv $path/results/temp2 $path/results/$exper.all.$TE.txt
-mv $path/results/*.$TE.te_insertion.all.txt $path/results/all_files
+for i in \`ls $path/results/*.$TE.all_nonref_insert.txt\` ; do grep -v total \$i | grep -v Note >> $path/results/temp2 ; done
+mv $path/results/temp2 $path/results/$exper.$TE.all_nonref.txt
+mv $path/results/*.$TE.all_nonref_insert.txt $path/results/all_files
 
 #combine confident insertions ref seqs to one file
-for i in \`ls $path/results/*.$TE.te_insertion_sites.fa\` ; do cat \$i  >> $path/results/temp3 ; done
-mv $path/results/temp3 $path/results/$exper.confident.$TE.ref_sites.fa
-mv $path/results/*.$TE.te_insertion_sites.fa $path/results/all_files
+for i in \`ls $path/results/*.$TE.confident_nonref_genomeflank.fa\` ; do cat \$i  >> $path/results/temp3 ; done
+mv $path/results/temp3 $path/results/$exper.$TE.confident_nonref_genomeflanks.fa
+mv $path/results/*.$TE.confident_nonref_genomeflank.fa $path/results/all_files
 
 #combine confident insertions gff to one file
 echo \"##gff-version 3\" > $path/results/temp4
-for i in \`ls $path/results/*.$TE.te_insertion_sites.gff\` ; do grep -v gff \$i  >> $path/results/temp4 ; done        
-mv $path/results/temp4 $path/results/$exper.confident.$TE.gff
-mv $path/results/*.$TE.te_insertion_sites.gff $path/results/all_files
+for i in \`ls $path/results/*.$TE.all_insert.gff\` ; do grep -v gff \$i  >> $path/results/temp4 ; done        
+mv $path/results/temp4 $path/results/$exper.$TE.all_inserts.gff
+mv $path/results/*.$TE.all_insert.gff $path/results/all_files
 
 #combine confident insertions reads to one file
-for i in \`ls $path/results/*.$TE.te_insertion_sites.reads.list\` ; do cat \$i  >> $path/results/temp5 ; done
-mv $path/results/temp5 $path/results/$exper.confident.$TE.reads.txt
-mv $path/results/*.$TE.te_insertion_sites.reads.list $path/results/all_files
+for i in \`ls $path/results/*.$TE.confident_nonref_insert_reads_list.txt\` ; do cat \$i  >> $path/results/temp5 ; done
+mv $path/results/temp5 $path/results/$exper.$TE.confident_nonref_reads_list.txt
+mv $path/results/*.$TE.confident_nonref_insert_reads_list.txt $path/results/all_files
 
 ";
     `chmod +x $shellscripts/step_6/$TE/step_6.$TE.finishing.sh`;
@@ -767,51 +767,51 @@ echo \$$jobName\n";
     ##do it now
     ##combine and delete individual chr files for confident sites
 `echo \"TE\tTSD\tEper\tchromosome\tinsertion_site\tleft_flanking_read_count\tright_flanking_read_count\tleft_flanking_seq\tright_flanking_seq\" > $path/results/temp`;
-    my @files = `ls $path/results/*.$TE.te_insertion_sites.table.txt`;
+    my @files = `ls $path/results/*.$TE.confident_nonref_insert.txt`;
     foreach my $file (@files) {
       chomp $file;
       `grep -v flanking_read_count $file  >> $path/results/temp`;
       unlink $file;
     }
-    `mv $path/results/temp $path/results/$exper.confident.$TE.txt`;
+    `mv $path/results/temp $path/results/$exper.$TE.confident_nonref.txt`;
 
     ##combine and delete individual chr files for all sites
 `echo \"TE\tTSD\tExper\tchromosome\tinsertion_site\tcombined_read_count\tright_flanking_read_count\tleft_flanking_read_count\" > $path/results/temp2`;
-    @files = `ls $path/results/*.$TE.te_insertion.all.txt`;
+    @files = `ls $path/results/*.$TE.all_nonref_insert.txt`;
     foreach my $file (@files) {
       chomp $file;
       `grep -v total $file | grep -v Note  >> $path/results/temp2`;
       unlink $file;
     }
-    `mv $path/results/temp2 $path/results/$exper.all.$TE.txt`;
+    `mv $path/results/temp2 $path/results/$exper.$TE.all_nonref.txt`;
 
     ##combine and delete individual chr fasta files
-    @files = `ls $path/results/*.$TE.te_insertion_sites.fa`;
+    @files = `ls $path/results/*.$TE.confident_nonref_genomeflank.fa`;
     foreach my $file (@files) {
       chomp $file;
       `cat $file >> $path/results/temp3`;
       unlink $file;
     }
-    `mv $path/results/temp3 $path/results/$exper.confident.$TE.ref_sites.fa`;
+    `mv $path/results/temp3 $path/results/$exper.$TE.confident_nonref_genomeflanks.fa`;
 
     ##combine and delete individual chr gff files
     `echo \"##gff-version 3\" > $path/results/temp4`;
-    @files = `ls $path/results/*.$TE.te_insertion_sites.gff`;
+    @files = `ls $path/results/*.$TE.all_insert.gff`;
     foreach my $file (@files) {
       chomp $file;
       `grep -v gff $file >> $path/results/temp4`;
       unlink $file;
     }
-    `mv $path/results/temp4 $path/results/$exper.confident.$TE.gff`;
+    `mv $path/results/temp4 $path/results/$exper.$TE.all_inserts.gff`;
 
     ##combine and delete individual chr reads list
-    @files = `ls $path/results/*.$TE.te_insertion_sites.reads.list`;
+    @files = `ls $path/results/*.$TE.confident_nonref_insert_reads_list.txt`;
     foreach my $file (@files) {
       chomp $file;
       `cat $file >> $path/results/temp5`;
       unlink $file;
     }
-    `mv $path/results/temp5 $path/results/$exper.confident.$TE.reads.txt`;
+    `mv $path/results/temp5 $path/results/$exper.$TE.confident_nonref_reads_list.txt`;
   }
   close FINISH;
 }
