@@ -12,13 +12,13 @@ my $scripts = $RealBin;
 if ( !defined @ARGV ) {
   &getHelp();
 }
-my $genomeFasta = 'NONE';
+my $genome_fasta = 'NONE';
 my $te_fasta;
 my $target             = 'NONE';
 my $len_cutoff         = 10;
 my $mismatch_allowance = 0;
 my $fq_dir;
-my $exper = 'not.given';
+my $exper              = 'not.given';
 my $mate_file_1        = '_p1';
 my $mate_file_2        = '_p2';
 my $mate_file_unpaired = '.unPaired';
@@ -26,7 +26,7 @@ my $workingdir;
 my $outdir     = 'outdir_teSearch';
 my $parallel   = 0;
 my $qsub_array = 0;
-my $qsub_q ;
+my $qsub_q;
 my ( $blat_minScore, $blat_tileSize ) = ( 10, 7 );
 my $flanking_seq_len = 100;
 my $existing_TE      = 'NONE';
@@ -38,7 +38,7 @@ GetOptions(
   'w|workingdir:s'       => \$workingdir,
   'o|outdir:s'           => \$outdir,
   'd|fq_dir:s'           => \$fq_dir,
-  'g|genomeFasta:s'      => \$genomeFasta,
+  'g|genome_fasta:s'     => \$genome_fasta,
   't|te_fasta:s'         => \$te_fasta,
   'l|len_cutoff:i'       => \$len_cutoff,
   'm|mismatch:f'         => \$mismatch_allowance,
@@ -48,14 +48,17 @@ GetOptions(
   'bm|blat_minScore:i'   => \$blat_minScore,
   'bt|blat_tileSize:i'   => \$blat_tileSize,
   'f|flanking_seq_len:i' => \$flanking_seq_len,
-  'x|existing_TE:s'      => \$existing_TE,
-  'h|help'               => \&getHelp,
+  '-r|reference_ins:s' => \$existing_TE,
+  'h|help' => \&getHelp,
 );
 my $current_dir;
-$qsub_array = 0 if $parallel == 0;
-if (defined $qsub_q){
-  $qsub_q = "-q $qsub_q";  
-}else {
+
+#$qsub_array = 0 if $parallel   == 0;
+$parallel = 1 if $qsub_array == 1;
+if ( defined $qsub_q ) {
+  $qsub_q = "-q $qsub_q";
+}
+else {
   $qsub_q = '';
 }
 
@@ -68,11 +71,11 @@ else {
 }
 my $mapping = 1;
 
-if ( !defined $genomeFasta ) {
+if ( !defined $genome_fasta ) {
   print "\n\nPlease provide reference genome by using -g Genome fasta path\n";
-  &getHelp();
+  die "\nuse -h option to get help\n";
 }
-elsif ( $genomeFasta eq 'NONE' ) {
+elsif ( $genome_fasta eq 'NONE' ) {
   print
 "A reference genome fasta was NOT provided. Proceeding without a reference will result in only the reads containing the TE being identified, no mapping of insertions will be performed\n";
   print "Proceed without mapping? (y|n) \n";
@@ -80,31 +83,32 @@ elsif ( $genomeFasta eq 'NONE' ) {
   if ( $answer =~ /n/i ) {
     &getHelp();
   }
-  elsif ($answer =~ /y/i) {
+  elsif ( $answer =~ /y/i ) {
     $mapping = 0;
   }
   print "Great, proceeding without aligning to a reference genome.\n";
 }
-elsif ( !-e $genomeFasta ) {
-  print "$genomeFasta does not exist. Check file name.\n";
-  &getHelp();
+elsif ( !-e $genome_fasta ) {
+  print "$genome_fasta does not exist. Check file name.\n";
+  die "\nuse -h option to get help\n";
 }
 my $genome_path;
-if ( -e $genomeFasta ) {
-  $genome_path = File::Spec->rel2abs($genomeFasta);
+if ( -e $genome_fasta ) {
+  $genome_path = File::Spec->rel2abs($genome_fasta);
 }
 if ( !defined $te_fasta ) {
   print
 "\n\nPlease provide fasta file containing transposable elements by using -t TE fasta path\n";
-  &getHelp();
+  die "\nuse -h option to get help\n";
 }
 elsif ( !-e $te_fasta ) {
   print "$te_fasta does not exist. Check file name.\n";
-  &getHelp();
+  die "\nuse -h option to get help\n";
 }
 else {
+
   #my $first_line = `head -n1 $te_fasta`;
-  open INFILE , $te_fasta or die "Can't open $te_fasta\n";
+  open INFILE, $te_fasta or die "Can't open $te_fasta\n";
   my $first_line = <INFILE>;
   close INFILE;
   if ( $first_line !~ /^>\S+\s+TSD=\S+/ ) {
@@ -116,7 +120,7 @@ my @fq_files;
 my %fq_files;
 if ( !defined $fq_dir ) {
   print "\n\nPlease provide a directory of paired fastq files\n";
-  &getHelp();
+  die "\nuse -h option to get help\n";
 }
 elsif ( $fq_dir eq 'SKIP' ) {
   ##skip all other steps for processing the raw fq files
@@ -124,7 +128,7 @@ elsif ( $fq_dir eq 'SKIP' ) {
 elsif ( !-d $fq_dir ) {
   print
 "\n\nCheck the spelling or location of $fq_dir, Please provide a directory of paired fastq files\n";
-  &getHelp();
+  die "\nuse -h option to get help\n";
 }
 else {
   my $fq_path = File::Spec->rel2abs($fq_dir);
@@ -133,28 +137,32 @@ else {
   push @fq_files, @fastq_files;
   if ( scalar @fq_files == 0 ) {
     print "Must provide at least 1 short read file\n";
-    &getHelp();
+    die "\nuse -h option to get help\n";
   }
 }
 my $existing_TE_path = 'NONE';
-my $existing_blat = 0;
+my $existing_blat    = 0;
 if ( $existing_TE ne 'NONE' ) {
-  if ($existing_TE eq '1'){
+  if ( $existing_TE eq '1' ) {
     ##run blat
     $existing_blat = 1;
   }
   elsif ( !-e $existing_TE ) {
-    &getHelp();
+    print "$existing_TE does not exist\n";
+    print "Please use -r 1 or provide a file that exists\n";
+    die "\nuse -h option to get help\n";
   }
   else {
     $existing_TE_path = File::Spec->rel2abs($existing_TE);
+
     #my $line = `head $existing_TE`;
-    open INFILE , $existing_TE or die "Can't open $existing_TE\n";
+    open INFILE, $existing_TE or die "Can't open $existing_TE\n";
     my $first_line = <INFILE>;
     close INFILE;
     if ( $first_line !~ /\S+\t\S+:\d+\.\.\d+/ ) {
       print "The existing_TE file is not in the appropriate format:
    
+SAMPLE Reference TEs (the two columns are tab-delimited):
 mping   Chr12:839604..840033
 mping   Chr11:23200534..23200105
 
@@ -162,7 +170,7 @@ TE_name<tab>ref_seqname:first_Base_Of_TIR1..Last_base_of_TIR2
 
 or use \'-x 1\' for RelocaTE to find your TE in the reference
    ";
-      &getHelp();
+    die "\nuse -h option to get help\n";
     }
   }
 }
@@ -175,35 +183,47 @@ usage:
 options:
 
 **required:
--t file		fasta containing nucleotide sequences of transposable elements with TSD=xxx in the desc. [no default]
--d dir		directory of paired and unpaired fastq files (paired _p1.fq & _p2.fq) (.fq or .fastq is acceptable)  [no default]
+-t |--te_fasta		file		fasta containing nucleotide sequences of transposable elements with 
+					TSD=xxx in the desc. [no default]
+-d |--fq_dir		dir		directory of paired and unpaired fastq files (paired _p1.fq & _p2.fq)
+					(.fq or .fastq is acceptable)  [no default]
 
 **recommended: 
--g file		genome (reference) fasta file path. If not provided will only align reads to TE and remove TE seq from short reads. [no default]
--e STR		Short sample name, will be used in the output files to create IDs for the insert (ex. A123) [not.given]
--o STR		name for directory to contain output directories and files, will be created for the run (ex. 04222012_A123) [outdir_teSearch]
+-g |--genome_fasta	file		genome (reference) fasta file path. If not provided will only align 
+					reads to TE and remove TE seq from short reads. [no default]
+-e |--exper 		STR		Short sample name, will be used in the output files to create IDs for
+					the insert (ex. A123) [not.given]
+-o |--outdir 		STR		name for directory to contain output directories and files, will be
+					created for the run (ex. 04222012_A123) [outdir_teSearch]
 
 **optional:
--p INT		Break down the single big job of relocaTE into as many smaller jobs as possible. The alternative (0) would be to run one after the other (int, 0=false or 1=true) [0] 
--q STR		same as qsub -q option, not required [no default]
--a INT		if \'-a 1\' , create qsub PBS array jobs to run the many shell scripts created in the \'-a 1\' option. (see: man qsub option -t).(int, 0=false or 1=true) [0] 
--w dir		base working directory, needs to exist, will not be creates, full path required [cwd] 
--l INT		len cutoff for the TE trimmed reads to be aligned [10] 
--m FRACTION	mismatch allowance for alignment to TE (ex 0.1) [0] 
--1 STR		string to uniquely identify mate 1 paired files ex: file_p1.fq [_p1]
--2 STR		pattern to uniquely identify mate 2 paired files ex: file_p2.fq [_p2]
--u STR		pattern to uniquely identify unpaired files ex: file.unPaired.fq [.unPaired] 
--bm INT		blat minScore value, used by blat in the comparison of reads to TE sequence [10]
--bt INT		blat tileSize value, used by blat in the comparison of reads to TE sequence  [7]
--f INT		length of the sequence flanking the found insertion to be returned. This sequence is taken from the reference genome [100]
--x STR		To identify existing TEs in the reads choose option-1 or option-2. option-1) use \'-x 1\' to have RelocaTE find the location of your TE in the reference. option-2) input the file name of a tab-delimited file containing the coordinates of TE insertions pre-existing in the reference sequence. [no default]
--h		this message
+-p |--parallel 		INT		Break down the single big job of relocaTE into as many smaller jobs as
+					possible. The alternative (0) would be to run one after the other
+					(int, 0=false or 1=true) [0] 
+-q |--qsub_q 		STR		same as qsub -q option, not required [no default]
+-a |--qsus_array	INT		if \'-a 1\' , create qsub PBS array jobs to run the many shell scripts
+					created in the \'-a 1\' option. (see: man qsub option -t).(
+					0=false or 1=true) [0] 
+-w |--workingdir	dir		base working directory, needs to exist, will not be creates, full path
+					required [cwd] 
+-l |--len		INT		len cutoff for the TE trimmed reads to be aligned [10] 
+-m |--mismatch		FRACTION	mismatch allowance for alignment to TE (ex 0.1) [0] 
+-1 |--mate_1_id		STR		string to uniquely identify mate 1 paired files ex: file_p1.fq [_p1]
+-2 |--mate_2_id		STR		pattern to uniquely identify mate 2 paired files ex: file_p2.fq [_p2]
+-u |--unpaired_id	STR		pattern to uniquely identify unpaired files ex: file.unPaired.fq [.unPaired] 
+-bm|--blat_minScore	INT		blat minScore value, used by blat in the comparison of reads to TE sequence [10]
+-bt|--blat_tileSize	INT		blat tileSize value, used by blat in the comparison of reads to TE sequence  [7]
+-f |--flanking_seq	INT		length of the sequence flanking the found insertion to be returned. This
+					sequence is taken from the reference genome [100]
+-r |--reference_ins	STR		To identify reference and shared insertions (reference and reads)
+					choose option-1 or option-2. 
+					option-1) use \'-x 1\' to have RelocaTE find the location of your TE in the 
+					reference.
+					option-2) input the file name of a tab-delimited file containing the coordinates
+					of TE insertions pre-existing in the reference sequence. [no default]
+-h |--help				this message
 
-SAMPLE Existing TE (the two columns are tab-delimited)
-mping   Chr12:839604..840033
-mping   Chr12:1045463..1045892
-
-SAMPLE TE FASTA
+SAMPLE TE FASTA:
 >mping TSD=TTA
 GGCCAGTCACAATGGGGGTTTCACTGGTGTGTCATGCACATTTAATAGGGGTAAGACTGAATAAAAAATG
 ATTATTTGCATGAAATGGGGATGAGAGAGAAGGAAAGAGTTTCATCCTGGTGAAACTCGTCAGCGTCGTT
@@ -213,25 +233,27 @@ CTTGTATCAATTAAATGCTTTGCTTAGTCTTGGAAACGTCAAAGTGAAACCCCTCCACTGTGGGGATTGT
 TTCATAAAAGATTTCATTTGAGAGAAGATGGTATAATATTTTGGGTAGCCGTGCAATGACACTAGCCATT
 GTGACTGGCC
 
-Must contain "TSD=", can be a Perl regular express.  
+FASTA header must contain "TSD=", can be a Perl regular expression.  
   Example: these exact characters TTA: TSD=TTA 
   Example: any 4 characters: TSD=....
   Example: A or T followed by GCC: TSD=(A|T)GCC 
   Example: CGA followed by any character then an A then CT or G: TSD=CGA.A(CT|G) 
 
-See documentation for more information. http://docs......
+See documentation for more information. http://srobb1.github.com/RelocaTE/
 
 ';
 
   exit 1;
 }
-if ($outdir eq '' or $outdir =~ /^\s+$/ or !defined $outdir){
-  die "your -o option has an incorrect value, it needs to be something\n";
-}else{
+if ( $outdir eq '' or $outdir =~ /^\s+$/ or !defined $outdir ) {
+  die "your -o option has an incorrect value, it needs to be something
+\nuse -h option to get help\n";
+}
+else {
   $outdir =~ s/\/$//;
 }
 my $te_path = File::Spec->rel2abs($te_fasta);
-my @outdir = split /\// , $outdir;
+my @outdir = split /\//, $outdir;
 $outdir = pop @outdir;
 my $top_dir = $outdir;
 my @depend;
@@ -241,26 +263,29 @@ if ($qsub_array) {
   mkdir "$shellscripts";
   open QSUBARRAY, ">$current_dir/$top_dir/run_these_jobs.sh"
     or die "Can't open $current_dir/$top_dir/run_these_jobs.sh\n";
-}elsif ($parallel){
+}
+elsif ($parallel) {
   mkdir "$current_dir/$top_dir";
   mkdir "$shellscripts";
   open PARALLEL, ">$current_dir/$top_dir/run_these_jobs.sh"
     or die "Can't open $current_dir/$top_dir/run_these_jobs.sh\n";
 }
 
+my $qsub_formatGenome_cmd = 0;
 ## get names of each ref sequecne
 my @genome_seqs;
-if ($mapping > 0 ){
+if ( $mapping > 0 ) {
   open( INFASTA, "$genome_path" ) || die "$!\n";
   while ( my $line = <INFASTA> ) {
-      next unless $line =~ /^>(\S+)/;
+    next unless $line =~ /^>(\S+)/;
     if ( $line =~ /^>(\S+)/ ) {
       my $id = $1;
       if ( $id =~ /\|/ ) {
-        $id   =~ s/\|/_/g;
+        $id =~ s/\|/_/g;
       }
       push @genome_seqs, $id;
-    }else {
+    }
+    else {
       die "Your genome FASTA file is in a unexpected format. 
 >SEQNAME
 SEQUENCE
@@ -274,11 +299,10 @@ SEQUENCE2\n";
   my $cmd;
   if ( !-e "$genome_path.bowtie_build_index.1.ebwt" ) {
     $cmd = "bowtie-build -f $genome_path $genome_path.bowtie_build_index";
+    $qsub_formatGenome_cmd = 1;
   }
   $genome_path =~ /.+\/(.+)\.fa$/;
   my $ref = $1;
-
-
 
   if ( $parallel and defined $cmd ) {
     my $shell_dir = "$shellscripts/step_1";
@@ -286,65 +310,61 @@ SEQUENCE2\n";
     open OUTSH, ">$shell_dir/step_1.$ref.formatGenome.sh";
     print OUTSH "$cmd\n";
     close OUTSH;
-    chmod 0755 , "$shell_dir/step_1.$ref.formatGenome.sh";
-    print PARALLEL "sh $shell_dir/step_1.$ref.formatGenome.sh\n" if !$qsub_array;
+    chmod 0755, "$shell_dir/step_1.$ref.formatGenome.sh";
+    print PARALLEL "sh $shell_dir/step_1.$ref.formatGenome.sh\n"
+      if !$qsub_array;
   }
   elsif ( $parallel and !defined $cmd ) {
     my $step1_file =
-"$shellscripts/step_1_not_needed_genomefasta_already_formatted";
+      "$shellscripts/step_1_not_needed_genome_fasta_already_formatted";
     my $shell_dir = "$shellscripts";
     mkdir $shell_dir;
-    if ($parallel){
+    if ($parallel) {
       open STEP1, ">$step1_file" or die "Can't Open $step1_file\n";
       print STEP1 '';
       close STEP1;
-    } 
+    }
   }
   elsif ( defined $cmd ) {
     ##run it now
-    system ($cmd);
+    system($cmd);
   }
   if ($qsub_array) {
-    if (
-      !-e "$shellscripts/step_1_not_needed_genomefasta_already_formatted"
-     )
+    if ( !-e "$shellscripts/step_1_not_needed_genome_fasta_already_formatted" )
     {
       my $job = "$shellscripts/step_1/step_1.$ref.formatGenome.sh";
-      if (!@depend){
-        print QSUBARRAY "STEP1=\`qsub -e $shellscripts -o $shellscripts $qsub_q $job\`
+
+      #if (!@depend){
+      print QSUBARRAY
+        "STEP1=\`qsub -e $shellscripts -o $shellscripts $qsub_q $job\`
 echo \$STEP1\n";
-        @depend = ("STEP1", "afterok");
-      }else{
-        my ($last_job,$afterok) = @depend;
-        @depend = ("STEP1", "afterok");
-        my $jobName = $depend[0]; 
-        print QSUBARRAY "$jobName=`qsub -e $shellscripts -o $shellscripts $qsub_q -W depend=$afterok:\$$last_job $job`
-echo \$$jobName\n";
-      }
+
     }
   }
 }    ##end if($mapping)
 
 ##run existing TE blat against ref if the file does not exsit
 my $qsub_existingTE_cmd = 0;
-my $existing_blat_cmd = "blat $genome_path $te_path $current_dir/$top_dir/existingTE.blatout";
+my $existing_blat_cmd =
+  "blat $genome_path $te_path $current_dir/$top_dir/existingTE.blatout";
 if ($existing_blat) {
   ##if running blat set existing_TE_path to blatout
   $existing_TE_path = "$current_dir/$top_dir/existingTE.blatout";
-  if (  $parallel
+  if ( $parallel
     and !-e "$current_dir/$top_dir/existingTE.blatout" )
   {
     my $shell_dir = "$shellscripts";
-    if (!-d $shell_dir){
+    if ( !-d $shell_dir ) {
       mkdir $shell_dir;
     }
-    open OUTSH, ">$shell_dir/step_0.existingTE_blat.sh" or die "Can't open $shell_dir/step_0.existingTE_blat.sh for writing $!\n";
+    open OUTSH, ">$shell_dir/step_0.existingTE_blat.sh"
+      or die "Can't open $shell_dir/step_0.existingTE_blat.sh for writing $!\n";
     print PARALLEL "sh $shell_dir/step_0.existingTE_blat.sh\n" if !$qsub_array;
     print OUTSH "$existing_blat_cmd\n";
     if ($qsub_array) {
       $qsub_existingTE_cmd = 1;
       print QSUBARRAY
-        "EXISTINGTE=`qsub -e $shellscripts -o $shellscripts $qsub_q $shellscripts/step_0.existingTE_blat.sh`
+"EXISTINGTE=`qsub -e $shellscripts -o $shellscripts $qsub_q $shellscripts/step_0.existingTE_blat.sh`
 echo \$EXISTINGTE\n";
     }
     close OUTSH;
@@ -354,8 +374,6 @@ echo \$EXISTINGTE\n";
     system($existing_blat_cmd);
   }
 }
-
-
 
 my @fq;
 my @fa;
@@ -377,30 +395,30 @@ if ( $fq_dir ne 'SKIP' ) {
           my @fq_path   = split '/', $fq_path;
           my $fq_name   = pop @fq_path;
           my $shell_dir = "$shellscripts/step_2";
-          #`mkdir -p $shell_dir`;
-	  mkdir $shell_dir;
+
+          mkdir $shell_dir;
           my $outsh = ">$shell_dir/$fq_count." . "fq2fa.sh";
           open OUTSH, ">$outsh";
           print PARALLEL "sh $outsh\n" if !$qsub_array;
           print OUTSH "$cmd\n";
         }
         else {
-          #`$cmd`;
-          system ($cmd);
+
+          system($cmd);
         }
       }
       else {
         my $shell_dir = "$shellscripts";
-        #`mkdir -p $shell_dir`;
-	mkdir $shell_dir;
+
+        mkdir $shell_dir;
         my $step2_file =
-"$shellscripts/step_2_not_needed_fq_already_converted_2_fa";
-        #`touch $step2_file` if $parallel;
-        if ($parallel){
+          "$shellscripts/step_2_not_needed_fq_already_converted_2_fa";
+
+        if ($parallel) {
           open STEP2, ">$step2_file" or die "Can't Open $step2_file\n";
           print STEP2 '';
           close STEP2;
-        } 
+        }
       }
     }
     else {
@@ -410,25 +428,26 @@ if ( $fq_dir ne 'SKIP' ) {
     }
     $fq_count++;
   }
-  if (
-    !-e "$shellscripts/step_2_not_needed_fq_already_converted_2_fa"
+  if ( !-e "$shellscripts/step_2_not_needed_fq_already_converted_2_fa"
     and $qsub_array )
   {
-      my $end = $fq_count -1;
-      my $job = "$shellscripts/step_2.fq2fa.sh";
-      if (!@depend){
-        print QSUBARRAY "STEP2=\`qsub -e $shellscripts -o $shellscripts $qsub_q -t 0-$end $job\`
+    my $end = $fq_count - 1;
+    my $job = "$shellscripts/step_2.fq2fa.sh";
+    if ( !@depend ) {
+      print QSUBARRAY
+        "STEP2=\`qsub -e $shellscripts -o $shellscripts $qsub_q -t 0-$end $job\`
 echo \$STEP2\n";
-        @depend = ("STEP2", "afterokarray");
-      }else{
-        my ($last_job,$afterok) = @depend;
-        @depend = ("STEP2", "afterokarray");
-        my $jobName = $depend[0];
-        print QSUBARRAY "$jobName=`qsub -e $shellscripts -o $shellscripts $qsub_q -t 0-$end -W depend=$afterok:\$$last_job $job`
+      @depend = ( "STEP2", "afterokarray" );
+    }
+    else {
+      my ( $last_job, $afterok ) = @depend;
+      @depend = ( "STEP2", "afterokarray" );
+      my $jobName = $depend[0];
+      print QSUBARRAY
+"$jobName=`qsub -e $shellscripts -o $shellscripts $qsub_q -t 0-$end -W depend=$afterok:\$$last_job $job`
 echo \$$jobName\n";
-      }
-    print QSUBARRAY2
-      "sh $shellscripts/step_2/\$PBS_ARRAYID.fq2fa.sh";
+    }
+    print QSUBARRAY2 "sh $shellscripts/step_2/\$PBS_ARRAYID.fq2fa.sh";
   }
   elsif ($qsub_array) {
     unlink "$shellscripts/step_2.fq2fa.sh";
@@ -455,7 +474,7 @@ while ( my $line = <INFASTA> ) {
     ##create new dir for files: workingDir/outdir/TE/
     my $te_dir = "$current_dir/$top_dir/$id";
     push @te_fastas, "$te_dir/$te_file";
-    #`mkdir -p $te_dir`;
+
     mkdir $te_dir;
     open( OUTFASTA, ">$te_dir/$te_file" ) or die "$!\n";
     print OUTFASTA $line;
@@ -475,9 +494,10 @@ close(OUTFASTA);
 #foreach TE fasta blat against target chromosome and parse and find insertion sites
 my $depend = 1 if @depend;
 foreach my $te_path (@te_fastas) {
-  if ($depend){
-    @depend = ("STEP2","afterokarray"); 
-  }else{
+  if ($depend) {
+    @depend = ( "STEP2", "afterokarray" );
+  }
+  else {
     @depend = ();
   }
   my @path     = split '/', $te_path;
@@ -485,10 +505,6 @@ foreach my $te_path (@te_fastas) {
   my $path     = join '/', @path;
   my $TE       = $te_fasta;
   $TE =~ s/\.fa//;
-  #`mkdir -p $path/blat_output`;
-  #`mkdir -p $path/flanking_seq`;
-  #`mkdir -p $path/te_containing_fq`;
-  #`mkdir -p $path/te_only_read_portions_fa`;
   mkdir "$path/blat_output";
   mkdir "$path/flanking_seq";
   mkdir "$path/te_containing_fq";
@@ -512,8 +528,9 @@ foreach my $te_path (@te_fastas) {
     $fa_name =~ s/\.fa$//;
     my $shell_dir = "$shellscripts/step_3/$TE";
     if ($parallel) {
-      make_path($shell_dir , {mode => 0755} );
-      open OUTSH, ">$shell_dir/$i.$TE.blat.sh" or die "Can't open $shell_dir/$i.$TE.blat.sh $!\n";
+      make_path( $shell_dir, { mode => 0755 } );
+      open OUTSH, ">$shell_dir/$i.$TE.blat.sh"
+        or die "Can't open $shell_dir/$i.$TE.blat.sh $!\n";
       print PARALLEL "sh $shell_dir/$i.$TE.blat.sh\n" if !$qsub_array;
     }
 
@@ -522,8 +539,7 @@ foreach my $te_path (@te_fastas) {
       my $cmd =
 "blat -minScore=$blat_minScore -tileSize=$blat_tileSize $te_path $fa $path/blat_output/$fa_name.te_$TE.blatout";
       print OUTSH "$cmd\n" if $parallel;
-      #`$cmd` if !$parallel;
-      system ($cmd) if !$parallel;
+      system($cmd) if !$parallel;
     }
 
     #use pre-existing te_containing_fq files
@@ -537,33 +553,33 @@ foreach my $te_path (@te_fastas) {
     if ($parallel) {
       print OUTSH "$cmd\n";
       close OUTSH;
-      #`chmod +x $shell_dir/*blat.sh`;
-      chmod 0755 , "$shell_dir/*blat.sh";
+      chmod 0755, "$shell_dir/*blat.sh";
     }
     else {
-      #`$cmd` if !$parallel;
-      system ($cmd) if !$parallel;
+      system($cmd) if !$parallel;
     }
   }
   if ($qsub_array) {
-      my $end = $fq_file_count -1;
-      my $job = "$shellscripts/step_3.$TE.blat.sh";
-      my $desc = $TE;
-      $desc =~ s/\W/_/;
-      if (!@depend){
-        print QSUBARRAY "STEP_3_$desc=\`qsub -e $shellscripts -o $shellscripts $qsub_q -t 0-$end $job\`
+    my $end  = $fq_file_count - 1;
+    my $job  = "$shellscripts/step_3.$TE.blat.sh";
+    my $desc = $TE;
+    $desc =~ s/\W/_/;
+    if ( !@depend ) {
+      print QSUBARRAY
+"STEP_3_$desc=\`qsub -e $shellscripts -o $shellscripts $qsub_q -t 0-$end $job\`
 echo \$STEP_3_$desc\n";
-        @depend = ("STEP_3_$desc", "afterokarray");
-      }else{
-        my ($last_job,$afterok) = @depend;
-        @depend = ("STEP_3_$desc", "afterokarray");
-        my $jobName = $depend[0];
-        print QSUBARRAY "$jobName=`qsub -e $shellscripts -o $shellscripts $qsub_q -t 0-$end -W depend=$afterok:\$$last_job $job`
+      @depend = ( "STEP_3_$desc", "afterokarray" );
+    }
+    else {
+      my ( $last_job, $afterok ) = @depend;
+      @depend = ( "STEP_3_$desc", "afterokarray" );
+      my $jobName = $depend[0];
+      print QSUBARRAY
+"$jobName=`qsub -e $shellscripts -o $shellscripts $qsub_q -t 0-$end -W depend=$afterok:\$$last_job $job`
 echo \$$jobName\n";
-      
-      }
-    print QSUBARRAY3
-"sh $shellscripts/step_3/$TE/\$PBS_ARRAYID.$TE.blat.sh";
+
+    }
+    print QSUBARRAY3 "sh $shellscripts/step_3/$TE/\$PBS_ARRAYID.$TE.blat.sh";
   }
   ##if a genome file was provided, align seqs to genome
   ##if no genome file was provided, will only blat and trim reads of te seq
@@ -574,45 +590,45 @@ echo \$$jobName\n";
     print OUTREGEX "$mate_file_1\t$mate_file_2\t$mate_file_unpaired\t$TSD{$TE}";
     my $cmd =
 "$scripts/relocaTE_align.pl $scripts $param_path $genome_path $outregex $TE $exper";
-    if ( !$parallel ) { 
+    if ( !$parallel ) {
       ## run now
-      `$cmd`;
+      system ($cmd);
     }
     else {
       my $shell_dir = "$shellscripts/step_4/$TE";
       $genome_path =~ /.+\/(.+)\.fa$/;
       my $ref = $1;
-      `mkdir -p $shell_dir`;
+      #`mkdir -p $shell_dir`;
+      mkdir $shell_dir;
       open OUTSH, ">$shell_dir/step_4.$ref.$TE.align.sh";
       print OUTSH "$cmd\n";
       print PARALLEL "sh $shell_dir/step_4.$ref.$TE.align.sh\n" if !$qsub_array;
       close OUTSH;
-      `chmod +x $shell_dir/step_4.$ref.$TE.align.sh`;
-      #print QSUBARRAY "qsub $shell_dir/step_4.$ref.$TE.align.sh\n";
-      if ($qsub_array){
-      my $job = "$shell_dir/step_4.$ref.$TE.align.sh";
-      my $desc = $TE;
-      $desc =~ s/\W/_/;
-      if (!@depend ){
-        print QSUBARRAY "STEP_4_$desc=\`qsub -e $shellscripts -o $shellscripts $qsub_q $job\`
+      #`chmod +x $shell_dir/step_4.$ref.$TE.align.sh`;
+      chmod 0755, "$shell_dir/step_4.$ref.$TE.align.sh";
+
+      if ($qsub_array) {
+        my $job  = "$shell_dir/step_4.$ref.$TE.align.sh";
+        my $desc = $TE;
+        $desc =~ s/\W/_/;
+        if ( !@depend ) {
+          print QSUBARRAY
+"STEP_4_$desc=\`qsub -e $shellscripts -o $shellscripts $qsub_q $job\`
 echo \$STEP_4_$desc\n";
-        @depend = ("STEP_4_$desc", "afterok");
-      }else{
-        my ($last_job,$afterok) = @depend;
-        @depend = ("STEP_4_$desc", "afterok");
-        my $jobName = $depend[0];
-        print QSUBARRAY "$jobName=`qsub -e $shellscripts -o $shellscripts $qsub_q -W depend=$afterok:\$$last_job $job`
+          @depend = ( "STEP_4_$desc", "afterok" );
+        }
+        else {
+          my ( $last_job, $afterok ) = @depend;
+          @depend = ( "STEP_4_$desc", "afterok" );
+          my $jobName = $depend[0];
+          print QSUBARRAY
+"$jobName=`qsub -e $shellscripts -o $shellscripts $qsub_q -W depend=$afterok:\$$last_job $job`
 echo \$$jobName\n";
+        }
       }
     }
-   }
 
     my $genome_count = 0;
-#    foreach my $genome_file (@genome_fastas) {
-#      $genome_file =~ /.+\/(.+)\.fa$/;
-#      my $target = $1;
-#      $genome_path =~ /.+\/(.+)\.fa$/;
-#      my $ref           = $1;
     foreach my $seq_id (@genome_seqs) {
       $genome_path =~ /.+\/(.+)\.fa$/;
       my $ref           = $1;
@@ -620,42 +636,56 @@ echo \$$jobName\n";
       my $cmd =
 "$scripts/relocaTE_insertionFinder.pl $merged_bowtie $seq_id $genome_path $TE $outregex $exper $flanking_seq_len $existing_TE_path $mismatch_allowance";
       if ( !$parallel ) {
-        `$cmd`;
+        system ($cmd);
       }
       else {
         my $shell_dir = "$shellscripts/step_5/$TE";
-        `mkdir -p $shell_dir`;
+        #`mkdir -p $shell_dir`;
+        mkdir $shell_dir;
         open OUTSH, ">$shell_dir/$genome_count.$TE.findSites.sh";
         print OUTSH "$cmd\n";
         close OUTSH;
-        print PARALLEL "sh $shell_dir/$genome_count.$TE.findSites.sh\n" if !$qsub_array;
-        `chmod +x $shell_dir/*findSites.sh`;
+        print PARALLEL "sh $shell_dir/$genome_count.$TE.findSites.sh\n"
+          if !$qsub_array;
+        #`chmod +x $shell_dir/*findSites.sh`;
+        chmod 0755, "$shell_dir/$genome_count.$TE.findSites.sh";
       }
       $genome_count++;
     }
     if ($qsub_array) {
-      my $end = $genome_count -1;
-      my $job = "$shellscripts/step_5.$TE.finder.sh";
+      my $end             = $genome_count - 1;
+      my $job             = "$shellscripts/step_5.$TE.finder.sh";
       my $existing_depend = '';
-      if ($qsub_existingTE_cmd ){
+      if ($qsub_existingTE_cmd) {
         $existing_depend = "-W depend=afterok:\$EXISTINGTE" if !@depend;
         $existing_depend = ":\$EXISTINGTE" if @depend;
       }
+      if ( $qsub_formatGenome_cmd and $existing_depend eq '' ) {
+        $existing_depend = "-W depend=afterok:\$STEP1" if !@depend;
+      }
+      elsif ( $qsub_formatGenome_cmd and ( $existing_depend ne '' or @depend ) )
+      {
+        $existing_depend .= ":\$STEP1";
+      }
       my $desc = $TE;
       $desc =~ s/\W/_/;
-      if (!@depend){
-        print QSUBARRAY "STEP_5_$desc=\`qsub -e $shellscripts -o $shellscripts $qsub_q -t 0-$end $existing_depend $job\`
+      if ( !@depend ) {
+        print QSUBARRAY
+"STEP_5_$desc=\`qsub -e $shellscripts -o $shellscripts $qsub_q -t 0-$end $existing_depend $job\`
 echo \$STEP_5_$desc\n";
-        @depend = ("STEP_5_$desc", "afterokarray");
-      }else{
-        my ($last_job,$afterok) = @depend;
-        @depend = ("STEP_5_$desc", "afterokarray");
+        @depend = ( "STEP_5_$desc", "afterokarray" );
+      }
+      else {
+        my ( $last_job, $afterok ) = @depend;
+        @depend = ( "STEP_5_$desc", "afterokarray" );
         my $jobName = $depend[0];
-        print QSUBARRAY "$jobName=`qsub -e $shellscripts -o $shellscripts $qsub_q -t 0-$end -W depend=$afterok:\$$last_job","$existing_depend $job`
+        print QSUBARRAY
+"$jobName=`qsub -e $shellscripts -o $shellscripts $qsub_q -t 0-$end -W depend=$afterok:\$$last_job",
+          "$existing_depend $job`
 echo \$$jobName\n";
       }
       print QSUBARRAY4
-"sh $shellscripts/step_5/$TE/\$PBS_ARRAYID.$TE.findSites.sh";
+        "sh $shellscripts/step_5/$TE/\$PBS_ARRAYID.$TE.findSites.sh";
     }
   }
   if ($qsub_array) {
@@ -671,11 +701,15 @@ foreach my $te_path (@te_fastas) {
   my $path     = join '/', @path;
   my $TE       = $te_fasta;
   $TE =~ s/\.fa//;
-    if ($parallel){
-      `mkdir -p $shellscripts/step_6/$TE`;
-      open FINISH , ">$shellscripts/step_6/$TE/step_6.$TE.finishing.sh";
-      print PARALLEL "sh $shellscripts/step_6/$TE/step_6.$TE.finishing.sh\n" if !$qsub_array;
-      print FINISH "
+  if ($parallel) {
+    #`mkdir -p $shellscripts/step_6/$TE`;
+    mkdir "$shellscripts/step_6/$TE";
+    open FINISH, ">$shellscripts/step_6/$TE/step_6.$TE.finishing.sh";
+    print PARALLEL "sh $shellscripts/step_6/$TE/step_6.$TE.finishing.sh\n"
+      if !$qsub_array;
+## Need to put all of this in a perl script then have the
+## finishing shell script execute that perl script
+    print FINISH "
 `mkdir -p $path/results/all_files`
 
 #combine confident insertions to one file
@@ -707,86 +741,91 @@ mv $path/results/temp5 $path/results/$exper.confident.$TE.reads.txt
 mv $path/results/*.$TE.te_insertion_sites.reads.list $path/results/all_files
 
 ";
-      `chmod +x $shellscripts/step_6/$TE/step_6.$TE.finishing.sh`;
-    }
-    if ($qsub_array){
-      my $job = "$shellscripts/step_6/$TE/step_6.$TE.finishing.sh";
-      my $desc = $TE;
-      $desc =~ s/\W/_/;
-      if (!@depend){
-        my $jobName = "STEP_6_$desc";
-        print QSUBARRAY "$jobName=\`qsub -e $shellscripts -o $shellscripts $qsub_q $job\`
+    `chmod +x $shellscripts/step_6/$TE/step_6.$TE.finishing.sh`;
+  }
+  if ($qsub_array) {
+    my $job  = "$shellscripts/step_6/$TE/step_6.$TE.finishing.sh";
+    my $desc = $TE;
+    $desc =~ s/\W/_/;
+    if ( !@depend ) {
+      my $jobName = "STEP_6_$desc";
+      print QSUBARRAY
+        "$jobName=\`qsub -e $shellscripts -o $shellscripts $qsub_q $job\`
 echo \$$jobName\n";
-        @depend = ("STEP_6_$desc", "afterok");
-      }else{
-        my ($last_job,$afterok) = ("STEP_5_$desc", "afterokarray");
-        @depend = ("STEP_6_$desc", "afterok");
-        my $jobName = $depend[0];
-        print QSUBARRAY "$jobName=`qsub -e $shellscripts -o $shellscripts $qsub_q -W depend=$afterok:\$$last_job $job`
-echo \$$jobName\n";
-      }
+      @depend = ( "STEP_6_$desc", "afterok" );
     }
-    if (!$parallel and !$qsub_array){
-      ##do it now
-       ##combine and delete individual chr files for confident sites
-      `echo \"TE\tTSD\tEper\tchromosome\tinsertion_site\tleft_flanking_read_count\tright_flanking_read_count\tleft_flanking_seq\tright_flanking_seq\" > $path/results/temp`;
-        my @files = `ls $path/results/*.$TE.te_insertion_sites.table.txt`;
-        foreach my $file (@files){
-          chomp $file;
-         `grep -v flanking_read_count $file  >> $path/results/temp`;
-          unlink $file;
-        } 
-       `mv $path/results/temp $path/results/$exper.confident.$TE.txt`;
+    else {
+      my ( $last_job, $afterok ) = ( "STEP_5_$desc", "afterokarray" );
+      @depend = ( "STEP_6_$desc", "afterok" );
+      my $jobName = $depend[0];
+      print QSUBARRAY
+"$jobName=`qsub -e $shellscripts -o $shellscripts $qsub_q -W depend=$afterok:\$$last_job $job`
+echo \$$jobName\n";
+    }
+  }
+  if ( !$parallel and !$qsub_array ) {
+    ##do it now
+    ##combine and delete individual chr files for confident sites
+`echo \"TE\tTSD\tEper\tchromosome\tinsertion_site\tleft_flanking_read_count\tright_flanking_read_count\tleft_flanking_seq\tright_flanking_seq\" > $path/results/temp`;
+    my @files = `ls $path/results/*.$TE.te_insertion_sites.table.txt`;
+    foreach my $file (@files) {
+      chomp $file;
+      `grep -v flanking_read_count $file  >> $path/results/temp`;
+      unlink $file;
+    }
+    `mv $path/results/temp $path/results/$exper.confident.$TE.txt`;
 
+    ##combine and delete individual chr files for all sites
+`echo \"TE\tTSD\tExper\tchromosome\tinsertion_site\tcombined_read_count\tright_flanking_read_count\tleft_flanking_read_count\" > $path/results/temp2`;
+    @files = `ls $path/results/*.$TE.te_insertion.all.txt`;
+    foreach my $file (@files) {
+      chomp $file;
+      `grep -v total $file | grep -v Note  >> $path/results/temp2`;
+      unlink $file;
+    }
+    `mv $path/results/temp2 $path/results/$exper.all.$TE.txt`;
 
-       ##combine and delete individual chr files for all sites
-       `echo \"TE\tTSD\tExper\tchromosome\tinsertion_site\tcombined_read_count\tright_flanking_read_count\tleft_flanking_read_count\" > $path/results/temp2`;        
-        @files = `ls $path/results/*.$TE.te_insertion.all.txt`;
-        foreach my $file (@files){
-          chomp $file;
-         `grep -v total $file | grep -v Note  >> $path/results/temp2`;
-          unlink $file;
-        } 
-       `mv $path/results/temp2 $path/results/$exper.all.$TE.txt`;
+    ##combine and delete individual chr fasta files
+    @files = `ls $path/results/*.$TE.te_insertion_sites.fa`;
+    foreach my $file (@files) {
+      chomp $file;
+      `cat $file >> $path/results/temp3`;
+      unlink $file;
+    }
+    `mv $path/results/temp3 $path/results/$exper.confident.$TE.ref_sites.fa`;
 
-       ##combine and delete individual chr fasta files
-        @files = `ls $path/results/*.$TE.te_insertion_sites.fa`;
-        foreach my $file (@files){
-          chomp $file;
-         `cat $file >> $path/results/temp3`;
-          unlink $file;
-        } 
-       `mv $path/results/temp3 $path/results/$exper.confident.$TE.ref_sites.fa`;
+    ##combine and delete individual chr gff files
+    `echo \"##gff-version 3\" > $path/results/temp4`;
+    @files = `ls $path/results/*.$TE.te_insertion_sites.gff`;
+    foreach my $file (@files) {
+      chomp $file;
+      `grep -v gff $file >> $path/results/temp4`;
+      unlink $file;
+    }
+    `mv $path/results/temp4 $path/results/$exper.confident.$TE.gff`;
 
-       ##combine and delete individual chr gff files 
-       `echo \"##gff-version 3\" > $path/results/temp4`;        
-        @files = `ls $path/results/*.$TE.te_insertion_sites.gff`;
-        foreach my $file (@files){
-          chomp $file;
-         `grep -v gff $file >> $path/results/temp4`;
-          unlink $file;
-        } 
-       `mv $path/results/temp4 $path/results/$exper.confident.$TE.gff`;
-
-       ##combine and delete individual chr reads list
-        @files = `ls $path/results/*.$TE.te_insertion_sites.reads.list`;
-        foreach my $file (@files){
-          chomp $file;
-         `cat $file >> $path/results/temp5`;
-          unlink $file;
-        } 
-       `mv $path/results/temp5 $path/results/$exper.confident.$TE.reads.txt`;
-     }
-    close FINISH;
+    ##combine and delete individual chr reads list
+    @files = `ls $path/results/*.$TE.te_insertion_sites.reads.list`;
+    foreach my $file (@files) {
+      chomp $file;
+      `cat $file >> $path/results/temp5`;
+      unlink $file;
+    }
+    `mv $path/results/temp5 $path/results/$exper.confident.$TE.reads.txt`;
+  }
+  close FINISH;
 }
 
 if ($qsub_array) {
   close QSUBARRAY;
 ## this would happen before IO was finished on the file
-#  system ("qsub $qsub_q $current_dir/$top_dir/run_these_jobs.sh");
-}elsif ($parallel){
+  #  system ("qsub $qsub_q $current_dir/$top_dir/run_these_jobs.sh");
+}
+elsif ($parallel) {
+
   #system (sort "$current_dir/$top_dir/run_these_jobs.sh");
-  print "Run each command line statement in $current_dir/$top_dir/run_these_jobs.sh.
+  print
+    "Run each command line statement in $current_dir/$top_dir/run_these_jobs.sh.
 --Run these in order (step_1,step_2,step_3, so on)  for each TE.
 --For example, all the step_3 scripts for a specific TE should be successfully completed (finished without errors) 
 before running a step_4 script of the same TE.
