@@ -53,7 +53,6 @@ GetOptions(
 );
 my $current_dir;
 
-#$qsub_array = 0 if $parallel   == 0;
 $parallel = 1 if $qsub_array == 1;
 if ( defined $qsub_q ) {
   $qsub_q = "-q $qsub_q";
