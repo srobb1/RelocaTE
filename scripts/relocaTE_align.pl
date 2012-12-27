@@ -80,7 +80,7 @@ else {    ##if only unmatched files are provided
 my @genome_dir = split '/', $genome_file;
 my $genome_fa  = pop @genome_dir;
 my $genome_dir = join '/', @genome_dir;
-$genome_fa =~ /(.+)\.fa$/;
+$genome_fa =~ /(.+)\.(fa|fasta)$/;
 my $target     = $1;
 my $target_dir = "$path/$target";
 ##make new directories for file output

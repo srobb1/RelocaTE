@@ -300,9 +300,10 @@ SEQUENCE2\n";
     $cmd = "bowtie-build -f $genome_path $genome_path.bowtie_build_index";
     $qsub_formatGenome_cmd = 1;
   }
-  $genome_path =~ /.+\/(.+)\.fa$/;
-  my $ref = $1;
-
+  my $ref = 'ref';
+  if ($genome_path =~ /(?:.+\/)?(.+)\.(fa|fasta)$/){
+    $ref = $1;
+  }
   if ( $parallel and defined $cmd ) {
     my $shell_dir = "$shellscripts/step_1";
     mkdir $shell_dir;
@@ -595,7 +596,7 @@ echo \$$jobName\n";
     }
     else {
       my $shell_dir = "$shellscripts/step_4/$TE";
-      $genome_path =~ /.+\/(.+)\.fa$/;
+      $genome_path =~ /.+\/(.+)\.(fa|fasta)$/;
       my $ref = $1;
       #`mkdir -p $shell_dir`;
       make_path( $shell_dir, { mode => 0755 } );
@@ -630,7 +631,7 @@ echo \$$jobName\n";
 
     my $genome_count = 0;
     foreach my $seq_id (@genome_seqs) {
-      $genome_path =~ /.+\/(.+)\.fa$/;
+      $genome_path =~ /.+\/(.+)\.(fa|fasta)$/;
       my $ref           = $1;
       my $merged_bowtie = "$path/bowtie_aln/$ref.$TE.bowtie.out";
       my $cmd =
