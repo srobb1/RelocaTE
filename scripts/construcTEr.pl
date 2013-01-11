@@ -9,7 +9,7 @@ my $working_dir     = shift;
 my $regex_file      = shift;
 my $insert_pos_file = shift;
 my %seqs;
-
+my $mm_cutoff = 0;
 ##get the regelar expression patterns for mates and for the TE
 ##when passed on the command line as an argument, even in single
 ##quotes I lose special regex characters
@@ -202,7 +202,8 @@ foreach my $te ( keys %seqs ) {
   if ( !-e "$genome_file.bowtie_build_index.1.ebwt" ) {
     `bowtie-build -f $genome_file $genome_file.bowtie_build_index`;
   }
-`bowtie --best -a -v 2 -f $genome_file.bowtie_build_index $bowtie_2_aln  1> $bowtie_out 2> $working_dir/bowtie.stderr`;
+#`bowtie --best -a -v 2 -f $genome_file.bowtie_build_index $bowtie_2_aln  1> $bowtie_out 2> $working_dir/bowtie.stderr`;
+`bowtie --best -f $genome_file.bowtie_build_index $bowtie_2_aln  1> $bowtie_out 2> $working_dir/bowtie.stderr`;
 ##parse bowtie out and record the genomic locations of alignments
   my $file_path = File::Spec->rel2abs($bowtie_out);
   open( my $BOWTIE_fh, "<", $file_path ) or die "Can't open $file_path $!\n";
@@ -211,6 +212,7 @@ foreach my $te ( keys %seqs ) {
     my @line = split /\t/, $line;
     my ( $name, $strand, $target, $start, $seq, $qual, $M, $mismatch ) =
       split /\t/, $line;
+    next if $M > 0 ; # next if read maps to more than one place
     my ( $this_mate, $id ) = split ',', $name;
     ##remove /1 or /2 from the read name
     ##7:12:11277:9907:Y/1     +       Chr1    22134042        TTTTTTATAAATGGATAA      DGGGGGDGGGGFGDGGGG      4       7:A>T,16:C>A
@@ -255,7 +257,7 @@ foreach my $te ( keys %seqs ) {
             my $seq_len =
               length $seqs{$te}{$id}{$mate}{aln}{$target}{$id_str}{seq};
             my $percent_mm = $mismatches / $seq_len;
-            if ( $percent_mm < 0.1 ) {
+            if ( $percent_mm <= $mm_cutoff ) {
               $genome_aln = 1;
             }
             else {
@@ -344,7 +346,9 @@ my %inserts;
 if (-e $insert_pos_file){
 open INSERTS, "$insert_pos_file";
 while (my $line = <INSERTS>){
-  next if $line =~ /^TE.+Exper.+chromosome.+insertion_site.+left_flanking_read_count/;
+  ##TE      TSD     Exper   chromosome      insertion_site  combined_read_count     right_flanking_read_count       left_flanking_read_count
+  next if $line =~ /^TE.+Exper.+chromosome.+insertion_site/;
+  next if $line =~/^\s/;
   my ($TE, $TSD, $sample_desc, $target, $pos) = split /\t/, $line;
   $inserts{$target}{"$target:$pos"}{pos}=$pos;
   }
