@@ -48,7 +48,7 @@ if ( $existing_TE ne 'NONE' ) {
       chomp( $line = <INTE> );
     }
     next if $line !~ /$usr_target[:\s]/;
-    next if $line !~ /$TE\s/;
+    next if $line !~ /\b$TE\b/;
     if ($blat) {
       my @blat     = split /\t/, $line;
       my $match    = $blat[0];
