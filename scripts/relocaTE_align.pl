@@ -103,7 +103,12 @@ foreach my $key ( sort keys %flanking_fq ) {
     my @fq_path = split '/', $flanking_fq;
     my $fq_name = pop @fq_path;
     $fq_name =~ s/\.fq$//;
-`bowtie --best -q $genome_file.bowtie_build_index $flanking_fq  1> $path/bowtie_aln/$target.$fq_name.bowtie.single.out 2>> $path/$target.stderr`;
+##bowtie
+`bowtie --sam --sam-nohead --sam-nosq -a -m 1 -v 3 -q $genome_file.bowtie_build_index $flanking_fq  1> $path/bowtie_aln/$target.$fq_name.bowtie.single.out 2>> $path/$target.stderr`;
+##bowtie2 -- need to get comparable -a -m1 -v3 arguments
+#`bowtie2 --no-hd --no-sq -a -m 1 -v 3 -x $genome_file.bowtie2_build_index -U $flanking_fq  1> $path/bowtie_aln/$target.$fq_name.bowtie.single.out 2>> $path/$target.stderr`;
+## orginal
+#`bowtie --best -q $genome_file.bowtie_build_index $flanking_fq  1> $path/bowtie_aln/$target.$fq_name.bowtie.single.out 2>> $path/$target.stderr`;
     push @bowtie_out_files,
       "$path/bowtie_aln/$target.$fq_name.bowtie.single.out";
   }    #end of foreach my $type ( sort keys %{ $flanking_fq{$key} } )
@@ -122,10 +127,19 @@ foreach my $key ( sort keys %flanking_fq ) {
     if (  -s "$flanking_fq_1.matched"
       and -s "$flanking_fq_2.matched" )
     {
-`bowtie --best  -q $genome_file.bowtie_build_index -1 $flanking_fq_1.matched -2 $flanking_fq_2.matched 1> $path/bowtie_aln/$target.$fq_name.bowtie.mates.out 2>> $path/$target.stderr`;
+##bowtie
+`bowtie --sam --sam-nohead --sam-nosq -a -m 1 -v 3 -q $genome_file.bowtie_build_index -1 $flanking_fq_1.matched -2 $flanking_fq_2.matched 1> $path/bowtie_aln/$target.$fq_name.bowtie.mates.out 2>> $path/$target.stderr`;
+##bowtie2 -- need to get comparable -a -m1 -v3 arguments
+#`bowtie2 --no-unal --no-hd --no-sq -a -m 1 -v 3 -x $genome_file.bowtie2_build_index -1 $flanking_fq_1.matched -2 $flanking_fq_2.matched 1> $path/bowtie_aln/$target.$fq_name.bowtie.mates.out 2>> $path/$target.stderr`;
+#`bowtie --best  -q $genome_file.bowtie_build_index -1 $flanking_fq_1.matched -2 $flanking_fq_2.matched 1> $path/bowtie_aln/$target.$fq_name.bowtie.mates.out 2>> $path/$target.stderr`;
       push @bowtie_out_files,
         "$path/bowtie_aln/$target.$fq_name.bowtie.mates.out";
-`bowtie --best -q $genome_file.bowtie_build_index $te_dir_path/flanking_seq/$fq_name.unPaired.fq 1> $path/bowtie_aln/$target.$fq_name.bowtie.unPaired.out 2>> $path/$target.stderr`;
+##bowtie
+`bowtie --sam --sam-nohead --sam-nosq -a -m 1 -v 3 -q $genome_file.bowtie_build_index $te_dir_path/flanking_seq/$fq_name.unPaired.fq 1> $path/bowtie_aln/$target.$fq_name.bowtie.unPaired.out 2>> $path/$target.stderr`;
+##bowtie2 -- need to get comparable -a -m1 -v3 arguments
+#`bowtie2 --no-unal --no-hd --no-sq -a -m 1 -v 3 -x $genome_file.bowtie2_build_index  $te_dir_path/flanking_seq/$fq_name.unPaired.fq 1> $path/bowtie_aln/$target.$fq_name.bowtie.unPaired.out 2>> $path/$target.stderr`;
+##bowtie orignial
+#`bowtie --best -q $genome_file.bowtie_build_index $te_dir_path/flanking_seq/$fq_name.unPaired.fq 1> $path/bowtie_aln/$target.$fq_name.bowtie.unPaired.out 2>> $path/$target.stderr`;
       push @bowtie_out_files,
         "$path/bowtie_aln/$target.$fq_name.bowtie.unPaired.out";
     }  # end of if(-s "$flanking_fq_1.matched" and -s "$flanking_fq_2.matched" )

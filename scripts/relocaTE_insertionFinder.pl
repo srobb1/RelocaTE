@@ -3,7 +3,7 @@ use Data::Dumper;
 
 ## 12012012: added the abilty to parse TE vs REF blat for creating a list of existing TEs 
 ## ---
-## 07272012: added the abilty to filter based on bowtie column 7 (number of times this
+## 07272012: added the abilty to filter based on sam column 7 (number of times this
 ## reads aligns to exactly the same sequence of the reference), only uniq matches allowed
 ## ---
 ## 07132012: added the ability to filter the aligned reads while taking strand into
@@ -22,7 +22,7 @@ use Bio::DB::Fasta;
 my $required_reads = 1;    ## rightReads + leftReads needs to be > to this value
 my $required_left_reads  = 1;       ## needs to be >= to this value
 my $required_right_reads = 1;       ## needs to be >= to this value
-my $bowtie               = shift;
+my $sam               = shift;
 my $usr_target           = shift;
 my $genome_path          = shift;
 my $TE                   = shift;
@@ -33,6 +33,25 @@ my $existing_TE = shift;
 my $mm_allow = shift;
 my %existingTE;
 my %existingTE_found;
+
+##if flag contains 16 it is on the minus strand and is reported as the revcomp in the sam file
+my %flag_minus_strand = (
+  16,  1, 17,  1, 18,  1, 19,  1, 20,  1, 21,  1, 22,  1, 23,  1, 24,  1,
+  25,  1, 26,  1, 27,  1, 28,  1, 29,  1, 30,  1, 31,  1, 48,  1, 49,  1,
+  50,  1, 51,  1, 52,  1, 53,  1, 54,  1, 55,  1, 56,  1, 57,  1, 58,  1,
+  59,  1, 60,  1, 61,  1, 62,  1, 63,  1, 80,  1, 81,  1, 82,  1, 83,  1,
+  84,  1, 85,  1, 86,  1, 87,  1, 88,  1, 89,  1, 90,  1, 91,  1, 92,  1,
+  93,  1, 94,  1, 95,  1, 112, 1, 113, 1, 114, 1, 115, 1, 116, 1, 117, 1,
+  118, 1, 119, 1, 120, 1, 121, 1, 122, 1, 123, 1, 124, 1, 125, 1, 126, 1,
+  127, 1, 144, 1, 145, 1, 146, 1, 147, 1, 148, 1, 149, 1, 150, 1, 151, 1,
+  152, 1, 153, 1, 154, 1, 155, 1, 156, 1, 157, 1, 158, 1, 159, 1, 176, 1,
+  177, 1, 178, 1, 179, 1, 180, 1, 181, 1, 182, 1, 183, 1, 184, 1, 185, 1,
+  186, 1, 187, 1, 188, 1, 189, 1, 190, 1, 191, 1, 208, 1, 209, 1, 210, 1,
+  211, 1, 212, 1, 213, 1, 214, 1, 215, 1, 216, 1, 217, 1, 218, 1, 219, 1,
+  220, 1, 221, 1, 222, 1, 223, 1, 240, 1, 241, 1, 242, 1, 243, 1, 244, 1,
+  245, 1, 246, 1, 247, 1, 248, 1, 249, 1, 250, 1, 251, 1, 252, 1, 253, 1,
+  254, 1, 255, 1
+);
 
 if ( $existing_TE ne 'NONE' ) {
   my $blat = 0;
@@ -118,25 +137,25 @@ my $db_obj = Bio::DB::Fasta->new($genome_path);
 my $genome_seq = $db_obj->seq($usr_target);
 
 #remove redundant lines.
-open BOWTIE, "$bowtie"
-  or die "there seems to not be a bowtie file that i can open $!";
-my %bowtie;
-while ( my $line = <BOWTIE> ) {
+my %sam;
+open SAM, "$sam"
+  or die "there seems to not be a bowtie file that i can't open $sam $!";
+while ( my $line = <SAM> ) {
   chomp $line;
   my @line = split /\t/, $line;
   next if $line[2] ne $usr_target;
-  my $start = $line[3];
+  my $start = $line[3]; #bowtie is 0 sam is 1
 
-#remove /1 or /2 from the read name
-#7:12:11277:9907:Y/1     +       Chr1    22134042        TTTTTTATAAATGGATAA      DGGGGGDGGGGFGDGGGG      4       7:A>T,16:C>A
+  #remove /1 or /2 from the read name
+  #7:12:11277:9907:Y/1 
   $line =~ s/(^.+?)\/[1|2](\t.+$)/$1$2/;
-  if ( !exists $bowtie{$line} ) {
-    $bowtie{$line} = $start;
+  if ( !exists $sam{$line} ) {
+    $sam{$line} = $start;
   }
 }
 
 #make new sorted sam array by sorting on the value of the sort hash
-my @sorted_bowtie = sort { $bowtie{$a} <=> $bowtie{$b} } keys %bowtie;
+my @sorted_sam = sort { $sam{$a} <=> $sam{$b} } keys %sam;
 
 my $last_start = 0;
 my $last_end   = 0;
@@ -144,23 +163,17 @@ my %teInsertions;
 my $count   = 0;
 my @bin     = (0);
 my $TSD_len = length $TSD;
-foreach my $line (@sorted_bowtie) {
+foreach my $line (@sorted_sam) {
   chomp $line;
-  my ( $name, $strand, $target, $start, $seq, $qual, $M, $mismatch ) =
+  #my ( $name, $strand, $target, $start, $seq, $qual, $M, $mismatch ) =
+  my ( $name, $flag, $target, $start, $MAPQ, $cigar ,$MRNM , $MPOS , $TLEN, $seq, $qual, @tags) =
     split /\t/, $line;
-  ## column 7 = $M
-  ## this column contains the number of other instances where the same sequence aligned against
-  ## the same reference characters as were aligned against in the reported alignment. This is
-  ## not the number of other places the read aligns with the same number of mismatches.
-  next if $M > 0;
-  ## 0 offset, change to 1 offset
-  $start = $start + 1;
+  my $strand = '+';
+  if ( exists $flag_minus_strand{$flag} ){
+    $strand = '-';
+  }
+  ## don't need to filter results since we use bowtie -a -m 1 -v 3, already uniq mapping reads
   my $len = length $seq;
-  ## format offset:reference-base>read-base
-  my @mismatches = split ',', $mismatch;
-  my $mm_count = scalar @mismatches;
-  ## only 3 mismatch allowed total
-  next if $mm_count > 3;
   my $end = $len + $start - 1;
   next if $target ne $usr_target;
 
@@ -190,11 +203,11 @@ foreach my $line (@sorted_bowtie) {
     $last_end   = $end;
   }
 }
-##outdir/te/bowtie/bowtie_file
+##outdir/te/sam/sam_file
 my $event = 0;
-my @path = split '/', $bowtie;
+my @path = split '/', $sam;
 pop @path;    #throw out filename
-pop @path;    #throwout bowtie dir
+pop @path;    #throwout sam dir
 my $te_dir = join '/', @path;
 my $results_dir = "$te_dir/results";
 `mkdir -p $results_dir`;
