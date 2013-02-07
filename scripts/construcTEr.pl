@@ -62,7 +62,7 @@ foreach my $blat_file (@blat_files) {
   }
   $prefix =~ s/\.fq//;
   my @dbs = `ls $all_records_dir/$prefix*fa`;
-  print "$prefix: @dbs\n";
+  #print "$prefix: @dbs\n";
   ## @db should only be p1 and p2 == 2 files
   chomp @dbs;
   ##blat parser
@@ -344,7 +344,7 @@ foreach my $te ( keys %seqs ) {
 }
 my %inserts;
 if (-e $insert_pos_file){
-open INSERTS, "$insert_pos_file";
+open INSERTS, "$insert_pos_file" or die "Can't open $insert_pos_file\n";
 while (my $line = <INSERTS>){
   ##TE      TSD     Exper   chromosome      insertion_site  combined_read_count     right_flanking_read_count       left_flanking_read_count
   next if $line =~ /^TE.+Exper.+chromosome.+insertion_site/;
@@ -353,7 +353,6 @@ while (my $line = <INSERTS>){
   $inserts{$target}{"$target:$pos"}{pos}=$pos;
   }
 }
-#print Dumper \%inserts;
 open OUTFA , ">$working_dir/$TE.construcTEr.reads.fa";
 foreach my $target ( sort keys %construcTEr ) {
   foreach my $range (
@@ -383,6 +382,7 @@ foreach my $target ( sort keys %construcTEr ) {
           my $overlap = range_overlap( $te_range, $read_range );
           if ( $overlap >= 5 ) {
             $range_str = $range_str . ",overlap_with_$range_name=$overlap";
+            #print $range_str,"\n";
           }
         }
         $range_str =~ s/^,//;
@@ -441,6 +441,9 @@ if ($insert_pos_file) {
     close OUT;
   }
 }
+#print Dumper \%inserts;
+print Dumper \%construcTEr;
+
 #####SUBROUTINES########
 sub dir_split {
   my $path = shift;
