@@ -156,7 +156,8 @@ while ( my $line = <INFQ> ) {
         $trimmed_qual = substr $qual, $end + 1;
         ##te was removed from the end of the read
         my ($id, $desc) = $header=~/^(\S+)(.*)/;
-        $id .= ':start';
+        $id .= ':start:5';
+        
         $header = $id.$desc;
       }
       else {    ## strand is positive
@@ -164,7 +165,7 @@ while ( my $line = <INFQ> ) {
         $trimmed_qual = substr $qual, 0, $start;
         ##te was removed from the start of the read
         my ($id, $desc) = $header=~/^(\S+)(.*)/;
-        $id .= ':end';
+        $id .= ':end:5';
         $header = $id.$desc;
       }
       next if length $trimmed_seq <= $len_cutoff;
@@ -187,7 +188,7 @@ while ( my $line = <INFQ> ) {
         ( $te_subseq = reverse $te_subseq ) =~ tr/AaGgTtCcNn/TtCcAaGgNn/;
         ##te was removed from the start of the read
         my ($id, $desc) = $header=~/^(\S+)(.*)/;
-        $id .= ':end';
+        $id .= ':end:3';
         $header = $id.$desc;
       }
       else {    ## strand is +
@@ -195,7 +196,7 @@ while ( my $line = <INFQ> ) {
         $trimmed_qual = substr $qual, $end + 1;
         ##te was removed from the end of the read
         my ($id, $desc) = $header=~/^(\S+)(.*)/;
-        $id .= ':start';
+        $id .= ':start:3';
         $header = $id.$desc;
       }
       next if length $trimmed_seq <= $len_cutoff;

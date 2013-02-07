@@ -172,7 +172,20 @@ foreach my $line (@sorted_sam) {
   if ( exists $flag_minus_strand{$flag} ){
     $strand = '-';
   }
-  ## don't need to filter results since we use bowtie -a -m 1 -v 3, already uniq mapping reads
+  
+  ##bowtie2: there is no -v option
+  $tooManyMM = 0;
+  my $bowtie2 = 0;
+  if ($bowtie2){
+    foreach my $tag (@tags){
+      next unless $tag =~ /XM/;
+      $XM_tag =~ /XM:i:(\d+)/;
+      $tooManyMM = 1 if $1 > 3;
+    }
+  }
+  next if $tooManyMM;
+  
+  ## bowtie1: don't need to filter results since we use bowtie -a -m 1 -v 3, already uniq mapping reads
   my $len = length $seq;
   my $end = $len + $start - 1;
   next if $target ne $usr_target;
@@ -223,7 +236,7 @@ open OUTLIST, ">$results_dir/$usr_target.$TE.confident_nonref_insert_reads_list.
 print OUTGFF "##gff-version	3\n";
 ##output in tab delimited table
 my $tableHeader =
-"TE\tTSD\tExper\tchromosome\tinsertion_site\tleft_flanking_read_count\tright_flanking_read_count\tleft_flanking_seq\tright_flanking_seq\n";
+"TE\tTSD\tExper\tchromosome\tinsertion_site\tleft_flanking_read_count\tright_flanking_read_count\tleft_flanking_seq\tright_flanking_seq\tTE_orient\n";
 print OUTTABLE $tableHeader;
 
 my $note;
@@ -232,8 +245,10 @@ foreach my $insertionEvent ( sort { $a <=> $b } keys %teInsertions ) {
     foreach my $start (
       sort { $a <=> $b }
       keys %{ $teInsertions{$insertionEvent}{$foundTSD} }
-      )
-    {
+      ){
+      my $TE_orient_foward = exists $teInsertions{$insertionEvent}{$foundTSD}{$start}{TE_orient}{'+'} ? $teInsertions{$insertionEvent}{$foundTSD}{$start}{TE_orient}{'+'} : 0;
+      my $TE_orient_reverse = exists $teInsertions{$insertionEvent}{$foundTSD}{$start}{TE_orient}{'-'} ? $teInsertions{$insertionEvent}{$foundTSD}{$start}{TE_orient}{'-'} : 0; 
+      my $TE_orient = $TE_orient_foward > $TE_orient_reverse ? "+" : "-" ;
       my $start_count =
         $teInsertions{$insertionEvent}{$foundTSD}{$start}{count};
       my $left_count = $teInsertions{$insertionEvent}{$foundTSD}{$start}{left};
@@ -258,10 +273,10 @@ foreach my $insertionEvent ( sort { $a <=> $b } keys %teInsertions ) {
           $zero_base_coor + 1, $flank_len;
         $note = "Non-reference, not found in reference";
         my $tableLine =
-"$TE\t$foundTSD\t$exper\t$usr_target\t$coor\t$left_count\t$right_count\t$left_flanking_ref_seq\t$right_flanking_ref_seq\n";
+"$TE\t$foundTSD\t$exper\t$usr_target\t$coor\t$left_count\t$right_count\t$left_flanking_ref_seq\t$right_flanking_ref_seq\t$TE_orient\n";
         print OUTTABLE $tableLine;
         print OUTGFF
-"$usr_target\t$exper\ttransposable_element_insertion_site\t$coor\t$coor\t.\t.\t.\tID=$TE.te_insertion_site.$usr_target.$coor;Note=$note;left_flanking_read_count=$left_count;right_flanking_read_count=$right_count;left_flanking_seq=$left_flanking_ref_seq;right_flanking_seq=$right_flanking_ref_seq;TSD=$foundTSD\n";
+"$usr_target\t$exper\ttransposable_element_insertion_site\t$coor\t$coor\t.\t$TE_orient\t.\tID=$TE.te_insertion_site.$usr_target.$coor;Note=$note;left_flanking_read_count=$left_count;right_flanking_read_count=$right_count;left_flanking_seq=$left_flanking_ref_seq;right_flanking_seq=$right_flanking_ref_seq;TSD=$foundTSD\n";
         print OUTFASTA
 ">$exper.$usr_target.$coor TSD=$foundTSD $usr_target:$seq_start..$seq_end\n$left_flanking_ref_seq$right_flanking_ref_seq\n";
         print OUTALL
@@ -312,49 +327,58 @@ sub TSD_check {
   $rev_seq =~ tr /ATGCN/TACGN/;
   my $result = 0;
   my $TSD;
+  my $TE_orient = 0;
   my $pos;
   my $start;    ## first base of TSD
   ##start means that the TE was removed from the start of the read
+  ##5 means the trimmed end mapps to the 5prime end of the TE
+  ##3 means the trimmed end mapps to the 3prime end of the TE
+
   if ( $strand eq '+' ) {
-    if ( $read_name =~ /start$/
+    if ( $read_name =~ /start:[35]$/
       and ( $seq =~ /^($tsd)/ or $rev_seq =~ /($tsd)$/ ) )
     {
       $result = 1;
       $TSD    = $1;
       $pos    = "right";
+      $TE_orient = (substr ($read_name,-1) == 5 ) ? '-' : '+' ;
       $start  = $seq_start;
     }
     ##end means that the TE was removed from the end of the read
-    elsif ( $read_name =~ /end$/
+    elsif ( $read_name =~ /end:[35]$/
       and ( $seq =~ /($tsd)$/ or $rev_seq =~ /^($tsd)/ ) )
     {
       $result = 1;
       $TSD    = $1;
       $pos    = "left";
+      $TE_orient = (substr ($read_name,-1) == 5 )  ? '+' : '-' ;
       $start  = $seq_start + ( ( length $seq ) - ( length $TSD ) );
     }
   }
   elsif ( $strand eq '-' ) {
-    if ( $read_name =~ /start$/
+    if ( $read_name =~ /start:[53]$/
       and ( $seq =~ /($tsd)$/ or $rev_seq =~ /^($tsd)/ ) )
     {
       $result = 1;
       $TSD    = $1;
       $pos    = "left";
+      $TE_orient = (substr ($read_name,-1) == 5 ) ? '+' : '-' ;
       $start  = $seq_start + ( ( length $seq ) - ( length $TSD ) );
     }
     ##end means that the TE was removed from the end of the read
-    elsif ( $read_name =~ /end$/
+    elsif ( $read_name =~ /end:[53]$/
       and ( $seq =~ /^($tsd)/ or $rev_seq =~ /($tsd)$/ ) )
     {
       $result = 1;
       $TSD    = $1;
       $pos    = "right";
+      $TE_orient = (substr ($read_name,-1) == 5 ) ? '-' : '+' ;
       $start  = $seq_start;
     }
 
   }
-  if ($result) {
+  ## existingTEs are TEs present in Ref and reads
+  if ($result and $TE_orient) {
     my ( $tir1_end, $tir2_end ) =
       ( ( $start + ( length $TSD ) ), ( $start - 1 ) );
     if ( exists $existingTE{$TE}{start}{$tir1_end} ) {
@@ -368,6 +392,7 @@ sub TSD_check {
     else {
       $teInsertions{$event}{$TSD}{$start}{count}++;
       $teInsertions{$event}{$TSD}{$start}{$pos}++;
+      $teInsertions{$event}{$TSD}{$start}{TE_orient}{$TE_orient}++;
       $read_name =~ s/:start|:end//;
       push @{ $teInsertions{$event}{$TSD}{$start}{reads} }, $read_name;
     }
