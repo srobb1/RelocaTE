@@ -302,8 +302,8 @@ SEQUENCE2\n";
   if ( !$bowtie2 and !-e "$genome_path.bowtie_build_index.1.ebwt" ) {
     $cmd = "bowtie-build -f $genome_path $genome_path.bowtie_build_index";
     $qsub_formatGenome_cmd = 1;
-  }elsif ( $bowtie2 and !-e "$genome_path.bowtie_build_index.1.bt2" ) {
-    $cmd = "bowtie2-build -f $genome_path $genome_path.bowtie_build_index";
+  }elsif ( $bowtie2 and !-e "$genome_path.bowtie2_build_index.1.bt2" ) {
+    $cmd = "bowtie2-build -f $genome_path $genome_path.bowtie2_build_index";
     $qsub_formatGenome_cmd = 1;
   }
   my $ref = 'ref';

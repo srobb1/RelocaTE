@@ -175,11 +175,11 @@ foreach my $line (@sorted_sam) {
   }
   
   ##bowtie2: there is no -v option
-  $tooManyMM = 0;
+  my $tooManyMM = 0;
   if ($bowtie2){
     foreach my $tag (@tags){
       next unless $tag =~ /XM/;
-      $XM_tag =~ /XM:i:(\d+)/;
+      $tag =~ /XM:i:(\d+)/;
       $tooManyMM = 1 if $1 > 3;
     }
   }
