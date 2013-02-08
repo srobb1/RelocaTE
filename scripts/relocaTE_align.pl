@@ -8,7 +8,7 @@ my $genome_file = shift;
 my $regex_file  = shift;
 my $TE          = shift;
 my $exper       = shift;
-
+my $bowtie2     = shift;
 ##get the regelar expression patterns for mates and for the TE
 ##when passed on the command line as an argument, even in single
 ##quotes I lose special regex characters
@@ -103,10 +103,13 @@ foreach my $key ( sort keys %flanking_fq ) {
     my @fq_path = split '/', $flanking_fq;
     my $fq_name = pop @fq_path;
     $fq_name =~ s/\.fq$//;
+if (!$bowtie2){
 ##bowtie
 `bowtie --sam --sam-nohead --sam-nosq -a -m 1 -v 3 -q $genome_file.bowtie_build_index $flanking_fq  1> $path/bowtie_aln/$target.$fq_name.bowtie.single.out 2>> $path/$target.stderr`;
+}else{
 ##bowtie2 -- need to get comparable -a -m1 -v3 arguments
-#`bowtie2 --no-hd --no-sq -a -m 1 -v 3 -x $genome_file.bowtie2_build_index -U $flanking_fq  1> $path/bowtie_aln/$target.$fq_name.bowtie.single.out 2>> $path/$target.stderr`;
+  `bowtie2 --no-hd -no-sq -x $genome_file.bowtie2_build_index -U $flanking_fq  1> $path/bowtie_aln/$target.$fq_name.bowtie.single.out 2>> $path/$target.stderr`;
+}
 ## orginal
 #`bowtie --best -q $genome_file.bowtie_build_index $flanking_fq  1> $path/bowtie_aln/$target.$fq_name.bowtie.single.out 2>> $path/$target.stderr`;
     push @bowtie_out_files,
@@ -127,17 +130,23 @@ foreach my $key ( sort keys %flanking_fq ) {
     if (  -s "$flanking_fq_1.matched"
       and -s "$flanking_fq_2.matched" )
     {
+if (!$bowtie2){
 ##bowtie
-`bowtie --sam --sam-nohead --sam-nosq -a -m 1 -v 3 -q $genome_file.bowtie_build_index -1 $flanking_fq_1.matched -2 $flanking_fq_2.matched 1> $path/bowtie_aln/$target.$fq_name.bowtie.mates.out 2>> $path/$target.stderr`;
-##bowtie2 -- need to get comparable -a -m1 -v3 arguments
-#`bowtie2 --no-unal --no-hd --no-sq -a -m 1 -v 3 -x $genome_file.bowtie2_build_index -1 $flanking_fq_1.matched -2 $flanking_fq_2.matched 1> $path/bowtie_aln/$target.$fq_name.bowtie.mates.out 2>> $path/$target.stderr`;
+  `bowtie --sam --sam-nohead --sam-nosq -a -m 1 -v 3 -q $genome_file.bowtie_build_index -1 $flanking_fq_1.matched -2 $flanking_fq_2.matched 1> $path/bowtie_aln/$target.$fq_name.bowtie.mates.out 2>> $path/$target.stderr`;
+}else{
+##bowtie2 
+  `bowtie2 --no-hd --no-sq -x $genome_file.bowtie2_build_index -1 $flanking_fq_1.matched -2 $flanking_fq_2.matched 1> $path/bowtie_aln/$target.$fq_name.bowtie.mates.out 2>> $path/$target.stderr`;
+}
 #`bowtie --best  -q $genome_file.bowtie_build_index -1 $flanking_fq_1.matched -2 $flanking_fq_2.matched 1> $path/bowtie_aln/$target.$fq_name.bowtie.mates.out 2>> $path/$target.stderr`;
       push @bowtie_out_files,
         "$path/bowtie_aln/$target.$fq_name.bowtie.mates.out";
-##bowtie
-`bowtie --sam --sam-nohead --sam-nosq -a -m 1 -v 3 -q $genome_file.bowtie_build_index $te_dir_path/flanking_seq/$fq_name.unPaired.fq 1> $path/bowtie_aln/$target.$fq_name.bowtie.unPaired.out 2>> $path/$target.stderr`;
-##bowtie2 -- need to get comparable -a -m1 -v3 arguments
-#`bowtie2 --no-unal --no-hd --no-sq -a -m 1 -v 3 -x $genome_file.bowtie2_build_index  $te_dir_path/flanking_seq/$fq_name.unPaired.fq 1> $path/bowtie_aln/$target.$fq_name.bowtie.unPaired.out 2>> $path/$target.stderr`;
+if (!$bowtie2){
+  ##bowtie
+  `bowtie --sam --sam-nohead --sam-nosq -a -m 1 -v 3 -q $genome_file.bowtie_build_index $te_dir_path/flanking_seq/$fq_name.unPaired.fq 1> $path/bowtie_aln/$target.$fq_name.bowtie.unPaired.out 2>> $path/$target.stderr`;
+}else{
+  ##bowtie2
+  `bowtie2 --no-hd --no-sq -x $genome_file.bowtie2_build_index  $te_dir_path/flanking_seq/$fq_name.unPaired.fq 1> $path/bowtie_aln/$target.$fq_name.bowtie.unPaired.out 2>> $path/$target.stderr`;
+}
 ##bowtie orignial
 #`bowtie --best -q $genome_file.bowtie_build_index $te_dir_path/flanking_seq/$fq_name.unPaired.fq 1> $path/bowtie_aln/$target.$fq_name.bowtie.unPaired.out 2>> $path/$target.stderr`;
       push @bowtie_out_files,

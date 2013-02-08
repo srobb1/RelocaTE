@@ -30,6 +30,7 @@ my $qsub_q;
 my ( $blat_minScore, $blat_tileSize ) = ( 10, 7 );
 my $flanking_seq_len = 100;
 my $existing_TE      = 'NONE';
+my $bowtie2 = 0;
 GetOptions(
   'p|parallel:i'         => \$parallel,
   'a|qsub_array:i'       => \$qsub_array,
@@ -48,7 +49,8 @@ GetOptions(
   'bm|blat_minScore:i'   => \$blat_minScore,
   'bt|blat_tileSize:i'   => \$blat_tileSize,
   'f|flanking_seq_len:i' => \$flanking_seq_len,
-  '-r|reference_ins:s' => \$existing_TE,
+  '-r|reference_ins:s'   => \$existing_TE,
+  '-b2|bowtie2:i'        => \$bowtie2,
   'h|help' => \&getHelp,
 );
 my $current_dir;
@@ -220,6 +222,7 @@ options:
 					reference.
 					option-2) input the file name of a tab-delimited file containing the coordinates
 					of TE insertions pre-existing in the reference sequence. [no default]
+-b2 |--bowtie2	        INT             to use bowtie2 use \'-b2 1\' else for bowtie use \'-b2 0\' [0]	
 -h |--help				this message
 
 SAMPLE TE FASTA:
@@ -296,8 +299,11 @@ SEQUENCE2\n";
 
   #create bowtie index
   my $cmd;
-  if ( !-e "$genome_path.bowtie_build_index.1.ebwt" ) {
+  if ( !$bowtie2 and !-e "$genome_path.bowtie_build_index.1.ebwt" ) {
     $cmd = "bowtie-build -f $genome_path $genome_path.bowtie_build_index";
+    $qsub_formatGenome_cmd = 1;
+  }elsif ( $bowtie2 and !-e "$genome_path.bowtie_build_index.1.bt2" ) {
+    $cmd = "bowtie2-build -f $genome_path $genome_path.bowtie_build_index";
     $qsub_formatGenome_cmd = 1;
   }
   my $ref = 'ref';
@@ -589,7 +595,7 @@ echo \$$jobName\n";
     open OUTREGEX, ">$outregex" or die $!;
     print OUTREGEX "$mate_file_1\t$mate_file_2\t$mate_file_unpaired\t$TSD{$TE}";
     my $cmd =
-"$scripts/relocaTE_align.pl $scripts $param_path $genome_path $outregex $TE $exper";
+"$scripts/relocaTE_align.pl $scripts $param_path $genome_path $outregex $TE $exper $bowtie2";
     if ( !$parallel ) {
       ## run now
       system ($cmd);
@@ -635,7 +641,7 @@ echo \$$jobName\n";
       my $ref           = $1;
       my $merged_bowtie = "$path/bowtie_aln/$ref.$TE.bowtie.out";
       my $cmd =
-"$scripts/relocaTE_insertionFinder.pl $merged_bowtie $seq_id $genome_path $TE $outregex $exper $flanking_seq_len $existing_TE_path $mismatch_allowance";
+"$scripts/relocaTE_insertionFinder.pl $merged_bowtie $seq_id $genome_path $TE $outregex $exper $flanking_seq_len $existing_TE_path $mismatch_allowance $bowtie2";
       if ( !$parallel ) {
         system ($cmd);
       }

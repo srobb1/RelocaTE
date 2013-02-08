@@ -31,6 +31,7 @@ my $exper                = shift;
 my $flank_len   = shift;    ##length of seq flanking insertions to be returned
 my $existing_TE = shift;
 my $mm_allow = shift;
+my $bowtie2 = shift;
 my %existingTE;
 my %existingTE_found;
 
@@ -175,7 +176,6 @@ foreach my $line (@sorted_sam) {
   
   ##bowtie2: there is no -v option
   $tooManyMM = 0;
-  my $bowtie2 = 0;
   if ($bowtie2){
     foreach my $tag (@tags){
       next unless $tag =~ /XM/;
