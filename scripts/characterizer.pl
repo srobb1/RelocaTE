@@ -19,14 +19,12 @@ use Getopt::Long;
 ## 031412 added a check for XM and NM tags in sam line, if >0 then it is not 100% Match
 ## 022712 changed the logic for calling 'homo', 'het', 'new ins/somat' 
 
-
-#my $scripts = $RealBin;
-my $cwd          = getcwd();
-
+  
 if ( !defined @ARGV ) {
-  getHelp();
+  &getHelp;
 }
 
+my $cwd          = getcwd();
 my $sites_file ;
 my $bam_dir;
 my $genome_fasta;
@@ -46,7 +44,7 @@ usage:
 ./characterizer.pl [-s relocaTE table output file][-b bam file or dir of bam files][-g reference genome fasta file][-h] 
 
 options:
--s file		relocaTE output file: *.te_insertion.all.txt [no default]
+-s file		relocaTE output file: YOURSAMPLENAME.mping.all_nonref.txt [no default]
 -b dir/file	bam file of the orginal reads aligned to reference (before TE was trimmed) or directory of bam files [no default]
 -g file		reference genome fasta file [no default]
 -x int		find excision events that leave a footprint, yes or no(1|0) [0]
@@ -57,6 +55,7 @@ For more information see documentation: http://docs........
 ';
   exit 1;
 }
+
 if ( -d $bam_dir ) {
 
   #remove trailing '/'
