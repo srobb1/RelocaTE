@@ -177,11 +177,21 @@ foreach my $line (@sorted_sam) {
   ##bowtie2: there is no -v option
   my $tooManyMM = 0;
   if ($bowtie2){
+    next if $MAPQ < 40; ## higher score means more chance of unique map
+    my ($first_map_score,$second_map_score);
     foreach my $tag (@tags){
       next unless $tag =~ /XM/;
-      $tag =~ /XM:i:(\d+)/;
-      $tooManyMM = 1 if $1 > 3;
+      if ($tag =~ /XM:i:(\d+)/){
+        $tooManyMM = 1 if $1 > 3;
+      }elsif ($tag =~ /AS:i:(\-?\d+)/){
+        $first_map_score = $1;
+      }elsif ($tag =~ /XS:i:(\-?\d+)/){
+        $second_map_score = $1;
+      }
     }
+    if (defined $second_map_score and $second_map_score !=0 and $second_map_score == $first_map_score){
+      next; ## if the send alignment is as good as the first, skip it
+    } 
   }
   next if $tooManyMM;
   
