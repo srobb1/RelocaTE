@@ -361,20 +361,19 @@ align unparied
 generate SAM for unpaired reads
 <pre>bwa samse genome.fasta aln.sai read.fastq > aln.sam</pre>
 generate BAM with SAMtools
-<pre>samtools view -h -b -S -T genome.fasta aln.sam > aln.bam<pre>
+<pre>samtools view -h -b -S -T genome.fasta aln.sam > aln.bam</pre>
 
 
  
 ###What does relocaTE.pl actually do?
-  1. it splits the supplied reference genome fasta into individual files, one file for each sequence.
-  2. if not already done, creates a bowtie index for the complete reference fasta.
-  3. if not already done, it converts the fq files to fa files.
-  4. it splits the supplied TE fasta into individual files, one file for each sequence.
-  5. if not already done, it runs blat: one job for every read file for every TE file. these jobs can be writted to shell scripts if -p 1, and an array job script will be generated if -a 1
-  6. if not already done, it runs relocaTE_trim.pl: one job for every blat out file. shell scripts and array jobs will be created if -p 1 and -a 1
-  7. it runs relocaTE_align.pl: one job for the one reference fasta. a shell script created if -p 1 and -a 1
-  8. it runs relocaTE_insertionFinder.pl: one job for every TE for every sequence of the reference fasta. shell scripts and array jobs will be created if -p 1 and -a 1.
-  9. it will concatenate the results of each reference sequence into one file: one job for every TE. shell scripts and array jobs will be created if -p 1 and -a 1.
+  1. if not already done, creates a bowtie index for the complete reference fasta.
+  2. if not already done, converts the fq files to fa files.
+  3. it splits the supplied TE fasta into individual files, one file for each sequence.
+  4. if not already done, runs blat: one job for every read file for every TE file. these jobs can be writted to shell scripts if -p 1, and an array job script will be generated if -a 1
+  5. if not already done, runs relocaTE_trim.pl: one job for every blat out file. shell scripts and array jobs will be created if -p 1 and -a 1
+  6. runs relocaTE_align.pl: aligns the trimmed reads to the reference fasta. a shell script created if -p 1 and -a 1
+  7. runs relocaTE_insertionFinder.pl: one job for every TE for every sequence of the reference fasta. shell scripts and array jobs will be created if -p 1 and -a 1.
+  8. concatenates the results of each reference sequence into one file: one job for every TE. shell scripts and array jobs will be created if -p 1 and -a 1.
 
 ###<a name="issue">Report an Issue</a>:
 For any of the listed reasons, or anything else, please leave us a <a href="https://github.com/srobb1/RelocaTE/issues?page=1&sort=comments&state=open">message here</a><br>
