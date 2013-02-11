@@ -12,6 +12,30 @@ CharacTErizer: A companion tool compares the numbers of reads that flank the TE 
 ###Table of Contents:<br>
 #####<a href="#req">Prerequisites</a><br>
 #####<a href="#cmd">RelocaTE Command Line Options</a>
+#####<a href="#quick">RelocaTE: Quick Start Guide</a><br>
+#####<a href="#input">RelocaTE Input Files</a>
+#####<a href="#output">RelocaTE Output Files</a>
+#####<a href="#tips">RelocaTE: TIPs</a><br>
+#####<a href="#characterizer">CharacTErizer</a>
+#####<a href="#issue">Report an Issue</a>
+
+
+
+
+<br>
+<hr>
+<hr>
+<br>
+###<a name="req">Prerequisites</a>: These programs need to be installed and the executable should be in your path.
+
+- <a href="http://genome.ucsc.edu/FAQ/FAQblat.html#blat3">Blat</a>
+- Bowtie (recommended <a href="http://bowtie-bio.sourceforge.net/manual.shtml#obtaining-bowtie">Bowtie1</a>, but RelocaTE is compatible with <a href="http://bowtie-bio.sourceforge.net/bowtie2/manual.shtml#obtaining-bowtie-2">Bowtie2</a>)
+- <a href="http://www.bioperl.org/wiki/Installing_BioPerl">BioPerl</a>
+- <a href="http://samtools.sourceforge.net/">Samtools</a>
+<br><br>
+
+###<a name="cmd">RelocaTE Command Line Options</a>:
+
 <pre>
 <a href="#t">-t  | --te_fasta</a>       Str: TE FASTA File
 <a href="#d">-d  | --fq_dir</a>         Str: directory of fq files
@@ -37,23 +61,6 @@ CharacTErizer: A companion tool compares the numbers of reads that flank the TE 
 <a href="#b2">-b2 | --bowtie2</a>        0|1: Use bowtie2 use '-b2 1' else for Bowtie1 use '-b2 0' [0]  
 </pre>
 
-#####<a href="#quick">RelocaTE: Quick Start Guide</a><br>
-#####<a href="#tips">RelocaTE: TIPs</a><br>
-#####<a href="#characterizer">CharacTErizer</a>
-#####<a href="#issue">Report an Issue</a>
-<br>
-<hr>
-<hr>
-<br>
-###<a name="req">Prerequisites</a>: These programs need to be installed and the executable should be in your path.
-
-- <a href="http://genome.ucsc.edu/FAQ/FAQblat.html#blat3">Blat</a>
-- Bowtie (recommended <a href="http://bowtie-bio.sourceforge.net/manual.shtml#obtaining-bowtie">Bowtie1</a>, but RelocaTE is compatible with <a href="http://bowtie-bio.sourceforge.net/bowtie2/manual.shtml#obtaining-bowtie-2">Bowtie2</a>)
-- <a href="http://www.bioperl.org/wiki/Installing_BioPerl">BioPerl</a>
-- <a href="http://samtools.sourceforge.net/">Samtools</a>
-<br><br>
-
-###<a name="cmd">RelocaTE Command Line Options</a>:
 ####<a name="t">-t TE Fasta File</t>
 
 Required. No default value.
@@ -311,6 +318,27 @@ mping   Chr12:1045463..1045892
 <br>
 
 
+
+###<a name="input">RelocaTE Input Files</a>:
+1. Genome Fasta [FASTA format] (not required, but if not used RelocaTE will only identify and trim the reads that contain the specified TE and will not map the insertion locations)
+2. Transposable element FASTA [FASTA format with TSD= in description] (required)
+3. Paired and/or unpaired Fastq files. (ex: reads_p1.fq, reads_p2.fq, reads_unPaired.fq, reads.fq) (required)
+4. Tab-delimited file with coordinates of TE insertions in the reference genome (not required)
+
+
+###<a name="output">RelocaTE Output Files</a>:
+<pre>
+Experiment_name.TE_name.all_inserts.gff: GFF3 file containing all reference and non-reference insertions
+Experiment_name.TE_name.all_nonref.txt: tab-delimited file containing all potential non-reference (insertions 
+                                        found only in reads, absent from reference) insertion sites
+Experiment_name.TE_name.confident_nonref.txt: tab-delimited file containing only the confident non-reference 
+				            insertion sites
+Experiment_name.TE_name.confident_nonref_genomeflanks.fa: FASTA file containing the genome sequence which 
+				 			  flanks each confident non-reference site
+Experiment_name.TE_name.confident_nonref_reads_list.txt: text file containing a list of the reads used to call
+							 each confident non-reference insertion
+Experiment_name.TE_name.all_reference.txt: text file containing counts of reads which overlap the reference insertions.
+</pre>
 
 ###<a name="tips">RelocaTE Tips</a>:
 If you have a multi-node cluster you can speed up your RelocaTE run by dividing your fastq files into many smaller files.
