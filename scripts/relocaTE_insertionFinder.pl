@@ -282,31 +282,29 @@ foreach my $insertionEvent ( sort { $a <=> $b } keys %teInsertions ) {
         my $right_flanking_ref_seq = substr $genome_seq,
           $zero_base_coor + 1, $flank_len;
         $note = "Non-reference, not found in reference";
+        my $coor_start = $coor - length($foundTSD) + 1 ;
         my $tableLine =
-"$TE\t$foundTSD\t$exper\t$usr_target\t$coor\t$left_count\t$right_count\t$left_flanking_ref_seq\t$right_flanking_ref_seq\t$TE_orient\n";
+"$TE\t$foundTSD\t$exper\t$usr_target\t$coor_start..$coor\t$left_count\t$right_count\t$left_flanking_ref_seq\t$right_flanking_ref_seq\t$TE_orient\n";
         print OUTTABLE $tableLine;
         print OUTGFF
-"$usr_target\t$exper\ttransposable_element_insertion_site\t$coor\t$coor\t.\t$TE_orient\t.\tID=$TE.te_insertion_site.$usr_target.$coor;Note=$note;left_flanking_read_count=$left_count;right_flanking_read_count=$right_count;left_flanking_seq=$left_flanking_ref_seq;right_flanking_seq=$right_flanking_ref_seq;TSD=$foundTSD\n";
+"$usr_target\t$exper\ttransposable_element_insertion_site\t$coor_start\t$coor\t.\t$TE_orient\t.\tID=$TE.te_insertion_site.$usr_target.$coor;Note=$note;left_flanking_read_count=$left_count;right_flanking_read_count=$right_count;left_flanking_seq=$left_flanking_ref_seq;right_flanking_seq=$right_flanking_ref_seq;TSD=$foundTSD\n";
         print OUTFASTA
-">$exper.$usr_target.$coor TSD=$foundTSD $usr_target:$seq_start..$seq_end\n$left_flanking_ref_seq$right_flanking_ref_seq\n";
+">$exper.$usr_target:$coor_start..$coor TSD=$foundTSD $usr_target:$seq_start..$seq_end\n$left_flanking_ref_seq$right_flanking_ref_seq\n";
         print OUTALL
-"$TE\t$foundTSD\t$exper\t$usr_target\t$coor\tC:$start_count\tR:$right_count\tL:$left_count\n";
-        print OUTLIST "$usr_target:$coor\t", join( ",", @reads ), "\n";
+"$TE\t$foundTSD\t$exper\t$usr_target\t$coor_start..$coor\tT:$start_count\tR:$right_count\tL:$left_count\t$TE_orient\n";
+        print OUTLIST "$usr_target:$coor_start..$coor\t", join( ",", @reads ), "\n";
       }
       else {
         my $coor = $start + ( $TSD_len - 1 );
+        my $coor_start = $coor - length($foundTSD) + 1 ;
         $left_count  = defined $left_count  ? $left_count  : 0;
         $right_count = defined $right_count ? $right_count : 0;
         print OUTALL
-"$TE\t$foundTSD\t$exper\t$usr_target\t$coor\tC:$start_count\tR:$right_count\tL:$left_count\n";
+"$TE\t$foundTSD\t$exper\t$usr_target\t$coor_start..$coor\tT:$start_count\tR:$right_count\tL:$left_count\n";
       }
     }
   }
 }
-print OUTALL "
-total confident insertions identified by a right AND left mping flanking sequence (C>=$required_reads,R>$required_right_reads,L>$required_left_reads)= $event
-Note:C=total read count, R=right hand read count, L=left hand read count\n"
-  if $event > 0;
 
 
   #open FOUNDGFF, ">>$results_dir/$exper.existing.$TE.found.gff" or die $!;
