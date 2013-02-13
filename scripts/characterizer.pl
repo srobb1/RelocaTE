@@ -77,15 +77,14 @@ my %TSDs;
 my %toPrint;
 while ( my $line = <INSITES> ) {
   next if $line =~ /TE.TSD.Exper.chromosome.insertion_site/;
-  next if $line =~ /total confident insertions/;
-  next if $line =~ /Note:C=total read count, R=right/;
   next if $line =~ /^\s*$/;
   chomp $line;
 
-  # mping   A119    Chr1    1448    C:1     R:0     L:1
-  my ($te,$TSD,$exp,$chromosome, $pos, $total_string, $right_string, $left_string) = split /\t/, $line;
+  # mping   A119    Chr1    1446..1448    T:1     R:0     L:1
+  my ($te,$TSD,$exp,$chromosome, $coor, $total_string, $right_string, $left_string, $TE_orient) = split /\t/, $line;
+  my ($pos) = $coor =~ /\d+\.\.(\d+)/;
   $TSDs{$chromosome}{$pos}=$TSD;
-  my ($total_count) = $total_string =~ /C:(\d+)/;
+  my ($total_count) = $total_string =~ /T:(\d+)/;
   my ($left_count)  = $left_string  =~ /L:(\d+)/;
   my ($right_count) = $right_string =~ /R:(\d+)/;
 
@@ -180,6 +179,8 @@ while ( my $line = <INSITES> ) {
     $toPrint{$chromosome}{$pos}{$TSD}{span} = $spanners;
     $toPrint{$chromosome}{$pos}{$TSD}{status} = $status;
     $toPrint{$chromosome}{$pos}{$TSD}{strain} = $exp;
+    $toPrint{$chromosome}{$pos}{$TSD}{coor} = $coor;
+    $toPrint{$chromosome}{$pos}{$TSD}{TE_orient} = $TE_orient;
   }
 }
 
@@ -290,9 +291,12 @@ foreach my $chr( sort keys %toPrint){
       my $spanners = $toPrint{$chr}{$pos}{$tsd}{span};
       my $status = $toPrint{$chr}{$pos}{$tsd}{status};
       my $strain = $toPrint{$chr}{$pos}{$tsd}{strain};
-      print "$strain\t$TE\t$tsd\t$chr.$pos\t$flankers\t$spanners\t$status\n";
+      my $coor = $toPrint{$chr}{$pos}{$tsd}{coor};
+      my $TE_orient = $toPrint{$chr}{$pos}{$tsd}{TE_orient};
+      my ($start) = $coor =~ /(\d+)\.\.\d+/;
+      print "$strain\t$TE\t$tsd\t$chr.$coor\t$flankers\t$spanners\t$status\n";
       print OUTGFF
-"$chr\t$strain\ttransposable_element_attribute\t$pos\t$pos\t.\t.\t.\tID=$chr.$pos.spanners;avg_flankers=$flankers;spanners=$spanners;type=$status;TE=$TE;TSD=$tsd\n";
+"$chr\t$strain\ttransposable_element_attribute\t$start\t$pos\t$TE_orient\t.\t.\tID=$chr.$pos.spanners;avg_flankers=$flankers;spanners=$spanners;type=$status;TE=$TE;TSD=$tsd\n";
     }
   }
 }
