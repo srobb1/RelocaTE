@@ -29,7 +29,8 @@ CharacTErizer: A companion tool compares the numbers of reads that flank the TE 
 ###<a name="req">Prerequisites</a>: These programs need to be installed and the executable should be in your path.
 
 - <a href="http://genome.ucsc.edu/FAQ/FAQblat.html#blat3">Blat</a>
-- Bowtie (recommended <a href="http://bowtie-bio.sourceforge.net/manual.shtml#obtaining-bowtie">Bowtie1</a>, but RelocaTE is compatible with <a href="http://bowtie-bio.sourceforge.net/bowtie2/manual.shtml#obtaining-bowtie-2">Bowtie2</a>)
+- <a href="http://blast.ncbi.nlm.nih.gov/Blast.cgi?CMD=Web&PAGE_TYPE=BlastDocs&DOC_TYPE=Download">Blast (Legacy)</a> formatdb and fastacmd used for indexed sequence retrieval. <a href="ftp://ftp.ncbi.nlm.nih.gov/blast/executables/release/LATEST/">Download here.</a>
+- Bowtie (recommended <a href="http://bowtie-bio.sourceforge.net/manual.shtml#obtaining-bowtie">Bowtie1</a>, but Coming Soon RelocaTE will be compatible with <a href="http://bowtie-bio.sourceforge.net/bowtie2/manual.shtml#obtaining-bowtie-2">Bowtie2</a>)
 - <a href="http://www.bioperl.org/wiki/Installing_BioPerl">BioPerl</a>
 - <a href="http://samtools.sourceforge.net/">Samtools</a>
 <br><br>
