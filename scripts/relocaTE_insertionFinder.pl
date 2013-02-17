@@ -1,23 +1,11 @@
 #!/usr/bin/perl -w
-use Data::Dumper;
-
-## 12012012: added the abilty to parse TE vs REF blat for creating a list of existing TEs 
-## ---
-## 07272012: added the abilty to filter based on bowtie column 7 (number of times this
-## reads aligns to exactly the same sequence of the reference), only uniq matches allowed
-## ---
-## 07132012: added the ability to filter the aligned reads while taking strand into
-## account
-## ---
-## 04212012: added the ability to use a tab-delimited list of existing TE locations
-## to identify if the reference TE-insertion is present in the reads
-## ----
-## 02172012: changed the number of flanking reads that are needed for a
-## insert to be called from a total of 2 to (left>1 and right>1) therefore (total>3).
-## Also changed the max allowed mis-matches to 3
-
 use strict;
+use Data::Dumper;
 use Bio::DB::Fasta;
+
+if ( !defined @ARGV ) {
+  die "Do not run directly, to be called by relocaTE.pl\n";
+}
 
 my $required_reads = 1;    ## rightReads + leftReads needs to be > to this value
 my $required_left_reads  = 1;       ## needs to be >= to this value
@@ -30,9 +18,30 @@ my $regex_file           = shift;
 my $exper                = shift;
 my $flank_len   = shift;    ##length of seq flanking insertions to be returned
 my $existing_TE = shift;
-my $mm_allow = shift;
+my $mm_allow    = shift;
+my $bowtie2     = shift;
+my $bowtie_sam  = 0;        ## change to shift or remove in V2
 my %existingTE;
 my %existingTE_found;
+
+##if flag contains 16 it is on the minus strand and is reported as the revcomp in the sam file
+my %flag_minus_strand = (
+  16,  1, 17,  1, 18,  1, 19,  1, 20,  1, 21,  1, 22,  1, 23,  1, 24,  1,
+  25,  1, 26,  1, 27,  1, 28,  1, 29,  1, 30,  1, 31,  1, 48,  1, 49,  1,
+  50,  1, 51,  1, 52,  1, 53,  1, 54,  1, 55,  1, 56,  1, 57,  1, 58,  1,
+  59,  1, 60,  1, 61,  1, 62,  1, 63,  1, 80,  1, 81,  1, 82,  1, 83,  1,
+  84,  1, 85,  1, 86,  1, 87,  1, 88,  1, 89,  1, 90,  1, 91,  1, 92,  1,
+  93,  1, 94,  1, 95,  1, 112, 1, 113, 1, 114, 1, 115, 1, 116, 1, 117, 1,
+  118, 1, 119, 1, 120, 1, 121, 1, 122, 1, 123, 1, 124, 1, 125, 1, 126, 1,
+  127, 1, 144, 1, 145, 1, 146, 1, 147, 1, 148, 1, 149, 1, 150, 1, 151, 1,
+  152, 1, 153, 1, 154, 1, 155, 1, 156, 1, 157, 1, 158, 1, 159, 1, 176, 1,
+  177, 1, 178, 1, 179, 1, 180, 1, 181, 1, 182, 1, 183, 1, 184, 1, 185, 1,
+  186, 1, 187, 1, 188, 1, 189, 1, 190, 1, 191, 1, 208, 1, 209, 1, 210, 1,
+  211, 1, 212, 1, 213, 1, 214, 1, 215, 1, 216, 1, 217, 1, 218, 1, 219, 1,
+  220, 1, 221, 1, 222, 1, 223, 1, 240, 1, 241, 1, 242, 1, 243, 1, 244, 1,
+  245, 1, 246, 1, 247, 1, 248, 1, 249, 1, 250, 1, 251, 1, 252, 1, 253, 1,
+  254, 1, 255, 1
+);
 
 if ( $existing_TE ne 'NONE' ) {
   my $blat = 0;
@@ -41,14 +50,14 @@ if ( $existing_TE ne 'NONE' ) {
     chomp $line;
     if ( $line =~ /psLayout version 3/ ) {
       $blat = 1;
-      <INTE>;               ## throw out blat header
-      <INTE>;               ## throw out blat header
-      <INTE>;               ## throw out blat header
-      <INTE>;               ## throw out blat header
+      <INTE>;    ## throw out blat header
+      <INTE>;    ## throw out blat header
+      <INTE>;    ## throw out blat header
+      <INTE>;    ## throw out blat header
       chomp( $line = <INTE> );
     }
     next if $line !~ /$usr_target[:\s]/;
-    next if $line !~ /$TE\s/;
+    next if $line !~ /\b$TE\b/;
     if ($blat) {
       my @blat     = split /\t/, $line;
       my $match    = $blat[0];
@@ -56,33 +65,37 @@ if ( $existing_TE ne 'NONE' ) {
       my $strand   = $blat[8];
       my $qName    = $blat[9];
       my $qLen     = $blat[10];
-      my $qStart   = $blat[11] + 1;#get all values into 1st base = 1 postion notation
-      my $qEnd     = $blat[12];    
-      my $tName    = $blat[13];
-      my $tLen     = $blat[14];
-      my $tStart   = $blat[15] + 1;#get all values into 1st base = 1 postion notation
-      my $tEnd     = $blat[16];   
-      my $MM = $mismatch/($match + $mismatch) ; 
+      my $qStart =
+        $blat[11] + 1;    #get all values into 1st base = 1 postion notation
+      my $qEnd  = $blat[12];
+      my $tName = $blat[13];
+      my $tLen  = $blat[14];
+      my $tStart =
+        $blat[15] + 1;    #get all values into 1st base = 1 postion notation
+      my $tEnd = $blat[16];
+      my $MM = $mismatch / ( $match + $mismatch );
 
       if ( $tEnd < $tStart ) {
         ( $tStart, $tEnd ) = ( $tEnd, $tStart );
       }
-      if (  $qStart <= 5
+      if (
+        $qStart <= 5
         and ( $qEnd >= ( $qLen - 5 ) )
         ## mismatches should be less than 10% the alignment length
         and $MM <= .1
         ## ref hit should be about the same size as the query
-        and ( ( $tEnd - $tStart +1 ) >= ( $qLen - ( $qLen * .1 ) ) ) 
-        and ( ( $tEnd - $tStart +1 ) <= ( $qLen + ( $qLen * .1 ) ) ) 
+        and ( ( $tEnd - $tStart + 1 ) >= ( $qLen - ( $qLen * .1 ) ) )
+        and ( ( $tEnd - $tStart + 1 ) <= ( $qLen + ( $qLen * .1 ) ) )
         ## alignment should be about the same size as the query
-        and ( ( $match + $mismatch ) >= ( $qLen - ( $qLen * .1 ) ) ) 
-        and ( ( $match + $mismatch ) <= ( $qLen + ( $qLen * .1 ) ) ) )
+        and ( ( $match + $mismatch ) >= ( $qLen - ( $qLen * .1 ) ) )
+        and ( ( $match + $mismatch ) <= ( $qLen + ( $qLen * .1 ) ) )
+        )
       {
         #print "$qName\t$tName:$tStart..$tEnd $MM --\n";
         $existingTE{$qName}{start}{$tStart} = "$qName\t$tName:$tStart..$tEnd";
         $existingTE{$qName}{end}{$tEnd}     = "$qName\t$tName:$tStart..$tEnd";
-        $existingTE_found{"$qName\t$tName:$tStart..$tEnd"}{start}=0;
-        $existingTE_found{"$qName\t$tName:$tStart..$tEnd"}{end}=0;
+        $existingTE_found{"$qName\t$tName:$tStart..$tEnd"}{start} = 0;
+        $existingTE_found{"$qName\t$tName:$tStart..$tEnd"}{end}   = 0;
       }
       ##will get rid of this. will only use auto run blat and above.
     }
@@ -91,8 +104,8 @@ if ( $existing_TE ne 'NONE' ) {
       ( $start, $end ) = sort { $a <=> $b } ( $start, $end );
       $existingTE{$te}{start}{$start} = $line;
       $existingTE{$te}{end}{$end}     = $line;
-       $existingTE_found{$line}{start}=0;
-       $existingTE_found{$line}{end}=0;
+      $existingTE_found{$line}{start} = 0;
+      $existingTE_found{$line}{end}   = 0;
     }
   }
 }
@@ -114,21 +127,22 @@ while ( my $line = <INREGEX> ) {
 my $TSD_pattern = $TSD =~ /[\[.*+?]/ ? 1 : 0;    #does $TSD contain a pattern?
 
 ##get chromosome sequence for substr of flanking seq
-my $db_obj = Bio::DB::Fasta->new($genome_path);
+my $db_obj     = Bio::DB::Fasta->new($genome_path);
 my $genome_seq = $db_obj->seq($usr_target);
 
 #remove redundant lines.
-open BOWTIE, "$bowtie"
-  or die "there seems to not be a bowtie file that i can open $!";
 my %bowtie;
+open BOWTIE, "$bowtie"
+  or die "there seems to not be a bowtie file that i can't open $bowtie $!";
 while ( my $line = <BOWTIE> ) {
   chomp $line;
   my @line = split /\t/, $line;
   next if $line[2] ne $usr_target;
   my $start = $line[3];
+  ###bowtie_output is 0 sam is 1
 
-#remove /1 or /2 from the read name
-#7:12:11277:9907:Y/1     +       Chr1    22134042        TTTTTTATAAATGGATAA      DGGGGGDGGGGFGDGGGG      4       7:A>T,16:C>A
+  #remove /1 or /2 from the read name
+  #7:12:11277:9907:Y/1
   $line =~ s/(^.+?)\/[1|2](\t.+$)/$1$2/;
   if ( !exists $bowtie{$line} ) {
     $bowtie{$line} = $start;
@@ -146,22 +160,72 @@ my @bin     = (0);
 my $TSD_len = length $TSD;
 foreach my $line (@sorted_bowtie) {
   chomp $line;
-  my ( $name, $strand, $target, $start, $seq, $qual, $M, $mismatch ) =
-    split /\t/, $line;
-  ## column 7 = $M
-  ## this column contains the number of other instances where the same sequence aligned against
-  ## the same reference characters as were aligned against in the reported alignment. This is
-  ## not the number of other places the read aligns with the same number of mismatches.
-  next if $M > 0;
-  ## 0 offset, change to 1 offset
-  $start = $start + 1;
-  my $len = length $seq;
-  ## format offset:reference-base>read-base
-  my @mismatches = split ',', $mismatch;
-  my $mm_count = scalar @mismatches;
-  ## only 3 mismatch allowed total
-  next if $mm_count > 3;
-  my $end = $len + $start - 1;
+  my (
+    $name, $flag, $target, $start, $MAPQ, $cigar,
+    $MRNM, $MPOS, $TLEN,   $seq,   $qual, @tags
+  );
+  my ( $strand, $M, $mismatch );
+  my ( $len, $end );
+  if ( !$bowtie2 and !$bowtie_sam ) {
+    ## bowtie1 with bowtie output
+    ( $name, $strand, $target, $start, $seq, $qual, $M, $mismatch ) =
+      split /\t/, $line;
+    next if $M > 0;
+    $start = $start + 1;
+    my @mismatches = split ',', $mismatch;
+    my $mm_count = scalar @mismatches;
+    ## only 3 mismatch allowed total
+    next if $mm_count > 3;
+    $len = length $seq;
+    $end = $len + $start - 1;
+  }
+  elsif ($bowtie2) {
+    (
+      $name, $flag, $target, $start, $MAPQ, $cigar,
+      $MRNM, $MPOS, $TLEN,   $seq,   $qual, @tags
+    ) = split /\t/, $line;
+    next if $target ne $usr_target;
+    $len = length $seq;
+    $end = $len + $start - 1;
+
+    my $strand = '+';
+    if ( exists $flag_minus_strand{$flag} ) {
+      $strand = '-';
+    }
+    ##bowtie2: there is no -v option
+    my $tooManyMM = 0;
+    next if $MAPQ < 40;    ## higher score means more chance of unique map
+    my ( $first_map_score, $second_map_score );
+    foreach my $tag (@tags) {
+      next unless $tag =~ /XM/;
+      if ( $tag =~ /XM:i:(\d+)/ ) {
+        $tooManyMM = 1 if $1 > 3;
+      }
+      elsif ( $tag =~ /AS:i:(\-?\d+)/ ) {
+        $first_map_score = $1;
+      }
+      elsif ( $tag =~ /XS:i:(\-?\d+)/ ) {
+        $second_map_score = $1;
+      }
+    }
+    if (  defined $second_map_score
+      and $second_map_score != 0
+      and $second_map_score == $first_map_score )
+    {
+      next;    ## if the send alignment is as good as the first, skip it
+    }
+    next if $tooManyMM;
+  }
+  else {
+    ## bowtie1 with sam output
+    ## bowtie1: don't need to filter results since we use bowtie -a -m 1 -v 3, already uniq mapping reads
+    (
+      $name, $flag, $target, $start, $MAPQ, $cigar,
+      $MRNM, $MPOS, $TLEN,   $seq,   $qual, @tags
+    ) = split /\t/, $line;
+    $len = length $seq;
+    $end = $len + $start - 1;
+  }
   next if $target ne $usr_target;
 
   ## test to see if we are still within one insertion event or a different one
@@ -190,11 +254,11 @@ foreach my $line (@sorted_bowtie) {
     $last_end   = $end;
   }
 }
-##outdir/te/bowtie/bowtie_file
+##outdir/te/sam/sam_file
 my $event = 0;
 my @path = split '/', $bowtie;
 pop @path;    #throw out filename
-pop @path;    #throwout bowtie dir
+pop @path;    #throwout sam dir
 my $te_dir = join '/', @path;
 my $results_dir = "$te_dir/results";
 `mkdir -p $results_dir`;
@@ -205,12 +269,13 @@ open OUTGFF, ">$results_dir/$usr_target.$TE.all_insert.gff"
   or die $!;
 open OUTTABLE, ">$results_dir/$usr_target.$TE.confident_nonref_insert.txt"
   or die $!;
-open OUTLIST, ">$results_dir/$usr_target.$TE.confident_nonref_insert_reads_list.txt"
+open OUTLIST,
+  ">$results_dir/$usr_target.$TE.confident_nonref_insert_reads_list.txt"
   or die $!;
 print OUTGFF "##gff-version	3\n";
 ##output in tab delimited table
 my $tableHeader =
-"TE\tTSD\tExper\tchromosome\tinsertion_site\tleft_flanking_read_count\tright_flanking_read_count\tleft_flanking_seq\tright_flanking_seq\n";
+"TE\tTSD\tExper\tchromosome\tinsertion_site\tstrand\tleft_flanking_read_count\tright_flanking_read_count\tleft_flanking_seq\tright_flanking_seq\n";
 print OUTTABLE $tableHeader;
 
 my $note;
@@ -221,6 +286,15 @@ foreach my $insertionEvent ( sort { $a <=> $b } keys %teInsertions ) {
       keys %{ $teInsertions{$insertionEvent}{$foundTSD} }
       )
     {
+      my $TE_orient_foward =
+        exists $teInsertions{$insertionEvent}{$foundTSD}{$start}{TE_orient}{'+'}
+        ? $teInsertions{$insertionEvent}{$foundTSD}{$start}{TE_orient}{'+'}
+        : 0;
+      my $TE_orient_reverse =
+        exists $teInsertions{$insertionEvent}{$foundTSD}{$start}{TE_orient}{'-'}
+        ? $teInsertions{$insertionEvent}{$foundTSD}{$start}{TE_orient}{'-'}
+        : 0;
+      my $TE_orient = $TE_orient_foward > $TE_orient_reverse ? "+" : "-";
       my $start_count =
         $teInsertions{$insertionEvent}{$foundTSD}{$start}{count};
       my $left_count = $teInsertions{$insertionEvent}{$foundTSD}{$start}{left};
@@ -244,52 +318,51 @@ foreach my $insertionEvent ( sort { $a <=> $b } keys %teInsertions ) {
         my $right_flanking_ref_seq = substr $genome_seq,
           $zero_base_coor + 1, $flank_len;
         $note = "Non-reference, not found in reference";
+        my $coor_start = $coor - length($foundTSD) + 1;
         my $tableLine =
-"$TE\t$foundTSD\t$exper\t$usr_target\t$coor\t$left_count\t$right_count\t$left_flanking_ref_seq\t$right_flanking_ref_seq\n";
+"$TE\t$foundTSD\t$exper\t$usr_target:$coor_start..$coor\t$TE_orient\t$left_count\t$right_count\t$left_flanking_ref_seq\t$right_flanking_ref_seq\n";
         print OUTTABLE $tableLine;
         print OUTGFF
-"$usr_target\t$exper\ttransposable_element_insertion_site\t$coor\t$coor\t.\t.\t.\tID=$TE.te_insertion_site.$usr_target.$coor;Note=$note;left_flanking_read_count=$left_count;right_flanking_read_count=$right_count;left_flanking_seq=$left_flanking_ref_seq;right_flanking_seq=$right_flanking_ref_seq;TSD=$foundTSD\n";
+"$usr_target\t$exper\ttransposable_element_insertion_site\t$coor_start\t$coor\t.\t$TE_orient\t.\tID=$TE.te_insertion_site.$usr_target.$coor;Note=$note;left_flanking_read_count=$left_count;right_flanking_read_count=$right_count;left_flanking_seq=$left_flanking_ref_seq;right_flanking_seq=$right_flanking_ref_seq;TSD=$foundTSD\n";
         print OUTFASTA
-">$exper.$usr_target.$coor TSD=$foundTSD $usr_target:$seq_start..$seq_end\n$left_flanking_ref_seq$right_flanking_ref_seq\n";
+">$exper.$usr_target:$coor_start..$coor TSD=$foundTSD $usr_target:$seq_start..$seq_end\n$left_flanking_ref_seq$right_flanking_ref_seq\n";
         print OUTALL
-"$TE\t$foundTSD\t$exper\t$usr_target\t$coor\tC:$start_count\tR:$right_count\tL:$left_count\n";
-        print OUTLIST "$usr_target:$coor\t", join( ",", @reads ), "\n";
+"$TE\t$foundTSD\t$exper\t$usr_target\t$coor_start..$coor\t$TE_orient\tT:$start_count\tR:$right_count\tL:$left_count\n";
+        print OUTLIST "$usr_target:$coor_start..$coor\t", join( ",", @reads ),
+          "\n";
       }
       else {
         my $coor = $start + ( $TSD_len - 1 );
+        my $coor_start = $coor - length($foundTSD) + 1;
         $left_count  = defined $left_count  ? $left_count  : 0;
         $right_count = defined $right_count ? $right_count : 0;
         print OUTALL
-"$TE\t$foundTSD\t$exper\t$usr_target\t$coor\tC:$start_count\tR:$right_count\tL:$left_count\n";
+"$TE\t$foundTSD\t$exper\t$usr_target\t$coor_start..$coor\t$TE_orient\tT:$start_count\tR:$right_count\tL:$left_count\n";
       }
     }
   }
 }
-print OUTALL "
-total confident insertions identified by a right AND left mping flanking sequence (C>=$required_reads,R>$required_right_reads,L>$required_left_reads)= $event
-Note:C=total read count, R=right hand read count, L=left hand read count\n"
-  if $event > 0;
 
-
-  #open FOUNDGFF, ">>$results_dir/$exper.existing.$TE.found.gff" or die $!;
-  my $allexisting = "$results_dir/$exper.$TE.all_reference.txt";
-  open ALLEXISTING, ">>$allexisting" or die $!;
-  print ALLEXISTING "strain\tTE\texistingTE_coor\treads_align_2_start\treads_align_2_end\n" 
-    if -s "$allexisting" < 10;
-  #print OUTGFF
-  #  "##gff-version 3\n" if -s "$results_dir/$exper.existing.$TE.found.gff" < 10;
-  foreach my $found ( keys %existingTE_found ) {
-    my $end_count = $existingTE_found{$found}{end};
-    my $start_count = $existingTE_found{$found}{start};
-    my ($ref,$s,$e) = $found =~ /(\S+)\:(\d+)\.\.(\d+)/;
-    if ($start_count > 0 or $end_count > 0){
-      $note = "Shared, in ref and reads";
-    }else{
-      $note = "Reference-only, only present in reference";
-    }
-      print OUTGFF "$ref\t$exper\ttransposable_element_insertion_site\t$s\t$e\t.\t.\t.\tID=$TE.te_insertion_site.$ref.$s..$e;TE_Name=$TE;Note=$note;left_flanking_read_count=$start_count;right_flanking_read_count=$end_count\n";
-    print ALLEXISTING "$exper\t$found\t$start_count\t$end_count\n";
+my $allexisting = "$results_dir/$exper.$TE.all_reference.txt";
+open ALLEXISTING, ">>$allexisting" or die $!;
+print ALLEXISTING
+  "strain\tTE\texistingTE_coor\treads_align_2_start\treads_align_2_end\n"
+  if -s "$allexisting" < 10;
+foreach my $found ( keys %existingTE_found ) {
+  my $end_count   = $existingTE_found{$found}{end};
+  my $start_count = $existingTE_found{$found}{start};
+  my ( $ref, $s, $e ) = $found =~ /(\S+)\:(\d+)\.\.(\d+)/;
+  if ( $start_count > 0 or $end_count > 0 ) {
+    $note = "Shared, in ref and reads";
   }
+  else {
+    $note = "Reference-only, only present in reference";
+  }
+  print OUTGFF
+"$ref\t$exper\ttransposable_element_insertion_site\t$s\t$e\t.\t.\t.\tID=$TE.te_insertion_site.$ref.$s..$e;TE_Name=$TE;Note=$note;left_flanking_read_count=$start_count;right_flanking_read_count=$end_count\n";
+  print ALLEXISTING "$exper\t$found\t$start_count\t$end_count\n";
+}
+
 sub TSD_check {
   ##$seq is entire trimmd read, not just the TSD portion of the read
   ##$start is the first postition of the entire read match to ref
@@ -299,49 +372,58 @@ sub TSD_check {
   $rev_seq =~ tr /ATGCN/TACGN/;
   my $result = 0;
   my $TSD;
+  my $TE_orient = 0;
   my $pos;
   my $start;    ## first base of TSD
   ##start means that the TE was removed from the start of the read
+  ##5 means the trimmed end mapps to the 5prime end of the TE
+  ##3 means the trimmed end mapps to the 3prime end of the TE
+
   if ( $strand eq '+' ) {
-    if ( $read_name =~ /start$/
+    if ( $read_name =~ /start:[35]$/
       and ( $seq =~ /^($tsd)/ or $rev_seq =~ /($tsd)$/ ) )
     {
-      $result = 1;
-      $TSD    = $1;
-      $pos    = "right";
-      $start  = $seq_start;
+      $result    = 1;
+      $TSD       = $1;
+      $pos       = "right";
+      $TE_orient = ( substr( $read_name, -1 ) == 5 ) ? '-' : '+';
+      $start     = $seq_start;
     }
     ##end means that the TE was removed from the end of the read
-    elsif ( $read_name =~ /end$/
+    elsif ( $read_name =~ /end:[35]$/
       and ( $seq =~ /($tsd)$/ or $rev_seq =~ /^($tsd)/ ) )
     {
-      $result = 1;
-      $TSD    = $1;
-      $pos    = "left";
-      $start  = $seq_start + ( ( length $seq ) - ( length $TSD ) );
+      $result    = 1;
+      $TSD       = $1;
+      $pos       = "left";
+      $TE_orient = ( substr( $read_name, -1 ) == 5 ) ? '+' : '-';
+      $start     = $seq_start + ( ( length $seq ) - ( length $TSD ) );
     }
   }
   elsif ( $strand eq '-' ) {
-    if ( $read_name =~ /start$/
+    if ( $read_name =~ /start:[53]$/
       and ( $seq =~ /($tsd)$/ or $rev_seq =~ /^($tsd)/ ) )
     {
-      $result = 1;
-      $TSD    = $1;
-      $pos    = "left";
-      $start  = $seq_start + ( ( length $seq ) - ( length $TSD ) );
+      $result    = 1;
+      $TSD       = $1;
+      $pos       = "left";
+      $TE_orient = ( substr( $read_name, -1 ) == 5 ) ? '+' : '-';
+      $start     = $seq_start + ( ( length $seq ) - ( length $TSD ) );
     }
     ##end means that the TE was removed from the end of the read
-    elsif ( $read_name =~ /end$/
+    elsif ( $read_name =~ /end:[53]$/
       and ( $seq =~ /^($tsd)/ or $rev_seq =~ /($tsd)$/ ) )
     {
-      $result = 1;
-      $TSD    = $1;
-      $pos    = "right";
-      $start  = $seq_start;
+      $result    = 1;
+      $TSD       = $1;
+      $pos       = "right";
+      $TE_orient = ( substr( $read_name, -1 ) == 5 ) ? '-' : '+';
+      $start     = $seq_start;
     }
 
   }
-  if ($result) {
+  ## existingTEs are TEs present in Ref and reads
+  if ( $result and $TE_orient ) {
     my ( $tir1_end, $tir2_end ) =
       ( ( $start + ( length $TSD ) ), ( $start - 1 ) );
     if ( exists $existingTE{$TE}{start}{$tir1_end} ) {
@@ -353,8 +435,10 @@ sub TSD_check {
       $existingTE_found{$te_id}{end}++;
     }
     else {
+      ## insert is not a ref insertion, it is a non-ref
       $teInsertions{$event}{$TSD}{$start}{count}++;
       $teInsertions{$event}{$TSD}{$start}{$pos}++;
+      $teInsertions{$event}{$TSD}{$start}{TE_orient}{$TE_orient}++;
       $read_name =~ s/:start|:end//;
       push @{ $teInsertions{$event}{$TSD}{$start}{reads} }, $read_name;
     }

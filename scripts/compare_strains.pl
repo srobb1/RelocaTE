@@ -1,10 +1,9 @@
 #!/usr/bin/perl -w
 use strict;
 #use inserts.characterixed.txt
-#chromosome.pos  avg_flankers    spanners        status
-#HEG4_2_nf       mping   TTA     Chr1.588834     7.5     29      new_insertion
-#HEG4_2_nf       mping   TTA     Chr1.1132977    45.5    0       homozygous
 
+#strain  TE      TSD   chromosome.pos    strand  avg_flankers    spanners        status
+#EG4_2   mping   TTA   Chr1:2925..2927   +  32   0       homozygous
 
 my %inserts;
 my @insert_files = @ARGV;
@@ -13,7 +12,7 @@ foreach my $file (@insert_files){
   while (my $line = <IN>){
    chomp $line;
    next if $line =~ /chromosome.pos.+avg_flan/;
-      my ($strain, $te, $tsd, $pos, $spanners, $flankers, $class) = split /\t/ , $line;
+      my ($strain, $te, $tsd, $pos, $strand, $spanners, $flankers, $class) = split /\t/ , $line;
       $class =~ s/\?//;
       $inserts{$pos}{$strain}=$class;
   }

@@ -2,6 +2,10 @@
 use strict;
 ##converts fq to fa
 
+if (!defined @ARGV){
+  die "Do not run directly, to be called by relocaTE.pl\n";
+}
+
 my ( $infq, $outfa ) = ( $ARGV[0], $ARGV[1] );
 
 if ( $infq !~ /\.(fq|fastq)$/ ) {

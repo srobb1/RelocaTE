@@ -202,7 +202,8 @@ foreach my $te ( keys %seqs ) {
   if ( !-e "$genome_file.bowtie_build_index.1.ebwt" ) {
     `bowtie-build -f $genome_file $genome_file.bowtie_build_index`;
   }
-`bowtie --best -a -v 2 -f $genome_file.bowtie_build_index $bowtie_2_aln  1> $bowtie_out 2> $working_dir/bowtie.stderr`;
+`bowtie -a -m 1 -v 3 -f $genome_file.bowtie_build_index $bowtie_2_aln  1> $bowtie_out 2> $working_dir/bowtie.stderr`;
+#`bowtie --best -a -v 2 -f $genome_file.bowtie_build_index $bowtie_2_aln  1> $bowtie_out 2> $working_dir/bowtie.stderr`;
 ##parse bowtie out and record the genomic locations of alignments
   my $file_path = File::Spec->rel2abs($bowtie_out);
   open( my $BOWTIE_fh, "<", $file_path ) or die "Can't open $file_path $!\n";
@@ -346,7 +347,8 @@ open INSERTS, "$insert_pos_file";
 while (my $line = <INSERTS>){
   next if $line =~ /^TE.+Exper.+chromosome.+insertion_site.+left_flanking_read_count/;
   my ($TE, $TSD, $sample_desc, $target, $pos) = split /\t/, $line;
-  $inserts{$target}{"$target:$pos"}{pos}=$pos;
+  my ($last_TSD_bp) = $pos =~ /\d+\.\.(\d+)/; 
+  $inserts{$target}{"$target:$pos"}{pos}=$last_TSD_bp;
   }
 }
 #print Dumper \%inserts;

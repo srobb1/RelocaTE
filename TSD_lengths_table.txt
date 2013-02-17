@@ -1,0 +1,41 @@
+Data collected from: 
+	Wicker, Sabot, Hua-Van et al., 2007
+	Yuan and Wessler, 2011
+
+Class 1 elements (Retrotransposons)
+			TSD_len	TSD_pattern
+  Subclass 1 LTR	4-6	TG..CA
+    Superfamily Copia	4-6
+    Superfamily Gypsy	4-6
+    Superfamily Bel-Pao	4-6
+    Superfamily Retrovirus	4-6
+    Superfamily ERV	4-6
+
+Class 2 elements (DNA Transposons)
+  Subclass 1 TIR
+			TSD_len	TSD_pattern
+    Superfamily CACTA	2-3
+    Superfamily Mutator	9-11
+    Superfamily hAT	(5-7)-8
+    Superfamily Tc1/Mariner	2 TA
+      example Group Stowaway
+    Superfamily	PIF/Harbinger	2-3	T/A rich, TWA, AT, or AWT
+      example Group Tourist
+    Superfamily Merlin	8-(9)
+    Superfamily Transib	5
+    Superfamily	P	7-8
+    Superfamily	PiggyBac	4	TTAA
+    Superfamily Zator	2	TA
+    Superfamily MULE	9-10
+    Superfamily Kolobok	4	TTAA
+    Superfamily Novosib	8
+    Superfamily Sola1	4	WWWW
+    Superfamily Sola2	4
+    Superfamily Sola3	4	TTAA
+    Superfamily CMC	2-4
+    Superfamily Academ	3
+    Superfamily Ginger	4-(5)
+  Subclass 2 Maverick
+    Superfamily 2 Maverick	6
+
+Parentheses in the TSDs indicate exceptional cases.

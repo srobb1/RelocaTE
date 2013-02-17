@@ -1,14 +1,19 @@
 #!/usr/bin/perl -w
 use strict;
-#line from relocaTE.pl that calls this script
-#$scripts/relocaTE_align.pl $scripts $param_path $genome_file $outregex $TE $exper
+## aligns TE trimmed reads to the reference
+
+if ( !defined @ARGV ) {
+  die "Do not run directly, to be called by relocaTE.pl\n";
+}
+
 my $scripts     = shift;    #full path to scripts directory
 my $path        = shift;    #current/top/TE
 my $genome_file = shift;
 my $regex_file  = shift;
 my $TE          = shift;
 my $exper       = shift;
-
+my $bowtie2     = shift;
+my $bowtie_sam  = 0;
 ##get the regelar expression patterns for mates and for the TE
 ##when passed on the command line as an argument, even in single
 ##quotes I lose special regex characters
@@ -21,8 +26,8 @@ my $TSD;
 while ( my $line = <INREGEX> ) {
   chomp $line;
   ( $mate_file_1, $mate_file_2, $mate_file_unpaired, $TSD ) = split /\t/, $line;
-  $mate_file_1 =~ s/\.(fq|fastq)$//;
-  $mate_file_2 =~ s/\.(fq|fastq)$//;
+  $mate_file_1        =~ s/\.(fq|fastq)$//;
+  $mate_file_2        =~ s/\.(fq|fastq)$//;
   $mate_file_unpaired =~ s/\.(fq|fastq)$//;
 }
 
@@ -63,6 +68,7 @@ if ( @files_1 and @files_2 ) {
             }
           }
         }
+
         #if $file_1 eq $file_2 & are finished with unpaired go back to $i loop
         last;
       }
@@ -80,15 +86,12 @@ else {    ##if only unmatched files are provided
 my @genome_dir = split '/', $genome_file;
 my $genome_fa  = pop @genome_dir;
 my $genome_dir = join '/', @genome_dir;
-$genome_fa =~ /(.+)\.fa$/;
+$genome_fa =~ /(.+)\.(fa|fasta)$/;
 my $target     = $1;
 my $target_dir = "$path/$target";
 ##make new directories for file output
-#`mkdir -p $target_dir`;
-#`mkdir -p $path/$target/bowtie_aln`;
 `mkdir -p $path/bowtie_aln`;
 my $te_dir_path = $path;
-#$path = $target_dir;
 my @bowtie_out_files;
 
 ##align each newly created flanking fq files to the genome
@@ -103,7 +106,20 @@ foreach my $key ( sort keys %flanking_fq ) {
     my @fq_path = split '/', $flanking_fq;
     my $fq_name = pop @fq_path;
     $fq_name =~ s/\.fq$//;
+
+    if ( !$bowtie2 and $bowtie_sam ) {
+      ##bowtie1 with sam output
+`bowtie --sam --sam-nohead --sam-nosq -a -m 1 -v 3 -q $genome_file.bowtie_build_index $flanking_fq  1> $path/bowtie_aln/$target.$fq_name.bowtie.single.out 2>> $path/$target.stderr`;
+    }
+    elsif ($bowtie2) {
+      ##bowtie2 -- need to get comparable -a -m1 -v3 arguments
+`bowtie2 --sam-nohead --sam-nosq -x $genome_file.bowtie2_build_index -U $flanking_fq  1> $path/bowtie_aln/$target.$fq_name.bowtie.single.out 2>> $path/$target.stderr`;
+    }
+    else {
+      ## bowtie1 with bowtie output
 `bowtie --best -q $genome_file.bowtie_build_index $flanking_fq  1> $path/bowtie_aln/$target.$fq_name.bowtie.single.out 2>> $path/$target.stderr`;
+    }
+
     push @bowtie_out_files,
       "$path/bowtie_aln/$target.$fq_name.bowtie.single.out";
   }    #end of foreach my $type ( sort keys %{ $flanking_fq{$key} } )
@@ -114,6 +130,7 @@ foreach my $key ( sort keys %flanking_fq ) {
     my $fq_name       = pop @fq_path;
     $fq_name =~ s/\.fq$//;
     if ( -s $flanking_fq_1 and -s $flanking_fq_2 ) {
+
       #clean reads if both flanking.fq are non-zero file size
       #clean means make sure the mate1&2 files are in the same order
       #and that any unmated reads are in the unpaired file
@@ -122,16 +139,37 @@ foreach my $key ( sort keys %flanking_fq ) {
     if (  -s "$flanking_fq_1.matched"
       and -s "$flanking_fq_2.matched" )
     {
+      if ( !$bowtie2 and $bowtie_sam ) {
+        ##bowtie1 and sam output
+`bowtie --sam --sam-nohead --sam-nosq -a -m 1 -v 3 -q $genome_file.bowtie_build_index -1 $flanking_fq_1.matched -2 $flanking_fq_2.matched 1> $path/bowtie_aln/$target.$fq_name.bowtie.mates.out 2>> $path/$target.stderr`;
+      }
+      elsif ($bowtie2) {
+        ##bowtie2
+`bowtie2  --sam-nohead  --sam-nosq -x $genome_file.bowtie2_build_index -1 $flanking_fq_1.matched -2 $flanking_fq_2.matched 1> $path/bowtie_aln/$target.$fq_name.bowtie.mates.out 2>> $path/$target.stderr`;
+      }
+      else {
+        ##bowtie1 with bowtie output
 `bowtie --best  -q $genome_file.bowtie_build_index -1 $flanking_fq_1.matched -2 $flanking_fq_2.matched 1> $path/bowtie_aln/$target.$fq_name.bowtie.mates.out 2>> $path/$target.stderr`;
+      }
       push @bowtie_out_files,
         "$path/bowtie_aln/$target.$fq_name.bowtie.mates.out";
+      if ( !$bowtie2 and $bowtie_sam ) {
+        ##bowtie1 and sam output
+`bowtie --sam --sam-nohead --sam-nosq -a -m 1 -v 3 -q $genome_file.bowtie_build_index $te_dir_path/flanking_seq/$fq_name.unPaired.fq 1> $path/bowtie_aln/$target.$fq_name.bowtie.unPaired.out 2>> $path/$target.stderr`;
+      }
+      elsif ($bowtie2) {
+        ##bowtie2
+`bowtie2 --sam-nohead --sam-nosq -x $genome_file.bowtie2_build_index -U $te_dir_path/flanking_seq/$fq_name.unPaired.fq 1> $path/bowtie_aln/$target.$fq_name.bowtie.unPaired.out 2>> $path/$target.stderr`;
+      }
+      else {
+        ##bowtie1 with bowtie output
 `bowtie --best -q $genome_file.bowtie_build_index $te_dir_path/flanking_seq/$fq_name.unPaired.fq 1> $path/bowtie_aln/$target.$fq_name.bowtie.unPaired.out 2>> $path/$target.stderr`;
+      }
       push @bowtie_out_files,
         "$path/bowtie_aln/$target.$fq_name.bowtie.unPaired.out";
     }  # end of if(-s "$flanking_fq_1.matched" and -s "$flanking_fq_2.matched" )
   }  #end of if ( exists $flanking_fq{$key}{1} and exists $flanking_fq{$key}{2})
 }    #end of foreach $key
-
 
 my $files2merge;
 my $filecount = scalar @bowtie_out_files;
@@ -139,10 +177,12 @@ if ( $filecount > 50 ) {
   my @big_files_2_merge;
   for ( my $i = 0 ; $i < $filecount ; $i = $i + 50 ) {
     $files2merge = join " ", ( splice( @bowtie_out_files, 0, 50 ) );
-    if (scalar @bowtie_out_files > 1){
+    if ( scalar @bowtie_out_files > 1 ) {
       `cat $files2merge > $path/bowtie_aln/$target.$TE.merged.bowtie.$i.temp`;
-      push @big_files_2_merge, "$path/bowtie_aln/$target.$TE.merged.bowtie.$i.temp";
-    }else {
+      push @big_files_2_merge,
+        "$path/bowtie_aln/$target.$TE.merged.bowtie.$i.temp";
+    }
+    else {
       ##if there is only 1 file after processing the 50, then just push onto @big_files_2_merge
       push @big_files_2_merge, $files2merge;
     }
@@ -154,8 +194,9 @@ else {
 }
 
 my $merged_bowtie = "$path/bowtie_aln/$target.$TE.bowtie.out";
-if ($files2merge){
+if ($files2merge) {
   `cat $files2merge > $merged_bowtie`;
-}else {
+}
+else {
   `touch $merged_bowtie`;
 }
