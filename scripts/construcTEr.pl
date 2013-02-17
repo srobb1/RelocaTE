@@ -9,7 +9,7 @@ my $working_dir     = shift;
 my $regex_file      = shift;
 my $insert_pos_file = shift;
 my %seqs;
-my $mm_cutoff = 0;
+
 ##get the regelar expression patterns for mates and for the TE
 ##when passed on the command line as an argument, even in single
 ##quotes I lose special regex characters
@@ -62,7 +62,7 @@ foreach my $blat_file (@blat_files) {
   }
   $prefix =~ s/\.fq//;
   my @dbs = `ls $all_records_dir/$prefix*fa`;
-  #print "$prefix: @dbs\n";
+  print "$prefix: @dbs\n";
   ## @db should only be p1 and p2 == 2 files
   chomp @dbs;
   ##blat parser
@@ -202,8 +202,8 @@ foreach my $te ( keys %seqs ) {
   if ( !-e "$genome_file.bowtie_build_index.1.ebwt" ) {
     `bowtie-build -f $genome_file $genome_file.bowtie_build_index`;
   }
+`bowtie -a -m 1 -v 3 -f $genome_file.bowtie_build_index $bowtie_2_aln  1> $bowtie_out 2> $working_dir/bowtie.stderr`;
 #`bowtie --best -a -v 2 -f $genome_file.bowtie_build_index $bowtie_2_aln  1> $bowtie_out 2> $working_dir/bowtie.stderr`;
-`bowtie --best -f $genome_file.bowtie_build_index $bowtie_2_aln  1> $bowtie_out 2> $working_dir/bowtie.stderr`;
 ##parse bowtie out and record the genomic locations of alignments
   my $file_path = File::Spec->rel2abs($bowtie_out);
   open( my $BOWTIE_fh, "<", $file_path ) or die "Can't open $file_path $!\n";
@@ -212,7 +212,6 @@ foreach my $te ( keys %seqs ) {
     my @line = split /\t/, $line;
     my ( $name, $strand, $target, $start, $seq, $qual, $M, $mismatch ) =
       split /\t/, $line;
-    next if $M > 0 ; # next if read maps to more than one place
     my ( $this_mate, $id ) = split ',', $name;
     ##remove /1 or /2 from the read name
     ##7:12:11277:9907:Y/1     +       Chr1    22134042        TTTTTTATAAATGGATAA      DGGGGGDGGGGFGDGGGG      4       7:A>T,16:C>A
@@ -257,7 +256,7 @@ foreach my $te ( keys %seqs ) {
             my $seq_len =
               length $seqs{$te}{$id}{$mate}{aln}{$target}{$id_str}{seq};
             my $percent_mm = $mismatches / $seq_len;
-            if ( $percent_mm <= $mm_cutoff ) {
+            if ( $percent_mm < 0.1 ) {
               $genome_aln = 1;
             }
             else {
@@ -344,15 +343,15 @@ foreach my $te ( keys %seqs ) {
 }
 my %inserts;
 if (-e $insert_pos_file){
-open INSERTS, "$insert_pos_file" or die "Can't open $insert_pos_file\n";
+open INSERTS, "$insert_pos_file";
 while (my $line = <INSERTS>){
-  ##TE      TSD     Exper   chromosome      insertion_site  combined_read_count     right_flanking_read_count       left_flanking_read_count
-  next if $line =~ /^TE.+Exper.+chromosome.+insertion_site/;
-  next if $line =~/^\s/;
+  next if $line =~ /^TE.+Exper.+chromosome.+insertion_site.+left_flanking_read_count/;
   my ($TE, $TSD, $sample_desc, $target, $pos) = split /\t/, $line;
-  $inserts{$target}{"$target:$pos"}{pos}=$pos;
+  my ($last_TSD_bp) = $pos =~ /\d+\.\.(\d+)/; 
+  $inserts{$target}{"$target:$pos"}{pos}=$last_TSD_bp;
   }
 }
+#print Dumper \%inserts;
 open OUTFA , ">$working_dir/$TE.construcTEr.reads.fa";
 foreach my $target ( sort keys %construcTEr ) {
   foreach my $range (
@@ -382,7 +381,6 @@ foreach my $target ( sort keys %construcTEr ) {
           my $overlap = range_overlap( $te_range, $read_range );
           if ( $overlap >= 5 ) {
             $range_str = $range_str . ",overlap_with_$range_name=$overlap";
-            #print $range_str,"\n";
           }
         }
         $range_str =~ s/^,//;
@@ -441,9 +439,6 @@ if ($insert_pos_file) {
     close OUT;
   }
 }
-#print Dumper \%inserts;
-print Dumper \%construcTEr;
-
 #####SUBROUTINES########
 sub dir_split {
   my $path = shift;

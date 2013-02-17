@@ -1,12 +1,10 @@
 #!/usr/bin/perl -w
 use strict;
 ##blat parser and fq trimmer
-## 053012: changed the test for mismatches from ($mismatches/$len) <= $mismatch_allowance
-##    to ($mismatches / ($matches + $mismatches)) <= $mismatch_allowance
-## 042112: changed the behavior of more than one blat hit to same query seq.
-## if on the same strand keep best TE hit
-## if on diff strands, this is a likely tandem insert, throw out reads, make a list
-## of potential tandem insert reads
+
+if ( !defined @ARGV ) {
+  die "Do not run directly, to be called by relocaTE.pl\n";
+}
 
 my $blat_file          = shift;
 my $fq_file_1          = shift;
@@ -18,13 +16,15 @@ my @blat_path = split '/', $blat_file;
 my $filename  = pop @blat_path;
 my $blat_path = join '/', @blat_path;
 pop @blat_path;
-my $te_path = join '/', @blat_path;
+my $te_path     = join '/', @blat_path;
 my $out_fq_path = "$te_path/te_containing_fq";
 my $out_fa_path = "$te_path/te_only_read_portions_fa";
 
-
-open (INBLAT, $blat_file) or die "Please provide a blat output file\n";
-open (OUTTANDEM,  ">$out_fq_path/$filename.potential_tandemInserts_containing_reads.list.txt") or die "Can't open $filename.potential_tandemInserts_containing_reads.list.txt or writing\n";
+open( INBLAT, $blat_file ) or die "Please provide a blat output file\n";
+open( OUTTANDEM,
+  ">$out_fq_path/$filename.potential_tandemInserts_containing_reads.list.txt" )
+  or die
+"Can't open $filename.potential_tandemInserts_containing_reads.list.txt or writing\n";
 
 <INBLAT>;    #get rid of blat header lines
 <INBLAT>;
@@ -49,29 +49,38 @@ while ( my $line = <INBLAT> ) {
   my $block_qStarts = $blat[19];
   my ($block_qStart) = split ',', $block_qStarts;
   my $addRecord = 0;
-  if (exists $coord{$qName}){
-    if ($strand eq $coord{$qName}{strand}){ 
+
+  if ( exists $coord{$qName} ) {
+    if ( $strand eq $coord{$qName}{strand} ) {
       ##if there is are tandem insertions, theses reads
       ##will call many false insertions events.
-      ##if on the same strand, the matches are not likely to overlap, 
+      ##if on the same strand, the matches are not likely to overlap,
       ##the two regions would be separated by mismatches or gaps if they were not
       ##tandem insetions
       print OUTTANDEM "$qName\n";
-      $qStart = $qStart <  $coord{$qName}{start} ? $qStart :  $coord{$qName}{start}; 
-      $qEnd = $qEnd >  $coord{$qName}{end} ? $qEnd :  $coord{$qName}{end}; 
-      $tStart = $tStart <  $coord{$qName}{tStart} ? $tStart :  $coord{$qName}{tStart}; 
-      $tEnd = $tEnd >  $coord{$qName}{tEnd} ? $tEnd :  $coord{$qName}{tEnd};
-      $match = ($coord{$qName}{match} + $match) > $qLen ? $qLen : $coord{$qName}{match} + $match ;
+      $qStart =
+        $qStart < $coord{$qName}{start} ? $qStart : $coord{$qName}{start};
+      $qEnd = $qEnd > $coord{$qName}{end} ? $qEnd : $coord{$qName}{end};
+      $tStart =
+        $tStart < $coord{$qName}{tStart} ? $tStart : $coord{$qName}{tStart};
+      $tEnd = $tEnd > $coord{$qName}{tEnd} ? $tEnd : $coord{$qName}{tEnd};
+      $match =
+        ( $coord{$qName}{match} + $match ) > $qLen
+        ? $qLen
+        : $coord{$qName}{match} + $match;
       $addRecord = 1;
-    }else {
+    }
+    else {
       ##keep the best match to TE
-      if ($coord{$qName}{match} >= $match ){
+      if ( $coord{$qName}{match} >= $match ) {
         $addRecord = 0;
-      }else{
+      }
+      else {
         $addRecord = 1;
       }
     }
-  }else {
+  }
+  else {
     $addRecord = 1;
   }
   if ($addRecord) {
@@ -87,7 +96,6 @@ while ( my $line = <INBLAT> ) {
   }
 }
 
-
 my $TE = "unspecified";
 my $FA = "unspecified";
 
@@ -97,16 +105,22 @@ if ( $filename =~ /(\S+)\.te_(\S+)\.blatout/ ) {
   $TE = $2;
 }
 ##checking to see if these files already exist
-my $outfq       = 0;
-my $outte5      = 0;
-my $outte3      = 0;
-if ( -e "$out_fq_path/$FA.te_$TE.ContainingReads.fq" and -s "$out_fq_path/$FA.te_$TE.ContainingReads.fq") {
+my $outfq  = 0;
+my $outte5 = 0;
+my $outte3 = 0;
+if (  -e "$out_fq_path/$FA.te_$TE.ContainingReads.fq"
+  and -s "$out_fq_path/$FA.te_$TE.ContainingReads.fq" )
+{
   $outfq = 1;
 }
-if ( -e "$out_fa_path/$FA.te_$TE.five_prime.fa" and -s "$out_fa_path/$FA.te_$TE.five_prime.fa") {
+if (  -e "$out_fa_path/$FA.te_$TE.five_prime.fa"
+  and -s "$out_fa_path/$FA.te_$TE.five_prime.fa" )
+{
   $outte5 = 1;
 }
-if ( -e "$out_fa_path/$FA.te_$TE.three_prime.fa" and -s "$out_fa_path/$FA.te_$TE.three_prime.fa") {
+if (  -e "$out_fa_path/$FA.te_$TE.three_prime.fa"
+  and -s "$out_fa_path/$FA.te_$TE.three_prime.fa" )
+{
   $outte3 = 1;
 }
 open OUTFQ,  ">$out_fq_path/$FA.te_$TE.ContainingReads.fq" if !$outfq;
@@ -138,11 +152,9 @@ while ( my $line = <INFQ> ) {
     my ( $trimmed_seq, $trimmed_qual );
 
     #query read overlaps 5' end of database TE & trimmed seq > cutoff
-    if (
-      $tStart == 0
+    if (  $tStart == 0
       and ( ( $len - ( $match + $mismatch ) ) > $len_cutoff )
-      and ( $mismatch / ($match + $mismatch) ) <= $mismatch_allowance
-      )
+      and ( $mismatch / ( $match + $mismatch ) ) <= $mismatch_allowance )
     {
       my ( $tS, $tE, $qS, $qE ) =
         ( $tStart + 1, $tEnd + 1, $start + 1, $end + 1 );
@@ -155,29 +167,29 @@ while ( my $line = <INFQ> ) {
         $trimmed_seq  = substr $seq,  $end + 1;
         $trimmed_qual = substr $qual, $end + 1;
         ##te was removed from the end of the read
-        my ($id, $desc) = $header=~/^(\S+)(.*)/;
+        my ( $id, $desc ) = $header =~ /^(\S+)(.*)/;
         $id .= ':start:5';
-        
-        $header = $id.$desc;
+
+        $header = $id . $desc;
       }
       else {    ## strand is positive
         $trimmed_seq  = substr $seq,  0, $start;
         $trimmed_qual = substr $qual, 0, $start;
         ##te was removed from the start of the read
-        my ($id, $desc) = $header=~/^(\S+)(.*)/;
+        my ( $id, $desc ) = $header =~ /^(\S+)(.*)/;
         $id .= ':end:5';
-        $header = $id.$desc;
+        $header = $id . $desc;
       }
       next if length $trimmed_seq <= $len_cutoff;
       print OUTTE5
 ">$header $qS..$qE matches $TE:$tS..$tE mismatches:$mismatch\n$te_subseq\n"
         if !$outte5;
     }
+
     #query read overlaps 3' end of database TE & trimmed seq > cutoff
     elsif ( ( $tEnd == $tLen - 1 )
       and ( $len - ( $match + $mismatch ) > $len_cutoff )
-      and ( $mismatch / ($match + $mismatch) ) <= $mismatch_allowance
-      ) 
+      and ( $mismatch / ( $match + $mismatch ) ) <= $mismatch_allowance )
     {
       my ( $tS, $tE, $qS, $qE ) =
         ( $tStart + 1, $tEnd + 1, $start + 1, $end + 1 );
@@ -187,17 +199,17 @@ while ( my $line = <INFQ> ) {
         $trimmed_qual = substr $qual, 0, $start;
         ( $te_subseq = reverse $te_subseq ) =~ tr/AaGgTtCcNn/TtCcAaGgNn/;
         ##te was removed from the start of the read
-        my ($id, $desc) = $header=~/^(\S+)(.*)/;
+        my ( $id, $desc ) = $header =~ /^(\S+)(.*)/;
         $id .= ':end:3';
-        $header = $id.$desc;
+        $header = $id . $desc;
       }
       else {    ## strand is +
         $trimmed_seq  = substr $seq,  $end + 1;
         $trimmed_qual = substr $qual, $end + 1;
         ##te was removed from the end of the read
-        my ($id, $desc) = $header=~/^(\S+)(.*)/;
+        my ( $id, $desc ) = $header =~ /^(\S+)(.*)/;
         $id .= ':start:3';
-        $header = $id.$desc;
+        $header = $id . $desc;
       }
       next if length $trimmed_seq <= $len_cutoff;
       print OUTTE3

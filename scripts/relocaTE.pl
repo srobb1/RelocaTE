@@ -6,7 +6,6 @@ use FindBin qw($RealBin);
 use File::Path qw(make_path);
 use strict;
 
-##change $scripts to location of relocaTE scripts
 my $scripts = $RealBin;
 
 if ( !defined @ARGV ) {
@@ -30,7 +29,7 @@ my $qsub_q;
 my ( $blat_minScore, $blat_tileSize ) = ( 10, 7 );
 my $flanking_seq_len = 100;
 my $existing_TE      = 'NONE';
-my $bowtie2 = 0;
+my $bowtie2          = 0;
 GetOptions(
   'p|parallel:i'         => \$parallel,
   'a|qsub_array:i'       => \$qsub_array,
@@ -99,7 +98,24 @@ if ( -e $genome_fasta ) {
 }
 if ( !defined $te_fasta ) {
   print
-"\n\nPlease provide fasta file containing transposable elements by using -t TE fasta path\n";
+"\nPlease provide fasta file containing transposable elements by using -t TE fasta path
+
+SAMPLE TE FASTA:
+>mping TSD=TTA
+GGCCAGTCACAATGGGGGTTTCACTGGTGTGTCATGCACATTTAATAGGGGTAAGACTGAATAAAAAATG
+ATTATTTGCATGAAATGGGGATGAGAGAGAAGGAAAGAGTTTCATCCTGGTGAAACTCGTCAGCGTCGTT
+TCCAAGTCCTCGGTAACAGAGTGAAACCCCCGTTGAGGCCGATTCGTTTCATTCACCGGATCTCTTGCGT
+CCGCCTCCGCCGTGCGACCTCCGCATTCTCCCGCGCCGCGCCGGATTTTGGGTACAAATGATCCCAGCAA
+CTTGTATCAATTAAATGCTTTGCTTAGTCTTGGAAACGTCAAAGTGAAACCCCTCCACTGTGGGGATTGT
+TTCATAAAAGATTTCATTTGAGAGAAGATGGTATAATATTTTGGGTAGCCGTGCAATGACACTAGCCATT
+GTGACTGGCC
+
+FASTA header must contain \"TSD=\", can be a Perl regular expression.  
+  Example: these exact characters TTA: TSD=TTA 
+  Example: any 4 characters: TSD=....
+  Example: A or T followed by GCC: TSD=(A|T)GCC 
+  Example: CGA followed by any character then an A then CT or G: TSD=CGA.A(CT|G) 
+\n";
   die "\nuse -h option to get help\n";
 }
 elsif ( !-e $te_fasta ) {
@@ -107,8 +123,6 @@ elsif ( !-e $te_fasta ) {
   die "\nuse -h option to get help\n";
 }
 else {
-
-  #my $first_line = `head -n1 $te_fasta`;
   open INFILE, $te_fasta or die "Can't open $te_fasta\n";
   my $first_line = <INFILE>;
   close INFILE;
@@ -155,8 +169,6 @@ if ( $existing_TE ne 'NONE' ) {
   }
   else {
     $existing_TE_path = File::Spec->rel2abs($existing_TE);
-
-    #my $line = `head $existing_TE`;
     open INFILE, $existing_TE or die "Can't open $existing_TE\n";
     my $first_line = <INFILE>;
     close INFILE;
@@ -169,9 +181,9 @@ mping   Chr11:23200534..23200105
 
 TE_name<tab>ref_seqname:first_Base_Of_TIR1..Last_base_of_TIR2
 
-or use \'-x 1\' for RelocaTE to find your TE in the reference
+or (recommended) use \'-r 1\' for RelocaTE to find your TE in the reference
    ";
-    die "\nuse -h option to get help\n";
+      die "\nuse -h option to get help\n";
     }
   }
 }
@@ -218,33 +230,17 @@ options:
 					sequence is taken from the reference genome [100]
 -r |--reference_ins	STR		To identify reference and shared insertions (reference and reads)
 					choose option-1 or option-2. 
-					option-1) use \'-x 1\' to have RelocaTE find the location of your TE in the 
+					option-1) (recommended) use \'-r 1\' to have RelocaTE find the location of your TE in the 
 					reference.
 					option-2) input the file name of a tab-delimited file containing the coordinates
 					of TE insertions pre-existing in the reference sequence. [no default]
--b2 |--bowtie2	        INT             to use bowtie2 use \'-b2 1\' else for bowtie use \'-b2 0\' [0]	
+-b2 |--bowtie2	        INT             to use bowtie2 use \'-b2 1\' else for bowtie use \'-b2 0\' [0]
 -h |--help				this message
 
-SAMPLE TE FASTA:
->mping TSD=TTA
-GGCCAGTCACAATGGGGGTTTCACTGGTGTGTCATGCACATTTAATAGGGGTAAGACTGAATAAAAAATG
-ATTATTTGCATGAAATGGGGATGAGAGAGAAGGAAAGAGTTTCATCCTGGTGAAACTCGTCAGCGTCGTT
-TCCAAGTCCTCGGTAACAGAGTGAAACCCCCGTTGAGGCCGATTCGTTTCATTCACCGGATCTCTTGCGT
-CCGCCTCCGCCGTGCGACCTCCGCATTCTCCCGCGCCGCGCCGGATTTTGGGTACAAATGATCCCAGCAA
-CTTGTATCAATTAAATGCTTTGCTTAGTCTTGGAAACGTCAAAGTGAAACCCCTCCACTGTGGGGATTGT
-TTCATAAAAGATTTCATTTGAGAGAAGATGGTATAATATTTTGGGTAGCCGTGCAATGACACTAGCCATT
-GTGACTGGCC
-
-FASTA header must contain "TSD=", can be a Perl regular expression.  
-  Example: these exact characters TTA: TSD=TTA 
-  Example: any 4 characters: TSD=....
-  Example: A or T followed by GCC: TSD=(A|T)GCC 
-  Example: CGA followed by any character then an A then CT or G: TSD=CGA.A(CT|G) 
 
 See documentation for more information. http://srobb1.github.com/RelocaTE/
 
 ';
-
   exit 1;
 }
 if ( $outdir eq '' or $outdir =~ /^\s+$/ or !defined $outdir ) {
@@ -272,7 +268,9 @@ elsif ($parallel) {
   open PARALLEL, ">$current_dir/$top_dir/run_these_jobs.sh"
     or die "Can't open $current_dir/$top_dir/run_these_jobs.sh\n";
 }
-
+else {
+  mkdir "$current_dir/$top_dir";
+}
 my $qsub_formatGenome_cmd = 0;
 ## get names of each ref sequecne
 my @genome_seqs;
@@ -300,14 +298,17 @@ SEQUENCE2\n";
   #create bowtie index
   my $cmd;
   if ( !$bowtie2 and !-e "$genome_path.bowtie_build_index.1.ebwt" ) {
-    $cmd = "bowtie-build -f $genome_path $genome_path.bowtie_build_index";
+    $cmd =
+"bowtie-build -f $genome_path $genome_path.bowtie_build_index 12> $current_dir/$top_dir/bowtie-build.out";
     $qsub_formatGenome_cmd = 1;
-  }elsif ( $bowtie2 and !-e "$genome_path.bowtie2_build_index.1.bt2" ) {
-    $cmd = "bowtie2-build -f $genome_path $genome_path.bowtie2_build_index";
+  }
+  elsif ( $bowtie2 and !-e "$genome_path.bowtie2_build_index.1.bt2" ) {
+    $cmd =
+"bowtie2-build -f $genome_path $genome_path.bowtie2_build_index 12> $current_dir/$top_dir/bowtie-build2.out";
     $qsub_formatGenome_cmd = 1;
   }
   my $ref = 'ref';
-  if ($genome_path =~ /(?:.+\/)?(.+)\.(fa|fasta)$/){
+  if ( $genome_path =~ /(?:.+\/)?(.+)\.(fa|fasta)$/ ) {
     $ref = $1;
   }
   if ( $parallel and defined $cmd ) {
@@ -333,14 +334,13 @@ SEQUENCE2\n";
   }
   elsif ( defined $cmd ) {
     ##run it now
+    print "Formatting the reference genome: $genome_path\n";
     system($cmd);
   }
   if ($qsub_array) {
     if ( !-e "$shellscripts/step_1_not_needed_genome_fasta_already_formatted" )
     {
       my $job = "$shellscripts/step_1/step_1.$ref.formatGenome.sh";
-
-      #if (!@depend){
       print QSUBARRAY
         "STEP1=\`qsub -e $shellscripts -o $shellscripts $qsub_q $job\`
 echo \$STEP1\n";
@@ -352,7 +352,7 @@ echo \$STEP1\n";
 ##run existing TE blat against ref if the file does not exsit
 my $qsub_existingTE_cmd = 0;
 my $existing_blat_cmd =
-  "blat $genome_path $te_path $current_dir/$top_dir/existingTE.blatout";
+"blat $genome_path $te_path $current_dir/$top_dir/existingTE.blatout 1> $current_dir/$top_dir/existingTE.blat.stdout";
 if ($existing_blat) {
   ##if running blat set existing_TE_path to blatout
   $existing_TE_path = "$current_dir/$top_dir/existingTE.blatout";
@@ -377,6 +377,7 @@ echo \$EXISTINGTE\n";
   }
   elsif ( !-e "$current_dir/$top_dir/existingTE.blatout" ) {
     ## do it now
+    print "finding TEs ($te_path) in the reference genome ($genome_path)\n";
     system($existing_blat_cmd);
   }
 }
@@ -403,13 +404,14 @@ if ( $fq_dir ne 'SKIP' ) {
           my $shell_dir = "$shellscripts/step_2";
 
           mkdir $shell_dir;
-          my $outsh = ">$shell_dir/$fq_count." . "fq2fa.sh";
+          my $outsh = "$shell_dir/$fq_count." . "fq2fa.sh";
           open OUTSH, ">$outsh";
           print PARALLEL "sh $outsh\n" if !$qsub_array;
           print OUTSH "$cmd\n";
         }
         else {
-
+          ##run it now
+          print "Converting $fq_path to fasta for blat\n";
           system($cmd);
         }
       }
@@ -460,11 +462,10 @@ echo \$$jobName\n";
   }
 }    ##end if $fq_dir ne 'SKIP'
 close QSUBARRAY2;
-##split TE fasta into single record fastas
-my @te_fastas;
-my %TSD;
 
 ##split the TE fasta of many seqs into individual files
+my @te_fastas;
+my %TSD;
 open( INFASTA, "$te_fasta" ) || die "$!\n";
 my $i = 0;
 while ( my $line = <INFASTA> ) {
@@ -543,8 +544,10 @@ foreach my $te_path (@te_fastas) {
     #use pre-existing blatout files
     if ( !-e "$path/blat_output/$fa_name.te_$TE.blatout" ) {
       my $cmd =
-"blat -minScore=$blat_minScore -tileSize=$blat_tileSize $te_path $fa $path/blat_output/$fa_name.te_$TE.blatout";
+"blat -minScore=$blat_minScore -tileSize=$blat_tileSize $te_path $fa $path/blat_output/$fa_name.te_$TE.blatout 1>> $path/blat_output/blat.out";
       print OUTSH "$cmd\n" if $parallel;
+      print "Finding reads in $fa_name that contain sequence of $TE\n"
+        if !$parallel;
       system($cmd) if !$parallel;
     }
 
@@ -562,6 +565,8 @@ foreach my $te_path (@te_fastas) {
       chmod 0755, "$shell_dir/*blat.sh";
     }
     else {
+      ##run it now
+      print "Trimming $fq reads of $TE sequence\n" if !$parallel;
       system($cmd) if !$parallel;
     }
   }
@@ -598,29 +603,37 @@ echo \$$jobName\n";
 "$scripts/relocaTE_align.pl $scripts $param_path $genome_path $outregex $TE $exper $bowtie2";
     if ( !$parallel ) {
       ## run now
-      system ($cmd);
+      print "Aligning $TE trimmed reads to the reference ($genome_path)\n";
+      system($cmd);
     }
     else {
       my $shell_dir = "$shellscripts/step_4/$TE";
       $genome_path =~ /.+\/(.+)\.(fa|fasta)$/;
       my $ref = $1;
+
       #`mkdir -p $shell_dir`;
       make_path( $shell_dir, { mode => 0755 } );
+
       #mkdir $shell_dir;
       open OUTSH, ">$shell_dir/step_4.$ref.$TE.align.sh";
       print OUTSH "$cmd\n";
       print PARALLEL "sh $shell_dir/step_4.$ref.$TE.align.sh\n" if !$qsub_array;
       close OUTSH;
+
       #`chmod +x $shell_dir/step_4.$ref.$TE.align.sh`;
       chmod 0755, "$shell_dir/step_4.$ref.$TE.align.sh";
-
       if ($qsub_array) {
+        my $existing_depend = '';
+        if ( $qsub_formatGenome_cmd ) {
+          $existing_depend = "-W depend=afterok:\$STEP1" if !@depend;
+          $existing_depend = ",depend=afterok:\$STEP1" if @depend;
+        }
         my $job  = "$shell_dir/step_4.$ref.$TE.align.sh";
         my $desc = $TE;
         $desc =~ s/\W/_/;
         if ( !@depend ) {
           print QSUBARRAY
-"STEP_4_$desc=\`qsub -e $shellscripts -o $shellscripts $qsub_q $job\`
+"STEP_4_$desc=\`qsub -e $shellscripts -o $shellscripts $qsub_q $existing_depend $job\`
 echo \$STEP_4_$desc\n";
           @depend = ( "STEP_4_$desc", "afterok" );
         }
@@ -629,7 +642,7 @@ echo \$STEP_4_$desc\n";
           @depend = ( "STEP_4_$desc", "afterok" );
           my $jobName = $depend[0];
           print QSUBARRAY
-"$jobName=`qsub -e $shellscripts -o $shellscripts $qsub_q -W depend=$afterok:\$$last_job $job`
+"$jobName=`qsub -e $shellscripts -o $shellscripts $qsub_q -W depend=$afterok:\$$last_job","$existing_depend $job`
 echo \$$jobName\n";
         }
       }
@@ -643,7 +656,9 @@ echo \$$jobName\n";
       my $cmd =
 "$scripts/relocaTE_insertionFinder.pl $merged_bowtie $seq_id $genome_path $TE $outregex $exper $flanking_seq_len $existing_TE_path $mismatch_allowance $bowtie2";
       if ( !$parallel ) {
-        system ($cmd);
+        ##run it now
+        print "Finding $TE insertions in $seq_id\n";
+        system($cmd);
       }
       else {
         my $shell_dir = "$shellscripts/step_5/$TE";
@@ -653,7 +668,6 @@ echo \$$jobName\n";
         close OUTSH;
         print PARALLEL "sh $shell_dir/$genome_count.$TE.findSites.sh\n"
           if !$qsub_array;
-        #`chmod +x $shell_dir/*findSites.sh`;
         chmod 0755, "$shell_dir/$genome_count.$TE.findSites.sh";
       }
       $genome_count++;
@@ -665,13 +679,6 @@ echo \$$jobName\n";
       if ($qsub_existingTE_cmd) {
         $existing_depend = "-W depend=afterok:\$EXISTINGTE" if !@depend;
         $existing_depend = ":\$EXISTINGTE" if @depend;
-      }
-      if ( $qsub_formatGenome_cmd and $existing_depend eq '' ) {
-        $existing_depend = "-W depend=afterok:\$STEP1" if !@depend;
-      }
-      elsif ( $qsub_formatGenome_cmd and ( $existing_depend ne '' or @depend ) )
-      {
-        $existing_depend .= ":\$STEP1";
       }
       my $desc = $TE;
       $desc =~ s/\W/_/;
@@ -699,7 +706,7 @@ echo \$$jobName\n";
     close QSUBARRAY4;
   }
 }
-
+## Finished, clean up, cat files
 ##cat all '.te_insertion_sites.table.txt' results into one file
 foreach my $te_path (@te_fastas) {
   my @path     = split '/', $te_path;
@@ -713,19 +720,19 @@ foreach my $te_path (@te_fastas) {
     open FINISH, ">$shellscripts/step_6/$TE/step_6.$TE.finishing.sh";
     print PARALLEL "sh $shellscripts/step_6/$TE/step_6.$TE.finishing.sh\n"
       if !$qsub_array;
-## Need to put all of this in a perl script then have the
+## toDo: Need to put all of this in a perl script then have the
 ## finishing shell script execute that perl script
     print FINISH "
 `mkdir -p $path/results/all_files`
 
 #combine confident insertions to one file
-echo \"TE\tTSD\tExper\tchromosome\tinsertion_site\tleft_flanking_read_count\tright_flanking_read_count\tleft_flanking_seq\tright_flanking_seq\tTE_orientation\" > $path/results/temp
+echo \"TE\tTSD\tExper\tchromosome\tinsertion_site\tstrand\tleft_flanking_read_count\tright_flanking_read_count\tleft_flanking_seq\tright_flanking_seq\tTE_orientation\" > $path/results/temp
 for i in \`ls $path/results/*.$TE.confident_nonref_insert.txt\` ; do grep -v flanking_read_count \$i >> $path/results/temp ; done
 mv $path/results/temp $path/results/$exper.$TE.confident_nonref.txt
 mv $path/results/*.$TE.confident_nonref_insert.txt $path/results/all_files
 
 #combine all insertions to one file
-echo \"TE\tTSD\tExper\tchromosome\tinsertion_site\tcombined_read_count\tright_flanking_read_count\tleft_flanking_read_count\" > $path/results/temp2
+echo \"TE\tTSD\tExper\tchromosome\tinsertion_site\tstrand\tcombined_read_count\tright_flanking_read_count\tleft_flanking_read_count\" > $path/results/temp2
 for i in \`ls $path/results/*.$TE.all_nonref_insert.txt\` ; do grep -v total \$i | grep -v Note >> $path/results/temp2 ; done
 mv $path/results/temp2 $path/results/$exper.$TE.all_nonref.txt
 mv $path/results/*.$TE.all_nonref_insert.txt $path/results/all_files
@@ -772,7 +779,8 @@ echo \$$jobName\n";
   if ( !$parallel and !$qsub_array ) {
     ##do it now
     ##combine and delete individual chr files for confident sites
-`echo \"TE\tTSD\tEper\tchromosome\tinsertion_site\tleft_flanking_read_count\tright_flanking_read_count\tleft_flanking_seq\tright_flanking_seq\tTE_orientation\" > $path/results/temp`;
+    print "Finishing and cleaning up\n";
+`echo \"TE\tTSD\tEper\tchromosome\tinsertion_site\tstrand\tleft_flanking_read_count\tright_flanking_read_count\tleft_flanking_seq\tright_flanking_seq\tTE_orientation\" > $path/results/temp`;
     my @files = `ls $path/results/*.$TE.confident_nonref_insert.txt`;
     foreach my $file (@files) {
       chomp $file;
@@ -782,7 +790,7 @@ echo \$$jobName\n";
     `mv $path/results/temp $path/results/$exper.$TE.confident_nonref.txt`;
 
     ##combine and delete individual chr files for all sites
-`echo \"TE\tTSD\tExper\tchromosome\tinsertion_site\tcombined_read_count\tright_flanking_read_count\tleft_flanking_read_count\" > $path/results/temp2`;
+`echo \"TE\tTSD\tExper\tchromosome\tinsertion_site\tstrand\tcombined_read_count\tright_flanking_read_count\tleft_flanking_read_count\" > $path/results/temp2`;
     @files = `ls $path/results/*.$TE.all_nonref_insert.txt`;
     foreach my $file (@files) {
       chomp $file;
@@ -798,7 +806,7 @@ echo \$$jobName\n";
       `cat $file >> $path/results/temp3`;
       unlink $file;
     }
-    `mv $path/results/temp3 $path/results/$exper.$TE.confident_nonref_genomeflanks.fa`;
+`mv $path/results/temp3 $path/results/$exper.$TE.confident_nonref_genomeflanks.fa`;
 
     ##combine and delete individual chr gff files
     `echo \"##gff-version 3\" > $path/results/temp4`;
@@ -817,7 +825,8 @@ echo \$$jobName\n";
       `cat $file >> $path/results/temp5`;
       unlink $file;
     }
-    `mv $path/results/temp5 $path/results/$exper.$TE.confident_nonref_reads_list.txt`;
+`mv $path/results/temp5 $path/results/$exper.$TE.confident_nonref_reads_list.txt`;
+    print "$TE results are found in $path/results\n";
   }
   close FINISH;
 }
@@ -826,13 +835,18 @@ if ($qsub_array) {
   close QSUBARRAY;
 ## this would happen before IO was finished on the file
   #  system ("qsub $qsub_q $current_dir/$top_dir/run_these_jobs.sh");
+  print "$current_dir/$top_dir/run_these_jobs.sh was created
+-- Run this script, \'sh $current_dir/$top_dir/run_these_jobs.sh\' 
+-- This script will submit all jobs to the queue in the appropriate order.
+-- Be sure to check the error files in $current_dir/$top_dir/shellscripts. They should all be file size 0.
+\n";
 }
 elsif ($parallel) {
 
   #system (sort "$current_dir/$top_dir/run_these_jobs.sh");
   print
     "Run each command line statement in $current_dir/$top_dir/run_these_jobs.sh.
---Run these in order (step_1,step_2,step_3, so on)  for each TE.
+--Run these in order (step_1,step_2,step_3, so on) for each TE.
 --For example, all the step_3 scripts for a specific TE should be successfully completed (finished without errors) 
 before running a step_4 script of the same TE.
 --All scripts of the same step can be run in parallel (at the same time).
