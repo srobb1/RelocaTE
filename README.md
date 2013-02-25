@@ -1,3 +1,5 @@
+RelocaTE 1-0-0
+
 <A href="http://srobb1.github.com/RelocaTE/">RelocaTE</a>: A tool to identify the locations of transposable element insertion events that are present in DNA short read data but absent in the reference genome sequence.
 
 
