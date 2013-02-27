@@ -9,7 +9,6 @@ These scripts expect that the following programs are installed and included in y
 	3. BWA
 	4. BioPerl
    	5. Blat
-	6. Blast: formatdb and fastacmd
 
 STEPS A-C
 A. RelocaTE
