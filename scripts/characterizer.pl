@@ -122,15 +122,15 @@ while ( my $line = <INSITES> ) {
         my ($XM) = $sam_line =~ /XM:i:(\d+)/;
         if ( defined $XM and $XM == 0 ) {
           $Mmatch++;
-          print "$sam_line\n";
+          #print "$sam_line\n";
         }
         elsif ( defined $NM and $NM == 0 ) {
           $Mmatch++;
-          print "$sam_line\n";
+          #print "$sam_line\n";
         }
         elsif ( !defined $NM and !defined $XM ) {
           $Mmatch++;
-          print "$sam_line\n";
+          #print "$sam_line\n";
         }
       }
       elsif ( $cigar =~ /[IND]/ ) {
