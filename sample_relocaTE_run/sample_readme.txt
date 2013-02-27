@@ -9,7 +9,6 @@ These scripts expect that the following programs are installed and included in y
 	3. BWA
 	4. BioPerl
    	5. Blat
-	6. Blast: formatdb and fastacmd
 
 STEPS A-C
 A. RelocaTE
@@ -34,23 +33,32 @@ A. To find TE insertions in the included fastq reads run RelocaTE:
         sh run_relocaTE.sh
 
   These scritps will run relocaTE directly or through a series of shell scripts. 
-	If you are running
+        If you are running
         - run_relocaTE_qsub.sh:
-		1) follow the instructions that are printed to the screen (run run_these_jobs.sh)
-      		2) once complete, view the results in 02052013/mping/results
+                1) follow the instructions that are printed to the screen (run run_these_jobs.sh)
+                2) once complete, view the results in 02052012_sample/mping/results
         or
         - run_relocaTE_shell.sh
-		1) follow the instructions that are printed to the screen (run run_these_jobs.sh)
-      		2) once complete, view the results in 02052013/mping/results
+                1) follow the instructions that are printed to the screen (run run_these_jobs.sh)
+                2) once complete, view the results in 02052012_sample/mping/results
         or
         - run_relocaTE.sh
-      		1) once complete, view the results in 02052013/mping/results
+                1) once complete, view the results in 02052012_sample/mping/results
 
-B. Find Spanners to help classify the insertions (homozygous, heterozygous, etc) by generating a BAM file of the reads not trimmed of TE to the reference.
+
+B. Find Spanners to help classify the insertions (homozygous, heterozygous, etc) by generating a BAM file of the reads not trimmed of TE to the referenc
+e.
   A BAM file is included in the sample data set, but one can be genreted by running the included script:
-	create_bam.sh by:
-	- changing directory into the directory of this script
- 	- and typing "sh create_bam.sh"
+        create_bam.sh by:
+        - changing directory into the directory of this script
+        - and typing "sh create_bam.sh"
+
+
 C. To classify the insertions (homozygous, heterozygous, etc) run_characTErizer.sh 
-	- change directory into the directory of this script
-	- type "sh run_characTErizer.sh"
+        - change directory into the directory of this script
+        - type "sh run_characTErizer.sh"
+        - once complete, view the resulting files in the directory you ran characTErizer.pl
+                1) sample.inserts_characTErized.gff: GFF file of the classified insertions including excisions 
+                2) sample.inserts_characTErized.txt: Text file of the classified insertions including excisions
+                3) excisions_with_footprint.vcfinfo: additional information on the insertions that have been classified as exicision events 
+
