@@ -147,8 +147,8 @@ elsif ( !-d $fq_dir ) {
 }
 else {
   my $fq_path = File::Spec->rel2abs($fq_dir);
-  @fq_files = <$fq_path/*fq>;
-  my @fastq_files = <$fq_path/*fastq>;
+  @fq_files = <$fq_path/*.fq>;
+  my @fastq_files = <$fq_path/*.fastq>;
   push @fq_files, @fastq_files;
   if ( scalar @fq_files == 0 ) {
     print "Must provide at least 1 short read file\n";
