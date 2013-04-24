@@ -11,6 +11,11 @@ CharacTErizer: A companion tool compares the numbers of reads that flank the TE 
 
 <hr>
 <hr>
+
+New to this version (1-0-2): Using "bowtie -a -m 1 -v 3". This decreases the number of false positive insertions identified. 
+
+<hr>
+<hr>
 ###Table of Contents:<br>
 #####<a href="#req">Prerequisites</a><br>
 #####<a href="#cmd">RelocaTE Command Line Options</a>
