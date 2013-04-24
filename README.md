@@ -34,7 +34,7 @@ CharacTErizer: A companion tool compares the numbers of reads that flank the TE 
 - Bowtie (recommended <a href="http://bowtie-bio.sourceforge.net/manual.shtml#obtaining-bowtie">Bowtie1</a>, but RelocaTE is compatible with <a href="http://bowtie-bio.sourceforge.net/bowtie2/manual.shtml#obtaining-bowtie-2">Bowtie2</a>)
 - <a href="http://www.bioperl.org/wiki/Installing_BioPerl">BioPerl</a>
 - <a href="http://samtools.sourceforge.net/">Samtools</a>
-- <a href="http://bio-bwa.sourceforge.net/"> bwa </a> (for use with characTErizer)
+- <a href"http://bio-bwa.sourceforge.net/">BWA</a> Recommeded for the creation of the BAM file needed by CharacTErizer    
 <br><br>
 
 ###<a name="cmd">RelocaTE Command Line Options</a>:
