@@ -12,7 +12,7 @@ RelocaTE-1-0-3
 <hr>
 <hr>
 
-**New to this vesion (1-0-3): now able to use TSD=NONE in TE fasta. RelocaTE is faster if TSDs are known.
+**New to this version (1-0-3): now able to use TSD=NONE in TE fasta. RelocaTE is faster if TSDs are known.
 
 <hr>
 <hr>
