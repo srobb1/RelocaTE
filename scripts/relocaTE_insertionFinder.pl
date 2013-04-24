@@ -56,7 +56,7 @@ if ( $existing_TE ne 'NONE' ) {
       <INTE>;    ## throw out blat header
       chomp( $line = <INTE> );
     }
-    next if $line !~ /$usr_target[:\s]/;
+    next if $line !~ /\b$usr_target[:\s]/;
     next if $line !~ /\b$TE\b/;
     if ($blat) {
       my @blat     = split /\t/, $line;
@@ -155,6 +155,7 @@ my @sorted_bowtie = sort { $bowtie{$a} <=> $bowtie{$b} } keys %bowtie;
 my $last_start = 0;
 my $last_end   = 0;
 my %teInsertions;
+my %teReadClusters;
 my $count   = 0;
 my @bin     = (0);
 my $TSD_len = length $TSD;
@@ -236,7 +237,8 @@ foreach my $line (@sorted_bowtie) {
   ## is this seq aligned to same region, is it in range
   ## if two sets of overlapping reads are separated by 5bp, these two sets
   ## are considered to be one set. ==> $range_allowance
-  my $range_allowance = 5;
+  my $range_allowance = 0;
+  #my $range_allowance = 5;
   my $padded_start    = $bin[0] - $range_allowance;
   my $padded_end      = $bin[-1] + $range_allowance;
   if ( ( $start >= $padded_start and $start <= $padded_end )
@@ -244,19 +246,56 @@ foreach my $line (@sorted_bowtie) {
   {
     push @bin, $start, $end;
     @bin = sort @bin;
-    TSD_check( $count, $seq, $start, $name, $TSD, $strand );
+    if ($TSD ne 'NONE'){
+      TSD_check( $count, $seq, $start, $name, $TSD, $strand );
+    }else{
+      calculate_cluster_depth( $count, $seq, $start, $name, $strand );
+    }
   }
   else {
     ## if start and end do not fall within last start and end
     ## we now have a different insertion event
     $count++;
-    TSD_check( $count, $seq, $start, $name, $TSD, $strand );
+    if ($TSD ne 'NONE'){
+      TSD_check( $count, $seq, $start, $name, $TSD, $strand );
+    }else{
+      calculate_cluster_depth( $count, $seq, $start, $name, $strand );
+    }
 
     #reset last_start, last_end, @bin
     @bin        = ( $start, $end );
     $last_start = $start;
     $last_end   = $end;
   }
+}
+
+if ($TSD eq 'NONE'){
+  ## count depth to find TSD in 
+  ## if there are 5 reads (2 right, 3 left) they
+  ## should only be a depth of 5 at the TSD
+  foreach my $cluster ( sort {$a <=> $b} keys %teReadClusters  ){
+    my $read_total = $teReadClusters{$cluster}{read_count};
+    my $TSD_len;
+    foreach my $chrom_pos ( sort {$a <=> $b} keys %{$teReadClusters{$cluster}{depth}} ){
+      my $depth = $teReadClusters{$cluster}{depth}{$chrom_pos};
+      if ($depth == $read_total){
+        $TSD_len++;
+      }
+    }
+    ## if we have a TSD, then we can proceed to the TSD_check
+    if ( $TSD_len ){
+      $TSD = '.' x $TSD_len; ## create TSD regex, ex: '....'
+      foreach my $name ( keys %{$teReadClusters{$cluster}{read_info}} ){
+        my $seq = $teReadClusters{$cluster}{read_info}{$name}{seq};
+        my $start = $teReadClusters{$cluster}{read_info}{$name}{seq_start};
+        my $strand = $teReadClusters{$cluster}{read_info}{$name}{strand};
+        TSD_check( $cluster, $seq, $start, $name, $TSD, $strand );
+      }
+      ## clean up, we don't need this info anymore
+      delete $teReadClusters{$cluster} ;
+    }
+  }
+  
 }
 ##outdir/te/sam/sam_file
 my $event = 0;
@@ -330,8 +369,13 @@ foreach my $insertionEvent ( sort { $a <=> $b } keys %teInsertions ) {
 "$usr_target\t$exper\ttransposable_element_insertion_site\t$coor_start\t$coor\t.\t$TE_orient\t.\tID=$TE.te_insertion_site.$usr_target.$coor;Note=$note;left_flanking_read_count=$left_count;right_flanking_read_count=$right_count;left_flanking_seq=$left_flanking_ref_seq;right_flanking_seq=$right_flanking_ref_seq;TSD=$foundTSD\n";
         print OUTFASTA
 ">$exper.$usr_target:$coor_start..$coor TSD=$foundTSD $usr_target:$seq_start..$seq_end\n$left_flanking_ref_seq$right_flanking_ref_seq\n";
-        print OUTALL
+        if ($right_count>0 and $left_count>0){
+          print OUTALL
 "$TE\t$foundTSD\t$exper\t$usr_target\t$coor_start..$coor\t$TE_orient\tT:$start_count\tR:$right_count\tL:$left_count\n";
+        }else {
+          print OUTALL
+"$TE\tinsufficient_data\t$exper\t$usr_target\t$coor_start..$coor\t$TE_orient\tT:$start_count\tR:$right_count\tL:$left_count\n";
+        }
         print OUTLIST "$usr_target:$coor_start..$coor\t", join( ",", @reads ),
           "\n";
       }
@@ -340,8 +384,13 @@ foreach my $insertionEvent ( sort { $a <=> $b } keys %teInsertions ) {
         my $coor_start = $coor - length($foundTSD) + 1;
         $left_count  = defined $left_count  ? $left_count  : 0;
         $right_count = defined $right_count ? $right_count : 0;
-        print OUTALL
+        if ($right_count>0 and $left_count>0){
+          print OUTALL
 "$TE\t$foundTSD\t$exper\t$usr_target\t$coor_start..$coor\t$TE_orient\tT:$start_count\tR:$right_count\tL:$left_count\n";
+        }else {
+          print OUTALL
+"$TE\tinsufficient_data\t$exper\t$usr_target\t$coor_start..$coor\t$TE_orient\tT:$start_count\tR:$right_count\tL:$left_count\n";
+        }
       }
     }
   }
@@ -366,7 +415,23 @@ foreach my $found ( keys %existingTE_found ) {
 "$ref\t$exper\ttransposable_element_insertion_site\t$s\t$e\t.\t.\t.\tID=$TE.te_insertion_site.$ref.$s..$e;TE_Name=$TE;Note=$note;left_flanking_read_count=$start_count;right_flanking_read_count=$end_count\n";
   print ALLEXISTING "$exper\t$found\t$start_count\t$end_count\n";
 }
-
+sub calculate_cluster_depth {
+  my ( $event, $seq, $seq_start, $read_name, $strand ) = @_;
+  #my ($te_5prime, $te_3prime) = (0,0);
+  ## make a note of which end of the TE has been identified
+  #if ( $read_name =~ /:5$/){
+  #  $teReadClusters{$event}{five_prime}++;
+  #}elsif ( $read_name =~ /:3$/ ){
+  #  $teReadClusters{$event}{three_prime}++;
+  #}
+  $teReadClusters{$event}{read_count}++;
+  $teReadClusters{$event}{read_info}{$read_name}{seq}=$seq;
+  $teReadClusters{$event}{read_info}{$read_name}{seq_start}=$seq_start;
+  $teReadClusters{$event}{read_info}{$read_name}{strand}=$strand;
+  for (my $i = $seq_start ; $i < $seq_start + (length $seq) ; $i++){
+     $teReadClusters{$event}{depth}{$i}++;
+  }
+}
 sub TSD_check {
   ##$seq is entire trimmd read, not just the TSD portion of the read
   ##$start is the first postition of the entire read match to ref
@@ -428,13 +493,17 @@ sub TSD_check {
   }
   ## existingTEs are TEs present in Ref and reads
   if ( $result and $TE_orient ) {
-    my ( $tir1_end, $tir2_end ) =
-      ( ( $start + ( length $TSD ) ), ( $start - 1 ) );
-    if ( exists $existingTE{$TE}{start}{$tir1_end} ) {
+    my ( $tir1_end, $tir2_end );
+    if ($pos eq 'left'){
+      $tir1_end = $seq_start + length $seq;
+    }elsif ($pos eq 'right'){
+      $tir2_end = $seq_start - 1;
+    }
+    if ( defined $tir1_end and exists $existingTE{$TE}{start}{$tir1_end} ) {
       my $te_id = $existingTE{$TE}{start}{$tir1_end};
       $existingTE_found{$te_id}{start}++;
     }
-    elsif ( exists $existingTE{$TE}{end}{$tir2_end} ) {
+    elsif ( defined $tir2_end and exists $existingTE{$TE}{end}{$tir2_end} ) {
       my $te_id = $existingTE{$TE}{end}{$tir2_end};
       $existingTE_found{$te_id}{end}++;
     }
