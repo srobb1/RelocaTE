@@ -753,6 +753,10 @@ for i in \`ls $path/results/*.$TE.confident_nonref_insert_reads_list.txt\` ; do 
 mv $path/results/temp5 $path/results/$exper.$TE.confident_nonref_reads_list.txt
 mv $path/results/*.$TE.confident_nonref_insert_reads_list.txt $path/results/all_files
 
+# move other outfiles somewhere else
+mv $pre_path/existingTE.blat.stdout $path/blat_output/.
+mv $pre_path/existingTE.blatout $path/blat_output/.
+
 ";
     `chmod +x $shellscripts/step_6/$TE/step_6.$TE.finishing.sh`;
   }
@@ -825,6 +829,10 @@ echo \$$jobName\n";
       `cat $file >> $path/results/temp5`;
       unlink $file;
     }
+    # move other outfiles somewhere else
+`mv $pre_path/existingTE.blat.stdout $path/blat_output/.`;
+`mv $pre_path/existingTE.blatout $path/blat_output/.`;
+
 `mv $path/results/temp5 $path/results/$exper.$TE.confident_nonref_reads_list.txt`;
     print "$TE results are found in $path/results\n";
   }
