@@ -7,7 +7,7 @@ RelocaTE 1-0-1
   2. <strong>reference-only</strong> transposable element insertions that are present in the reference and no evidence of the insertion in the reads. This could be due to a lack of data. Future releases of RelocaTE will report evidence based reference-only insertions 
 
 
-<a href="http://srobb1.github.com/RelocaTE/#characterizer">CharacTErizer</a> is a companion tool compares the numbers of reads that flank the TE sequence and contain genomic sequence to the number of reads that span a predicted insertion site with no gaps. These spanners contain no TE sequence. The ratio of spanners to flankers is used to classify the insertion as homozygous, heterozygous, or new (somatic). Somatic excision events can also be predicted.
+<a href="http://srobb1.github.com/RelocaTE/#characterizer">CharacTErizer</a> is a companion tool that compares the numbers of reads that flank the TE sequence and contain genomic sequence to the number of reads that span a predicted insertion site with no gaps. These spanners contain no TE sequence. The ratio of spanners to flankers is used to classify the insertion as homozygous, heterozygous, or new (somatic). Somatic excision events can also be predicted.
 
 
 <hr>
