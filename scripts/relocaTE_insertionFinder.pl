@@ -246,7 +246,7 @@ foreach my $line (@sorted_bowtie) {
   {
     push @bin, $start, $end;
     @bin = sort @bin;
-    if ($TSD ne 'NONE'){
+    if ($TSD !~ /UNK/i){
       TSD_check( $count, $seq, $start, $name, $TSD, $strand );
     }else{
       calculate_cluster_depth( $count, $seq, $start, $name, $strand );
@@ -256,7 +256,7 @@ foreach my $line (@sorted_bowtie) {
     ## if start and end do not fall within last start and end
     ## we now have a different insertion event
     $count++;
-    if ($TSD ne 'NONE'){
+    if ($TSD !~ /UNK/i){
       TSD_check( $count, $seq, $start, $name, $TSD, $strand );
     }else{
       calculate_cluster_depth( $count, $seq, $start, $name, $strand );
@@ -269,7 +269,7 @@ foreach my $line (@sorted_bowtie) {
   }
 }
 
-if ($TSD eq 'NONE'){
+if ($TSD =~ /UNK/i){
   ## count depth to find TSD in 
   ## if there are 5 reads (2 right, 3 left) they
   ## should only be a depth of 5 at the TSD
