@@ -30,6 +30,7 @@ my ( $blat_minScore, $blat_tileSize ) = ( 10, 7 );
 my $flanking_seq_len = 100;
 my $existing_TE      = 'NONE';
 my $bowtie2          = 0;
+my $nonLTR           = 0;
 GetOptions(
   'p|parallel:i'         => \$parallel,
   'a|qsub_array:i'       => \$qsub_array,
@@ -50,6 +51,7 @@ GetOptions(
   'f|flanking_seq_len:i' => \$flanking_seq_len,
   '-r|reference_ins:s'   => \$existing_TE,
   '-b2|bowtie2:i'        => \$bowtie2,
+  '-n|nonLTR:i'        => \$nonLTR,
   'h|help' => \&getHelp,
 );
 my $current_dir;
@@ -348,11 +350,15 @@ echo \$STEP1\n";
     }
   }
 }    ##end if($mapping)
-
+my $nonLTR_blat_params = '';
+if ( $nonLTR ){
+  $nonLTR_blat_params =  '-noTrimA -stepSize=3';
+}
 ##run existing TE blat against ref if the file does not exsit
 my $qsub_existingTE_cmd = 0;
 my $existing_blat_cmd =
-"blat $genome_path $te_path $current_dir/$top_dir/existingTE.blatout 1> $current_dir/$top_dir/existingTE.blat.stdout";
+"blat $genome_path $nonLTR_blat_params $te_path $current_dir/$top_dir/existingTE.blatout 1> $current_dir/$top_dir/existingTE.blat.stdout";
+#"blat -noTrimA $genome_path $te_path $current_dir/$top_dir/existingTE.blatout 1> $current_dir/$top_dir/existingTE.blat.stdout";
 if ($existing_blat) {
   ##if running blat set existing_TE_path to blatout
   $existing_TE_path = "$current_dir/$top_dir/existingTE.blatout";
@@ -544,7 +550,8 @@ foreach my $te_path (@te_fastas) {
     #use pre-existing blatout files
     if ( !-e "$path/blat_output/$fa_name.te_$TE.blatout" ) {
       my $cmd =
-"blat -minScore=$blat_minScore -tileSize=$blat_tileSize $te_path $fa $path/blat_output/$fa_name.te_$TE.blatout 1>> $path/blat_output/blat.out";
+"blat $nonLTR_blat_params -minScore=$blat_minScore -tileSize=$blat_tileSize $te_path $fa $path/blat_output/$fa_name.te_$TE.blatout 1>> $path/blat_output/blat.out";
+#"blat -noTrimA -minScore=$blat_minScore -tileSize=$blat_tileSize $te_path $fa $path/blat_output/$fa_name.te_$TE.blatout 1>> $path/blat_output/blat.out";
       print OUTSH "$cmd\n" if $parallel;
       print "Finding reads in $fa_name that contain sequence of $TE\n"
         if !$parallel;
