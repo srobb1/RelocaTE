@@ -713,10 +713,12 @@ foreach my $te_path (@te_fastas) {
   my $te_fasta = pop @path;
   my $TE       = $te_fasta;
   my $path     = join '/', @path;
+  $TE =~ s/\.fa//;
+
   pop @path;
   my $pre_path     = join '/', @path;
-  $TE =~ s/\.fa//;
   if ($parallel) {
+
     my $shell_dir = "$shellscripts/step_6/$TE";
     make_path( $shell_dir, { mode => 0755 } );
     open FINISH, ">$shellscripts/step_6/$TE/step_6.$TE.finishing.sh";
