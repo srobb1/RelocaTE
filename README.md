@@ -9,10 +9,11 @@ RelocaTE-1-0-3
 
 <a href="http://srobb1.github.com/RelocaTE/#characterizer">CharacTErizer</a> is a companion tool that compares the numbers of reads that flank the TE sequence and contain genomic sequence to the number of reads that span a predicted insertion site with no gaps. These spanners contain no TE sequence. The ratio of spanners to flankers is used to classify the insertion as homozygous, heterozygous, or new (somatic). Somatic excision events can also be predicted.
 <hr>
+** Updates **
 <hr>
 
-**New to this version 1-0-3: now able to use TSD=NONE in TE fasta. RelocaTE is faster if TSDs are known.
-<br>nbsp;New to version 1-0-2: Using "bowtie -a -m 1 -v 3". This decreases the number of false positive insertions identified. 
+- 1-0-3: now able to use TSD=NONE in TE fasta. RelocaTE is faster if TSDs are known.
+- 1-0-2: Using "bowtie -a -m 1 -v 3". This decreases the number of false positive insertions identified. 
 
 
 <hr>
