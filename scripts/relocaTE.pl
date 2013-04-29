@@ -712,6 +712,9 @@ foreach my $te_path (@te_fastas) {
   my @path     = split '/', $te_path;
   my $te_fasta = pop @path;
   my $path     = join '/', @path;
+  pop @path;
+  my $pre_path     = join '/', @path;
+  my $te_dir= pop @path;
   my $TE       = $te_fasta;
   $TE =~ s/\.fa//;
   if ($parallel) {
@@ -753,6 +756,9 @@ for i in \`ls $path/results/*.$TE.confident_nonref_insert_reads_list.txt\` ; do 
 mv $path/results/temp5 $path/results/$exper.$TE.confident_nonref_reads_list.txt
 mv $path/results/*.$TE.confident_nonref_insert_reads_list.txt $path/results/all_files
 
+# move other outfiles somewhere else
+mv $pre_path/existingTE.blat.stdout $path/blat_output/.
+mv $pre_path/existingTE.blatout $path/blat_output/.
 ";
     `chmod +x $shellscripts/step_6/$TE/step_6.$TE.finishing.sh`;
   }
@@ -826,6 +832,11 @@ echo \$$jobName\n";
       unlink $file;
     }
 `mv $path/results/temp5 $path/results/$exper.$TE.confident_nonref_reads_list.txt`;
+    
+    # move other outfiles somewhere else
+`mv $pre_path/existingTE.blat.stdout $path/blat_output/.`;
+`mv $pre_path/existingTE.blatout $path/blat_output/.`;
+
     print "$TE results are found in $path/results\n";
   }
   close FINISH;
@@ -845,7 +856,7 @@ elsif ($parallel) {
 
   #system (sort "$current_dir/$top_dir/run_these_jobs.sh");
   print
-    "Run each command line statement in $current_dir/$top_dir/run_these_jobs.sh.
+    "Run each command line statement in $current_dir/$top_dir/run_these_jobs.sh
 --Run these in order (step_1,step_2,step_3, so on) for each TE.
 --For example, all the step_3 scripts for a specific TE should be successfully completed (finished without errors) 
 before running a step_4 script of the same TE.
