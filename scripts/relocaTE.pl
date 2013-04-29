@@ -712,11 +712,13 @@ foreach my $te_path (@te_fastas) {
   my @path     = split '/', $te_path;
   my $te_fasta = pop @path;
   my $path     = join '/', @path;
-  pop @path;
-  my $pre_path     = join '/', @path;
-  my $te_dir= pop @path;
   my $TE       = $te_fasta;
   $TE =~ s/\.fa//;
+
+  #my $te_dir= pop @path;
+  pop @path;
+  my $pre_path     = join '/', @path;
+
   if ($parallel) {
     my $shell_dir = "$shellscripts/step_6/$TE";
     make_path( $shell_dir, { mode => 0755 } );
