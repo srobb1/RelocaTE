@@ -518,6 +518,10 @@ foreach my $te_path (@te_fastas) {
   my $path     = join '/', @path;
   my $TE       = $te_fasta;
   $TE =~ s/\.fa//;
+
+  pop @path;
+  my $pre_path     = join '/', @path;
+
   mkdir "$path/blat_output";
   mkdir "$path/flanking_seq";
   mkdir "$path/te_containing_fq";
@@ -760,6 +764,11 @@ for i in \`ls $path/results/*.$TE.confident_nonref_insert_reads_list.txt\` ; do 
 mv $path/results/temp5 $path/results/$exper.$TE.confident_nonref_reads_list.txt
 mv $path/results/*.$TE.confident_nonref_insert_reads_list.txt $path/results/all_files
 
+# move other outfiles somewhere else
+if [ -e $pre_path/bowtie-build.out ] ; then 
+  mv $pre_path/bowtie-build.out $path/bowtie_aln/.
+fi 
+
 ";
     `chmod +x $shellscripts/step_6/$TE/step_6.$TE.finishing.sh`;
   }
@@ -833,6 +842,15 @@ echo \$$jobName\n";
       unlink $file;
     }
 `mv $path/results/temp5 $path/results/$exper.$TE.confident_nonref_reads_list.txt`;
+
+    # move other outfiles somewhere else
+if (-e "$pre_path/bowtie-build.out" ){ 
+   `mv $pre_path/bowtie-build.out $path/bowtie_aln/.`;
+}
+`mv $pre_path/existingTE.blat.stdout $path/blat_output/.`;
+`mv $pre_path/existingTE.blatout $path/blat_output/.`;
+
+
     print "$TE results are found in $path/results\n";
   }
   close FINISH;
