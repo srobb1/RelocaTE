@@ -519,8 +519,6 @@ foreach my $te_path (@te_fastas) {
   my $TE       = $te_fasta;
   $TE =~ s/\.fa//;
 
-  pop @path;
-  my $pre_path     = join '/', @path;
 
   mkdir "$path/blat_output";
   mkdir "$path/flanking_seq";
@@ -725,6 +723,10 @@ foreach my $te_path (@te_fastas) {
   my $path     = join '/', @path;
   my $TE       = $te_fasta;
   $TE =~ s/\.fa//;
+
+  pop @path;
+  my $pre_path     = join '/', @path;
+
   if ($parallel) {
     my $shell_dir = "$shellscripts/step_6/$TE";
     make_path( $shell_dir, { mode => 0755 } );
