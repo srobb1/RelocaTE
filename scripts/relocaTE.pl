@@ -711,8 +711,10 @@ echo \$$jobName\n";
 foreach my $te_path (@te_fastas) {
   my @path     = split '/', $te_path;
   my $te_fasta = pop @path;
-  my $path     = join '/', @path;
   my $TE       = $te_fasta;
+  my $path     = join '/', @path;
+  pop @path;
+  my $pre_path     = join '/', @path;
   $TE =~ s/\.fa//;
   if ($parallel) {
     my $shell_dir = "$shellscripts/step_6/$TE";
