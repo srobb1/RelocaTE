@@ -757,6 +757,10 @@ mv $path/results/temp5 $path/results/$exper.$TE.confident_nonref_reads_list.txt
 mv $path/results/*.$TE.confident_nonref_insert_reads_list.txt $path/results/all_files
 
 # move other outfiles somewhere else
+if [ -e $pre_path/bowtie-build.out ] ; then 
+  mv $pre_path/bowtie-build.out $path/bowtie_aln/.
+fi 
+mv $pre_path/existingTE.blat.stdout $path/blat_output/.
 mv $pre_path/existingTE.blat.stdout $path/blat_output/.
 mv $pre_path/existingTE.blatout $path/blat_output/.
 ";
@@ -834,6 +838,9 @@ echo \$$jobName\n";
 `mv $path/results/temp5 $path/results/$exper.$TE.confident_nonref_reads_list.txt`;
     
     # move other outfiles somewhere else
+if (-e "$pre_path/bowtie-build.out" ){ 
+   `mv $pre_path/bowtie-build.out $path/bowtie_aln/.`;
+}
 `mv $pre_path/existingTE.blat.stdout $path/blat_output/.`;
 `mv $pre_path/existingTE.blatout $path/blat_output/.`;
 
