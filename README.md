@@ -34,7 +34,7 @@ RelocaTE 1-0-1
 - <a href="http://genome.ucsc.edu/FAQ/FAQblat.html#blat3">Blat</a>
 - <a href="http://bowtie-bio.sourceforge.net/manual.shtml#obtaining-bowtie">Bowtie 1</a>
 - <a href="http://www.bioperl.org/wiki/Installing_BioPerl">BioPerl</a>
-- <a href="http://samtools.sourceforge.net/">Samtools</a>
+- <a href="http://samtools.sourceforge.net/">SAMtools</a>
 - <a href"http://sourceforge.net/projects/bio-bwa/files/">BWA</a> Recommeded for the creation of the BAM file needed by CharacTErizer 
 - <a href="http://blast.ncbi.nlm.nih.gov/Blast.cgi?CMD=Web&PAGE_TYPE=BlastDocs&DOC_TYPE=Download">Blast (Legacy)</a> formatdb and fastacmd are used for indexed sequence retrieval in an additional companion tool, ConstrucTEr, more info coming soon.
 
@@ -244,7 +244,7 @@ Excerpt directly from Blat manual:
  
  Optional. Default value is 100.
 
-n is the length of the sequence flanking the found insertion site to be returned in an output fasta file and in the output gff file. This sequence is taken from the reference genome.
+n is the length of the sequence flanking the insertion site that will be returned in an output fasta file and in the output gff file. This sequence is taken from the reference genome.
 
 ####<a name="x">-r  | --reference_ins  [1|File] To identify reference and shared insertions (reference and reads)</a>
 
@@ -301,22 +301,18 @@ _pair2 would match the second paired file
 </pre>
 
 3.&nbsp;&nbsp;Get the reference genome fasta. This will be one file containing all the reference sequences of your organism.<br>
-4.&nbsp;&nbsp;If you want to determine if your short reads contain the same TE insertions as the reference, create a file with the existing TE insertions found in the reference.
-
-This file name is tab-delimited containing the coordinates of existing TE in the reference.  If this file is provided a new file will be generated containing a list of these existing insertions found in the reads. The number of reads supporting the start and the end of the insertion will be reported. 
-
-The format is two columns, neither column have any white space. The first colum is the TE name. Then a tab separates the first column from the second column. And the second column contains the reference sequence name as described in the reference fasta, a :, the starting bp,  .. , and finally the ending bp.
-
+4.&nbsp;&nbsp;If you want to determine if your short reads contain the same TE insertions as the reference, use the '-r 1' option
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OR, use -r "filename": you can create a file with the TE name and the coordinates in the reference: 
 SAMPLE:
 <pre>
 mping   Chr12:839604..840033
 mping   Chr12:1045463..1045892
 </pre>
 
-5.&nbsp;&nbsp;Do you have a queue system available to you, or do you have multiple processors? If so, you can select the ?p 1 option. This will create a series of shell scripts that you can submit to the queue or run on multiple processors.<br> 
+5.&nbsp;&nbsp;Do you have a queue system available to you, or do you have multiple processors? If so, you can select the -p 1 option. This will create a series of shell scripts that you can submit to the queue or run on multiple processors.<br> 
 &nbsp;&nbsp;&nbsp; - These should be run in order. For example all of step_1 should be run and completed before the shell scripts of step_2 are run, and so on.
 
-6.&nbsp;&nbsp;Do you have a queue system available and is it PBS? If so, you can select the ?a 1 option to generate array job scripts. These jobs can be submitted to the queue instead of submitting hundreds of individual shell scripts. The array job will submit the hundreds of scripts for you.  
+6.&nbsp;&nbsp;Do you have a queue system available and is it PBS? If so, you can select the -a 1 option to generate array job scripts. These jobs can be submitted to the queue instead of submitting hundreds of individual shell scripts. The array job will submit the hundreds of scripts for you.  
 &nbsp;&nbsp;&nbsp; - Make sure to submit the array jobs in order and wait for the job to complete before submitting the next one.
 
 7.&nbsp;&nbsp;You are now ready to run relocaTE.pl with your data. If you run the program without any command line options, it will print out a list of the options and short descriptions.
@@ -329,7 +325,7 @@ mping   Chr12:1045463..1045892
 1. Genome Fasta [FASTA format] (not required, but if not used RelocaTE will only identify and trim the reads that contain the specified TE and will not map the insertion locations)
 2. Transposable element FASTA [FASTA format with TSD= in description] (required)
 3. Paired and/or unpaired Fastq files. (ex: reads_p1.fq, reads_p2.fq, reads_unPaired.fq, reads.fq) (required)
-4. Tab-delimited file with coordinates of TE insertions in the reference genome (not required)
+4. Optional: Tab-delimited file with coordinates of TE insertions in the reference genome (not required)
 
 <br><hr><br>
 
