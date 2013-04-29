@@ -851,6 +851,9 @@ if (-e "$pre_path/bowtie-build.out" ){
 }
 `mv $pre_path/existingTE.blat.stdout $path/blat_output/.`;
 `mv $pre_path/existingTE.blatout $path/blat_output/.`;
+  if ( -d  "$pre_path/shellscripts"){
+     `rm -rf $pre_path/shellscripts`;
+   }
 
 
     print "$TE results are found in $path/results\n";
