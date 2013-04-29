@@ -11,8 +11,8 @@ RelocaTE-1-0-3
 <hr>
 <hr>
 
-**New to this version (1-0-3): now able to use TSD=NONE in TE fasta. RelocaTE is faster if TSDs are known.
-  New to version 1-0-2: Using "bowtie -a -m 1 -v 3". This decreases the number of false positive insertions identified. 
+**New to this version 1-0-3: now able to use TSD=NONE in TE fasta. RelocaTE is faster if TSDs are known.
+<br>nbsp;New to version 1-0-2: Using "bowtie -a -m 1 -v 3". This decreases the number of false positive insertions identified. 
 
 
 <hr>
