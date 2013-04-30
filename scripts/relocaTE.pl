@@ -798,7 +798,7 @@ echo \$$jobName\n";
     ##do it now
     ##combine and delete individual chr files for confident sites
     print "Finishing and cleaning up\n";
-`echo \"TE\tTSD\tEper\tchromosome\tinsertion_site\tstrand\tleft_flanking_read_count\tright_flanking_read_count\tleft_flanking_seq\tright_flanking_seq\" > $path/results/temp`;
+`echo \"TE\tTSD\tExper\tchromosome\tinsertion_site\tstrand\tleft_flanking_read_count\tright_flanking_read_count\tleft_flanking_seq\tright_flanking_seq\" > $path/results/temp`;
     my @files = `ls $path/results/*.$TE.confident_nonref_insert.txt`;
     foreach my $file (@files) {
       chomp $file;
