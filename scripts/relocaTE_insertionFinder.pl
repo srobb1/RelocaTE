@@ -127,8 +127,16 @@ while ( my $line = <INREGEX> ) {
 my $TSD_pattern = $TSD =~ /[\[.*+?]/ ? 1 : 0;    #does $TSD contain a pattern?
 
 ##get chromosome sequence for substr of flanking seq
-my $db_obj     = Bio::DB::Fasta->new($genome_path);
-my $genome_seq = $db_obj->seq($usr_target);
+my $genome_seq;
+
+my $module_installed = module_check("Bio::DB::Fasta");
+if ($module_installed){
+  my $db_obj     = Bio::DB::Fasta->new($genome_path);
+  $genome_seq = $db_obj->seq($usr_target);
+}else{
+  $genome_seq = get_seq($genome_path,$usr_target);
+}
+
 
 #remove redundant lines.
 my %bowtie;
@@ -515,5 +523,44 @@ sub TSD_check {
       $read_name =~ s/:start|:end//;
       push @{ $teInsertions{$event}{$TSD}{$start}{reads} }, $read_name;
     }
+  }
+}
+
+sub get_seq {
+  my ($genome_file, $target) = @_;  
+  my $seq;
+  ##get chromosome sequence for substr of flanking seq
+  open GENOME, "$genome_file" or die "Cannot open genome fasta: $genome_file $!";
+  while ( my $line = <GENOME> ) {
+    chomp $line;
+    if ( $line =~ />(\S+)/ ) {
+        my $id = $1;
+        if ( $id ne $target ) {
+          next;
+        }else{
+          while ( my $seq_line = <GENOME> ){
+            chomp $seq_line;
+            last if $seq_line  =~ />(\S+)/ ;
+            $seq .= $seq_line;
+          }
+        }
+    }
+    else {
+      next;
+    }
+  }
+  return $seq;
+}
+
+sub module_check {
+## check to see if module is installed
+## don't think poorly of me for using $@,
+## i found this code online and copied it here
+  my $mod = shift;
+  eval("use $mod");
+  if ($@) {
+    return(0); 
+  } else {
+    return(1);
   }
 }
