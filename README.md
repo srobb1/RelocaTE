@@ -39,7 +39,7 @@ New to this version (1-0-2): Using "bowtie -a -m 1 -v 3". This decreases the num
 - <a href="http://bowtie-bio.sourceforge.net/manual.shtml#obtaining-bowtie">Bowtie 1</a>
 - <a href="http://www.bioperl.org/wiki/Installing_BioPerl">BioPerl</a>
 - <a href="http://samtools.sourceforge.net/">SAMtools</a>
-- <a href"http://sourceforge.net/projects/bio-bwa/files/">BWA</a> Recommeded for the creation of the BAM file needed by CharacTErizer 
+- <a href="http://sourceforge.net/projects/bio-bwa/files/">BWA</a> Recommeded for the creation of the BAM file needed by CharacTErizer 
 - <a href="http://blast.ncbi.nlm.nih.gov/Blast.cgi?CMD=Web&PAGE_TYPE=BlastDocs&DOC_TYPE=Download">Blast (Legacy)</a> formatdb and fastacmd are used for indexed sequence retrieval in an additional companion tool, ConstrucTEr, more info coming soon.
 
 <br><hr><br>
