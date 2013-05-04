@@ -1,4 +1,4 @@
-RelocaTE-1-0-3
+RelocaTE-1-0-3-noBioPerl
 
 <A href="http://srobb1.github.com/RelocaTE/">RelocaTE</a>: is a collection of scripts in which short reads (paired or unpaired), a fasta containing the sequences of transposable elements and a reference genome sequence are the input and the output is a series of files containing the locations (relative to the reference genome) of TE insertions in the reference and short reads
   1. <strong>non-reference</strong> transposable element insertion events that are present in DNA short read data but absent in the reference genome sequence.
