@@ -394,8 +394,8 @@ foreach my $target ( sort keys %construcTEr ) {
         }
       }
       }
-      print OUTFA
-">$id $name:$start..$end ($strand) mismatches=$mismatch $range_str\n$seq\n";
+      #print OUTFA
+#">$id $name:$start..$end ($strand) mismatches=$mismatch $range_str\n$seq\n";
     }
   }
 }
@@ -418,23 +418,30 @@ if ($insert_pos_file) {
     foreach my $insert_str ( keys %{ $inserts{$target} } ) {
 
       my @values;
+      my @counts;
       open OUT, ">$out_dir/$insert_str.fa";
       foreach my $seq_rec ( @{ $inserts{$target}{$insert_str}{rec} } ) {
         print OUT "$seq_rec";
         for ( my $i = 0 ; $i < @rangeHeader ; $i++ ) {
           if (!defined $values[$i]){
             $values[$i] = 0;
+            $counts[$i] = 0;
           }
           my $n = $rangeHeader[$i];
           if ( $seq_rec =~ /$n=(\d+)/ ) {
             my $value = $1;
+            $counts[$i]++;
             if ( $value >= $values[$i] ) {
               $values[$i] = $value;
             }
           }
         }
       }
-      print OUTTABLE "$TE\t$insert_str\t", join ("\t" ,@values) , "\n";
+      my @forTable;
+      for (my $i = 0 ; $i <@values ; $i++){
+        push @forTable , "$values[$i]($counts[$i])";
+      }
+      print OUTTABLE "$TE\t$insert_str\t", join ("\t" ,@forTable) , "\n";
     }
     close OUT;
   }
