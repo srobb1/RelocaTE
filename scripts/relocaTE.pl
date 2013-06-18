@@ -192,6 +192,7 @@ or (recommended) use \'-r 1\' for RelocaTE to find your TE in the reference
 
 sub getHelp {
   print ' 
+RelocaTE live:
 usage:
 ./relocaTE.pl [-t TE_fasta_file][-g chromosome_genome_fasta][-d dir_of_fq][-e short_sample_name][-h] 
 
@@ -237,7 +238,8 @@ options:
 					option-2) input the file name of a tab-delimited file containing the coordinates
 					of TE insertions pre-existing in the reference sequence. [no default]
 -b2 |--bowtie2	        INT             to use bowtie2 use \'-b2 1\' else for bowtie use \'-b2 0\' [0]
--h |--help				this message
+-n  |--nonLTR		INT        	query TEs are LTRs, yes=1 no=0. default -n 0 [0]
+-h  |--help				this message
 
 
 See documentation for more information. http://srobb1.github.com/RelocaTE/
@@ -352,7 +354,8 @@ echo \$STEP1\n";
 }    ##end if($mapping)
 my $nonLTR_blat_params = '';
 if ( $nonLTR ){
-  $nonLTR_blat_params =  '-noTrimA -stepSize=3';
+  #$nonLTR_blat_params =  '-noTrimA -stepSize=5';
+  $nonLTR_blat_params =  '-noTrimA';
 }
 ##run existing TE blat against ref if the file does not exsit
 my $qsub_existingTE_cmd = 0;
