@@ -352,6 +352,8 @@ echo \$STEP1\n";
     }
   }
 }    ##end if($mapping)
+
+mkdir "$current_dir/$top_dir/blat_output";
 my $nonLTR_blat_params = '';
 if ( $nonLTR ){
   #$nonLTR_blat_params =  '-noTrimA -stepSize=5';
@@ -360,13 +362,13 @@ if ( $nonLTR ){
 ##run existing TE blat against ref if the file does not exsit
 my $qsub_existingTE_cmd = 0;
 my $existing_blat_cmd =
-"blat $genome_path $nonLTR_blat_params $te_path $current_dir/$top_dir/existingTE.blatout 1> $current_dir/$top_dir/existingTE.blat.stdout";
+"blat $genome_path $nonLTR_blat_params $te_path $current_dir/$top_dir/blat_output/existingTE.blatout 1> $current_dir/$top_dir/existingTE.blat.stdout";
 #"blat -noTrimA $genome_path $te_path $current_dir/$top_dir/existingTE.blatout 1> $current_dir/$top_dir/existingTE.blat.stdout";
 if ($existing_blat) {
   ##if running blat set existing_TE_path to blatout
-  $existing_TE_path = "$current_dir/$top_dir/existingTE.blatout";
+  $existing_TE_path = "$current_dir/$top_dir/blat_output/existingTE.blatout";
   if ( $parallel
-    and !-e "$current_dir/$top_dir/existingTE.blatout" )
+    and !-e "$current_dir/$top_dir/blat_output/existingTE.blatout" )
   {
     my $shell_dir = "$shellscripts";
     if ( !-d $shell_dir ) {
@@ -384,7 +386,7 @@ echo \$EXISTINGTE\n";
     }
     close OUTSH;
   }
-  elsif ( !-e "$current_dir/$top_dir/existingTE.blatout" ) {
+  elsif ( !-e "$current_dir/$top_dir/blat_output/existingTE.blatout" ) {
     ## do it now
     print "finding TEs ($te_path) in the reference genome ($genome_path)\n";
     system($existing_blat_cmd);
@@ -395,7 +397,7 @@ my @fq;
 my @fa;
 
 #convert fq files to fa for blat
-open QSUBARRAY2, ">$shellscripts/step_2.fq2fa.sh"
+open QSUBARRAY2, ">$shellscripts/step_2.fq2fa_blat.sh"
   if $qsub_array;
 my $fq_count = 0;
 if ( $fq_dir ne 'SKIP' ) {
@@ -403,28 +405,14 @@ if ( $fq_dir ne 'SKIP' ) {
     my $fq_path = File::Spec->rel2abs($fq);
     push @fq, $fq_path;
     my $fa = $fq;
+    my @fq_path = split /\// , $fq_path;
+    my $fa_name = $fq_path[-1];
+    $fa_name =~ s/\.(fq|fastq$)//; 
     if ( $fa =~ s/\.(fq|fastq)$/.fa/ ) {
       push @fa, $fa;
-      if ( !-e $fa ) {
-        my $cmd = "$scripts/relocaTE_fq2fa.pl $fq_path $fa";
-        if ($parallel) {
-          my @fq_path   = split '/', $fq_path;
-          my $fq_name   = pop @fq_path;
-          my $shell_dir = "$shellscripts/step_2";
-
-          mkdir $shell_dir;
-          my $outsh = "$shell_dir/$fq_count." . "fq2fa.sh";
-          open OUTSH, ">$outsh";
-          print PARALLEL "sh $outsh\n" if !$qsub_array;
-          print OUTSH "$cmd\n";
-        }
-        else {
-          ##run it now
-          print "Converting $fq_path to fasta for blat\n";
-          system($cmd);
-        }
-      }
-      else {
+      my @cmd;
+      if (-e $fa and -e "$current_dir/$top_dir/blat_output/$fa_name.te_allTEs.blatout"){
+        # if already done, don't do it
         my $shell_dir = "$shellscripts";
 
         mkdir $shell_dir;
@@ -435,6 +423,34 @@ if ( $fq_dir ne 'SKIP' ) {
           open STEP2, ">$step2_file" or die "Can't Open $step2_file\n";
           print STEP2 '';
           close STEP2;
+        }
+
+      }
+      else {
+         if ( !-e $fa){
+           ## convert fq to fa if fa does not exist
+           push @cmd , "$scripts/relocaTE_fq2fa.pl $fq_path $fa";
+           ## rerun the blat if the fq had to be converted to fa
+           push @cmd, "blat $nonLTR_blat_params -minScore=$blat_minScore -tileSize=$blat_tileSize $te_path $fa $current_dir/$top_dir/blat_output/$fa_name.te_allTEs.blatout 1>> $current_dir/$top_dir/blat_output/blat.out";
+         }else {
+           ## if the fa already existed, only run blat if it did not already get run
+           push @cmd, "blat $nonLTR_blat_params -minScore=$blat_minScore -tileSize=$blat_tileSize $te_path $fa $current_dir/$top_dir/blat_output/$fa_name.te_allTEs.blatout 1>> $current_dir/$top_dir/blat_output/blat.out" if !-e "$current_dir/$top_dir/blat_output/$fa_name.te_allTEs.blatout";
+         }
+         my $cmd = join "\n" , @cmd;
+        if ($parallel) {
+          my @fq_path   = split '/', $fq_path;
+          my $fq_name   = pop @fq_path;
+          my $shell_dir = "$shellscripts/step_2";
+          mkdir $shell_dir;
+          my $outsh = "$shell_dir/$fq_count." . "fq2fa_blat.sh";
+          open OUTSH, ">$outsh";
+          print PARALLEL "sh $outsh\n" if !$qsub_array;
+          print OUTSH "$cmd\n";
+        }
+        else {
+          ##run it now
+          print "Converting $fq_path to fasta and running a blat of the fasta against all TEs\n";
+          system($cmd);
         }
       }
     }
@@ -449,7 +465,7 @@ if ( $fq_dir ne 'SKIP' ) {
     and $qsub_array )
   {
     my $end = $fq_count - 1;
-    my $job = "$shellscripts/step_2.fq2fa.sh";
+    my $job = "$shellscripts/step_2.fq2fa_blat.sh";
     if ( !@depend ) {
       print QSUBARRAY
         "STEP2=\`qsub -e $shellscripts -o $shellscripts $qsub_q -t 0-$end $job\`
@@ -464,10 +480,10 @@ echo \$STEP2\n";
 "$jobName=`qsub -e $shellscripts -o $shellscripts $qsub_q -t 0-$end -W depend=$afterok:\$$last_job $job`
 echo \$$jobName\n";
     }
-    print QSUBARRAY2 "sh $shellscripts/step_2/\$PBS_ARRAYID.fq2fa.sh";
+    print QSUBARRAY2 "sh $shellscripts/step_2/\$PBS_ARRAYID.fq2fa_blat.sh";
   }
   elsif ($qsub_array) {
-    unlink "$shellscripts/step_2.fq2fa.sh";
+    unlink "$shellscripts/step_2.fq2fa_blat.sh";
   }
 }    ##end if $fq_dir ne 'SKIP'
 close QSUBARRAY2;
@@ -475,7 +491,7 @@ close QSUBARRAY2;
 ##split the TE fasta of many seqs into individual files
 my @te_fastas;
 my %TSD;
-open( INFASTA, "$te_fasta" ) || die "$!\n";
+open( INFASTA, "$te_path" ) || die "$!\n";
 my $i = 0;
 while ( my $line = <INFASTA> ) {
   if ( $line =~ /^>(\S+)\s+TSD=(\S+)/ ) {
@@ -507,8 +523,9 @@ while ( my $line = <INFASTA> ) {
 close(INFASTA);
 close(OUTFASTA);
 
-#foreach TE fasta blat against target chromosome and parse and find insertion sites
+#foreach TE fasta grep the proper blat output lines and find insertion sites
 my $depend = 1 if @depend;
+my $loop_count = 0;
 foreach my $te_path (@te_fastas) {
   if ($depend) {
     @depend = ( "STEP2", "afterokarray" );
@@ -554,8 +571,8 @@ foreach my $te_path (@te_fastas) {
 
     #use pre-existing blatout files
     if ( !-e "$path/blat_output/$fa_name.te_$TE.blatout" ) {
-      my $cmd =
-"blat $nonLTR_blat_params -minScore=$blat_minScore -tileSize=$blat_tileSize $te_path $fa $path/blat_output/$fa_name.te_$TE.blatout 1>> $path/blat_output/blat.out";
+      my $cmd = "grep -P \"\t$TE\t\" $current_dir/$top_dir/blat_output/$fa_name.te_allTEs.blatout > $path/blat_output/$fa_name.te_$TE.blatout";
+#"blat $nonLTR_blat_params -minScore=$blat_minScore -tileSize=$blat_tileSize $te_path $fa $path/blat_output/$fa_name.te_$TE.blatout 1>> $path/blat_output/blat.out";
 #"blat -noTrimA -minScore=$blat_minScore -tileSize=$blat_tileSize $te_path $fa $path/blat_output/$fa_name.te_$TE.blatout 1>> $path/blat_output/blat.out";
       print OUTSH "$cmd\n" if $parallel;
       print "Finding reads in $fa_name that contain sequence of $TE\n"
@@ -717,6 +734,7 @@ echo \$$jobName\n";
     close QSUBARRAY3;
     close QSUBARRAY4;
   }
+  $loop_count++;
 }
 ## Finished, clean up, cat files
 ##cat all '.te_insertion_sites.table.txt' results into one file
@@ -852,8 +870,8 @@ echo \$$jobName\n";
 if (-e "$pre_path/bowtie-build.out" ){ 
    `mv $pre_path/bowtie-build.out $path/bowtie_aln/.`;
 }
-`mv $pre_path/existingTE.blat.stdout $path/blat_output/.`;
-`mv $pre_path/existingTE.blatout $path/blat_output/.`;
+#`mv $pre_path/existingTE.blat.stdout $path/blat_output/.`;
+#`mv $pre_path/existingTE.blatout $path/blat_output/.`;
   if ( -d  "$pre_path/shellscripts"){
      `rm -rf $pre_path/shellscripts`;
    }

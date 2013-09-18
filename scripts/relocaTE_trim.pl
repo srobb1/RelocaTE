@@ -26,11 +26,11 @@ open( OUTTANDEM,
   or die
 "Can't open $filename.potential_tandemInserts_containing_reads.list.txt or writing\n";
 
-<INBLAT>;    #get rid of blat header lines
-<INBLAT>;
-<INBLAT>;
-<INBLAT>;
-<INBLAT>;
+#<INBLAT>;    #get rid of blat header lines
+#<INBLAT>;
+#<INBLAT>;
+#<INBLAT>;
+#<INBLAT>;
 
 my %coord;
 while ( my $line = <INBLAT> ) {
