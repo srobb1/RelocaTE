@@ -12,11 +12,12 @@ RelocaTE-live
 ** Updates **
 <hr>
 =======
-- 1-0-4: 1.fixed bug: missing existingTE.blatout file.
-         2.fixed bug: convert fq to fa even when only one file needs to be converted
-         3.fixed bug: qsub -W with multiple dependencies now is functioning
-         4.TSD=UNK, TSD=UKN, and TSD=UNKNOWN will all function
-         5.added count of seqs that match to unique regions to output of construcTEr.pl
+- 1-0-4: 
+  1.fixed bug: missing existingTE.blatout file.
+  2.fixed bug: convert fq to fa even when only one file needs to be converted
+  3.fixed bug: qsub -W with multiple dependencies now is functioning
+  4.TSD=UNK, TSD=UKN, and TSD=UNKNOWN will all function
+  5.added count of seqs that match to unique regions to output of construcTEr.pl
 - 1-0-3: now able to use TSD=UNK in TE fasta. RelocaTE is faster if TSDs are known.
 - 1-0-2: Using "bowtie -a -m 1 -v 3". This decreases the number of false positive insertions identified. 
 
