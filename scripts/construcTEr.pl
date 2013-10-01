@@ -8,6 +8,7 @@ my $te_fasta        = shift;
 my $working_dir     = shift;
 my $regex_file      = shift;
 my $insert_pos_file = shift;
+my $blat_dir = shift;
 my %seqs;
 
 ##get the regelar expression patterns for mates and for the TE
@@ -40,9 +41,12 @@ while ( my $line = <TE_FA> ) {
   }
 }
 my %seq_storage;
-my @blat_files = <$working_dir/blat_output/*blatout>;
+if (!defined $blat_dir){
+  $blat_dir = "$working_dir/blat_output";
+}
+my @blat_files = <$blat_dir/*blatout>;
 if (scalar @blat_files == 0 ){
-  die "Can't find blatout files in $working_dir/blat_output/*blatout\n";
+  die "Can't find blatout files in $blat_dir\n";
 } 
 foreach my $blat_file (@blat_files) {
   next if $blat_file =~ /unpaired/i;
@@ -88,19 +92,13 @@ foreach my $blat_file (@blat_files) {
     my $id          = $qName;
     my $aln_bp      = $matches + $qBaseInsert + $mismatches;
     
-   ## throw out if gap is too big 
-   if ($qBaseInsert > 5 or $tBaseInsert > 5){
+    ### want to find hits to the TE
+    ## throw out if gap is too big 
+    if ($qBaseInsert > 5 or $tBaseInsert > 5){
       next;
     }
-    
-    #### if the hit does not overlap the edge of the TE and not most of the read is not aligning
-    #### throw it out
-    next if  (( $tStart > 1 and $tEnd < $tLen ) and ($aln_bp < ( $qLen * .98 ) )); 
-
-    #### if the hit does overlap the edge of the TE and the query match count doesnot just about equal the target match length 
-    ### throw if out
-    next if ( (( $tStart == 1 or $tEnd == $tLen ) and ( ($aln_bp) < ( $tEnd - $tStart + 1 + $tBaseInsert - 5)) or ($aln_bp) > ( $tEnd - $tStart + 1 + $tBaseInsert + 5)) ); 
-
+    ## if 50% or more of the read matches to the TE, keep it
+    next unless ($matches + $mismatches) >= $qLen*.50 ;
     my $add = 0;
     if ( exists $seqs{$te}{$id}{$te_mate}{blat_hit}{matches} ) {
       my $stored_matches = $seqs{$te}{$id}{$te_mate}{blat_hit}{matches};
@@ -120,7 +118,10 @@ foreach my $blat_file (@blat_files) {
       ##doesnt exist so add it
       $add = 1;
     }
-    if ($add) {
+
+
+
+    if ($add){
       $seqs{$te}{$id}{$te_mate}{blat_hit}{qlen}        = $qLen;
       $seqs{$te}{$id}{$te_mate}{blat_hit}{qBaseInsert} = $qBaseInsert;
       $seqs{$te}{$id}{$te_mate}{blat_hit}{tBaseInsert} = $tBaseInsert;
@@ -138,13 +139,12 @@ foreach my $blat_file (@blat_files) {
     }
   }
 }
+
+## retrieve seq and pair of any read that matches to the TE
 foreach my $te (keys %seq_storage){
   foreach my $mate_fa ( keys %{$seq_storage{$te}} ) {
     my @mate_fa_path = split '/' , $mate_fa;
     my $file_name = pop @mate_fa_path;
-    ##my $fa_out_dir = "$working_dir/construcTEr_collected_fa";
-    ##`mkdir -p $fa_out_dir`;
-    ##open OUTFA , ">$fa_out_dir/$file_name";
     my $mate = $file_name;
     $mate =~ s/\.fa//;
     my $fastacmd_str = join ',' , sort keys %{$seq_storage{$te}{$mate_fa}};
@@ -160,8 +160,6 @@ foreach my $te (keys %seq_storage){
        $seq_recs .= `fastacmd -d $mate_fa -s $fastacmd_str`; 
      }
 
-    #my $seq_recs =
-    #  `fastacmd -d $mate_fa -s $fastacmd_str`;
     if ( defined $seq_recs ) {
       my @seq_recs = split />/, $seq_recs;
       ## get rid of first empty record
@@ -178,7 +176,7 @@ foreach my $te (keys %seq_storage){
     }
   }
 }
-##get reads to align to genome
+##get reads to align to genome and print to a file for bowtie
 foreach my $te ( keys %seqs ) {
   my $bowtie_2_aln = "$working_dir/$te.construcTEr.bowtie2aln.fa";
   open BOWTIEFA, ">$bowtie_2_aln" or die "Can't open $bowtie_2_aln, $!\n";
@@ -374,6 +372,7 @@ foreach my $target ( sort keys %construcTEr ) {
       ## if record is a TE hit - get range info
 
       my $range_str = '';
+      ## only TEs are in %ranges
       if ( exists $ranges{$name} ) {
         my $read_range = range_create( $start, $end );
         foreach my $range_name ( sort keys %{ $ranges{$name} } ) {
@@ -389,13 +388,14 @@ foreach my $target ( sort keys %construcTEr ) {
       my ($r_s, $r_e) = split /\.\./ , $range;
       foreach my $insert_str(keys %{$inserts{$target}}){
         my $pos = $inserts{$target}{$insert_str}{pos};
-        if ( ((abs ($r_s -$pos)) < 500) or ((abs ($r_e -$pos)) < 500) ){
+        if ( (((abs ($r_s -$pos)) < 1000) or ((abs ($r_e -$pos)) < 1000)) 
+            and  $mismatch == 0){
           push @{$inserts{$target}{$insert_str}{rec}} , ">$id $name:$start..$end ($strand) mismatches=$mismatch $range_str\n$seq\n";   
         }
       }
       }
-      print OUTFA
-">$id $name:$start..$end ($strand) mismatches=$mismatch $range_str\n$seq\n";
+      #print OUTFA
+#">$id $name:$start..$end ($strand) mismatches=$mismatch $range_str\n$seq\n";
     }
   }
 }
@@ -418,23 +418,30 @@ if ($insert_pos_file) {
     foreach my $insert_str ( keys %{ $inserts{$target} } ) {
 
       my @values;
+      my @counts;
       open OUT, ">$out_dir/$insert_str.fa";
       foreach my $seq_rec ( @{ $inserts{$target}{$insert_str}{rec} } ) {
         print OUT "$seq_rec";
         for ( my $i = 0 ; $i < @rangeHeader ; $i++ ) {
           if (!defined $values[$i]){
             $values[$i] = 0;
+            $counts[$i] = 0;
           }
           my $n = $rangeHeader[$i];
           if ( $seq_rec =~ /$n=(\d+)/ ) {
             my $value = $1;
+            $counts[$i]++;
             if ( $value >= $values[$i] ) {
               $values[$i] = $value;
             }
           }
         }
       }
-      print OUTTABLE "$TE\t$insert_str\t", join ("\t" ,@values) , "\n";
+      my @forTable;
+      for (my $i = 0 ; $i <@values ; $i++){
+        push @forTable , "$values[$i]($counts[$i])";
+      }
+      print OUTTABLE "$TE\t$insert_str\t", join ("\t" ,@forTable) , "\n";
     }
     close OUT;
   }

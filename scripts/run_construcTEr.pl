@@ -23,12 +23,14 @@ my $parallel = 1;
 my $arrayJob = 1;
 my $mate_file_1        = '_1\D*?fq';
 my $mate_file_2        = '_2\D*?fq';
+my $blat_dir;
 #my $unpaired        = 'unPaired\D*?fq';
 my $insert_file = 0;
 GetOptions(
   'p|parallel:i'    => \$parallel,
   'a|arrayJob:i'    => \$arrayJob,
   'i|insert_file:s' => \$insert_file,    
+  'b|blat_dir:s' => \$blat_dir,    
   'w|workingdir:s'  => \$workingdir,
   'o|outdir:s'      => \$outdir,
   'd|fq_dir:s'      => \$fq_dir,
@@ -90,6 +92,12 @@ if ( $insert_file and !-e $insert_file) {
   print "$insert_file does not exist. Check file name.\n";
   &getHelp();
 }
+if ( defined $blat_dir and -d $blat_dir ) {
+  $blat_dir = File::Spec->rel2abs($blat_dir);
+  $blat_dir =~ s/\/$//;
+}else {
+  print "$blat_dir does not exist, need to run blats\n";
+}
 if ( !defined $fq_dir ) {
   print "\n\nPlease provide a directory of complete set of paired fastq files\n";
   &getHelp();
@@ -145,8 +153,8 @@ my $top_dir = $outdir;
 
 ## get fq files
 $fq_dir = File::Spec->rel2abs($fq_dir);
-my @fq_files = <$fq_dir/*fq>;
-push @fq_files , <$fq_dir/*fastq>;
+my @fq_files = <$fq_dir/*.fq>;
+push @fq_files , <$fq_dir/*.fastq>;
 ## create bowtie index
 my $genome_file = File::Spec->rel2abs($genomeFasta);
 if ( !-e "$genome_file.bowtie_build_index.1.ebwt" ) {
@@ -256,7 +264,7 @@ close(OUTFASTA);
 
 
 #foreach TE fasta blat against target chromosome and parse and find insertion sites
-
+if (!defined $blat_dir){
 if ($parallel){
   $shell_script_count++;
 }
@@ -301,6 +309,7 @@ foreach my $te_path (@te_fastas) {
     close SH;
   }
 }
+}
 
 if ($parallel){
   $shell_script_count++;
@@ -312,7 +321,7 @@ foreach my $te_path (@te_fastas) {
   my $outregex   = "$current_dir/$top_dir/$TE/$TE.regex.txt";
   open OUTREGEX, ">$outregex" or die $!;
   print OUTREGEX  "$mate_file_1\t$mate_file_2";
-  my $cmd =  "$scripts/construcTEr.pl $fq_dir $genome_file $te_path $current_dir/$top_dir/$TE $outregex $insert_file";
+  my $cmd =  "$scripts/construcTEr.pl $fq_dir $genome_file $te_path $current_dir/$top_dir/$TE $outregex $insert_file $blat_dir";
   if ($parallel) {
     $shell_dir = "$current_dir/$top_dir/shellscripts/step_$shell_script_count/$TE";
     `mkdir -p $shell_dir`;

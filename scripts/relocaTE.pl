@@ -30,6 +30,7 @@ my ( $blat_minScore, $blat_tileSize ) = ( 10, 7 );
 my $flanking_seq_len = 100;
 my $existing_TE      = 'NONE';
 my $bowtie2          = 0;
+my $nonLTR           = 0;
 GetOptions(
   'p|parallel:i'         => \$parallel,
   'a|qsub_array:i'       => \$qsub_array,
@@ -190,6 +191,7 @@ or (recommended) use \'-r 1\' for RelocaTE to find your TE in the reference
 
 sub getHelp {
   print ' 
+RelocaTE live:
 usage:
 ./relocaTE.pl [-t TE_fasta_file][-g chromosome_genome_fasta][-d dir_of_fq][-e short_sample_name][-h] 
 
@@ -235,7 +237,7 @@ options:
 					option-2) input the file name of a tab-delimited file containing the coordinates
 					of TE insertions pre-existing in the reference sequence. [no default]
 -b2 |--bowtie2	        INT             to use bowtie2 use \'-b2 1\' else for bowtie use \'-b2 0\' [0]
--h |--help				this message
+-h  |--help				this message
 
 
 See documentation for more information. http://srobb1.github.com/RelocaTE/
@@ -348,16 +350,25 @@ echo \$STEP1\n";
     }
   }
 }    ##end if($mapping)
-
+my $top_blat_output_dir = "$current_dir/$top_dir/blat_output";
+mkdir $top_blat_output_dir;
+my $nonLTR_blat_params = '';
+if ( $nonLTR ){
+  #$nonLTR_blat_params =  '-noTrimA -stepSize=5';
+  $nonLTR_blat_params =  '-noTrimA';
+}
 ##run existing TE blat against ref if the file does not exsit
+my $existingTE_blatout = "$top_blat_output_dir/existingTE.blatout";
 my $qsub_existingTE_cmd = 0;
 my $existing_blat_cmd =
-"blat $genome_path $te_path $current_dir/$top_dir/existingTE.blatout 1> $current_dir/$top_dir/existingTE.blat.stdout";
+"blat $genome_path $nonLTR_blat_params $te_path $existingTE_blatout 1> $top_blat_output_dir/existingTE.blat.stdout";
+#"blat -noTrimA $genome_path $te_path $current_dir/$top_dir/existingTE.blatout 1> $current_dir/$top_dir/existingTE.blat.stdout";
 if ($existing_blat) {
   ##if running blat set existing_TE_path to blatout
-  $existing_TE_path = "$current_dir/$top_dir/existingTE.blatout";
+  $existing_TE_path = $existingTE_blatout; 
+  #$existing_TE_path = "$current_dir/$top_dir/existingTE.blatout";
   if ( $parallel
-    and !-e "$current_dir/$top_dir/existingTE.blatout" )
+    and !-e $existingTE_blatout )
   {
     my $shell_dir = "$shellscripts";
     if ( !-d $shell_dir ) {
@@ -375,7 +386,7 @@ echo \$EXISTINGTE\n";
     }
     close OUTSH;
   }
-  elsif ( !-e "$current_dir/$top_dir/existingTE.blatout" ) {
+  elsif ( !-e $existingTE_blatout ) {
     ## do it now
     print "finding TEs ($te_path) in the reference genome ($genome_path)\n";
     system($existing_blat_cmd);
@@ -389,6 +400,7 @@ my @fa;
 open QSUBARRAY2, ">$shellscripts/step_2.fq2fa.sh"
   if $qsub_array;
 my $fq_count = 0;
+my @convert2fa;
 if ( $fq_dir ne 'SKIP' ) {
   foreach my $fq (@fq_files) {
     my $fq_path = File::Spec->rel2abs($fq);
@@ -397,14 +409,15 @@ if ( $fq_dir ne 'SKIP' ) {
     if ( $fa =~ s/\.(fq|fastq)$/.fa/ ) {
       push @fa, $fa;
       if ( !-e $fa ) {
+        push @convert2fa , $fa;
         my $cmd = "$scripts/relocaTE_fq2fa.pl $fq_path $fa";
         if ($parallel) {
           my @fq_path   = split '/', $fq_path;
           my $fq_name   = pop @fq_path;
           my $shell_dir = "$shellscripts/step_2";
-
+          my $file_count = @convert2fa -1;
           mkdir $shell_dir;
-          my $outsh = "$shell_dir/$fq_count." . "fq2fa.sh";
+          my $outsh = "$shell_dir/$file_count." . "fq2fa.sh";
           open OUTSH, ">$outsh";
           print PARALLEL "sh $outsh\n" if !$qsub_array;
           print OUTSH "$cmd\n";
@@ -415,19 +428,6 @@ if ( $fq_dir ne 'SKIP' ) {
           system($cmd);
         }
       }
-      else {
-        my $shell_dir = "$shellscripts";
-
-        mkdir $shell_dir;
-        my $step2_file =
-          "$shellscripts/step_2_not_needed_fq_already_converted_2_fa";
-
-        if ($parallel) {
-          open STEP2, ">$step2_file" or die "Can't Open $step2_file\n";
-          print STEP2 '';
-          close STEP2;
-        }
-      }
     }
     else {
       print
@@ -436,10 +436,26 @@ if ( $fq_dir ne 'SKIP' ) {
     }
     $fq_count++;
   }
-  if ( !-e "$shellscripts/step_2_not_needed_fq_already_converted_2_fa"
-    and $qsub_array )
+
+  if ( !@convert2fa ) {
+    my $shell_dir = "$shellscripts";
+
+    mkdir $shell_dir;
+    my $step2_file =
+      "$shellscripts/step_2_not_needed_fq_already_converted_2_fa";
+
+    if ($parallel) {
+      open STEP2, ">$step2_file" or die "Can't Open $step2_file\n";
+      print STEP2 '';
+      close STEP2;
+    }
+  }
+
+
+  #if ( !-e "$shellscripts/step_2_not_needed_fq_already_converted_2_fa"
+  if ( @convert2fa and $qsub_array )
   {
-    my $end = $fq_count - 1;
+    my $end = @convert2fa - 1;
     my $job = "$shellscripts/step_2.fq2fa.sh";
     if ( !@depend ) {
       print QSUBARRAY
@@ -512,6 +528,8 @@ foreach my $te_path (@te_fastas) {
   my $path     = join '/', @path;
   my $TE       = $te_fasta;
   $TE =~ s/\.fa//;
+
+
   mkdir "$path/blat_output";
   mkdir "$path/flanking_seq";
   mkdir "$path/te_containing_fq";
@@ -544,7 +562,8 @@ foreach my $te_path (@te_fastas) {
     #use pre-existing blatout files
     if ( !-e "$path/blat_output/$fa_name.te_$TE.blatout" ) {
       my $cmd =
-"blat -minScore=$blat_minScore -tileSize=$blat_tileSize $te_path $fa $path/blat_output/$fa_name.te_$TE.blatout 1>> $path/blat_output/blat.out";
+"blat $nonLTR_blat_params -minScore=$blat_minScore -tileSize=$blat_tileSize $te_path $fa $path/blat_output/$fa_name.te_$TE.blatout 1>> $path/blat_output/blat.out";
+#"blat -noTrimA -minScore=$blat_minScore -tileSize=$blat_tileSize $te_path $fa $path/blat_output/$fa_name.te_$TE.blatout 1>> $path/blat_output/blat.out";
       print OUTSH "$cmd\n" if $parallel;
       print "Finding reads in $fa_name that contain sequence of $TE\n"
         if !$parallel;
@@ -717,6 +736,7 @@ foreach my $te_path (@te_fastas) {
 
   pop @path;
   my $pre_path     = join '/', @path;
+
   if ($parallel) {
 
     my $shell_dir = "$shellscripts/step_6/$TE";
@@ -761,8 +781,6 @@ mv $path/results/*.$TE.confident_nonref_insert_reads_list.txt $path/results/all_
 if [ -e $pre_path/bowtie-build.out ] ; then 
   mv $pre_path/bowtie-build.out $path/bowtie_aln/.
 fi
-mv $pre_path/existingTE.blat.stdout $path/blat_output/.
-mv $pre_path/existingTE.blatout $path/blat_output/.
 
 ";
     `chmod +x $shellscripts/step_6/$TE/step_6.$TE.finishing.sh`;
@@ -840,13 +858,21 @@ echo \$$jobName\n";
 if (-e "$pre_path/bowtie-build.out" ){ 
    `mv $pre_path/bowtie-build.out $path/bowtie_aln/.`;
 }
-`mv $pre_path/existingTE.blat.stdout $path/blat_output/.`;
-`mv $pre_path/existingTE.blatout $path/blat_output/.`;
   if ( -d  "$pre_path/shellscripts"){
      `rm -rf $pre_path/shellscripts`;
   }
 
 `mv $path/results/temp5 $path/results/$exper.$TE.confident_nonref_reads_list.txt`;
+
+    # move other outfiles somewhere else
+if (-e "$pre_path/bowtie-build.out" ){ 
+   `mv $pre_path/bowtie-build.out $path/bowtie_aln/.`;
+}
+  if ( -d  "$pre_path/shellscripts"){
+     `rm -rf $pre_path/shellscripts`;
+   }
+
+
     print "$TE results are found in $path/results\n";
   }
   close FINISH;

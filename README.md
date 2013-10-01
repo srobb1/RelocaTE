@@ -1,4 +1,4 @@
-RelocaTE-1-0-3
+RelocaTE-1-0-4
 
 <A href="http://srobb1.github.com/RelocaTE/">RelocaTE</a>: is a collection of scripts in which short reads (paired or unpaired), a fasta containing the sequences of transposable elements and a reference genome sequence are the input and the output is a series of files containing the locations (relative to the reference genome) of TE insertions in the reference and short reads
   1. <strong>non-reference</strong> transposable element insertion events that are present in DNA short read data but absent in the reference genome sequence.
@@ -11,7 +11,11 @@ RelocaTE-1-0-3
 <hr>
 ** Updates **
 <hr>
-
+=======
+- 1-0-4: 1.fixed bug: missing existingTE.blatout file.
+         2.fixed bug: convert fq to fa even when only one file needs to be converted
+         3.TSD=UNK, TSD=UKN, and TSD=UNKNOWN will all function
+         4.added count of seqs that match to unique regions to output of construcTEr.pl
 - 1-0-3: now able to use TSD=UNK in TE fasta. RelocaTE is faster if TSDs are known.
 - 1-0-2: Using "bowtie -a -m 1 -v 3". This decreases the number of false positive insertions identified. 
 
@@ -410,6 +414,7 @@ bwa aln MSUr7.sample.fa fq/sample_p2.fq > sample_p2.sai
 
 #generate SAM for paired reads
 bwa sampe MSUr7.sample.fa sample_p1.sai sample_p2.sai fq/sample_p1.fq fq/sample_p2.fq > sample.paired.sam
+<<<<<<< .merge_file_H6775A
 
 #align unparied
 bwa aln MSUr7.sample.fa fq/sample.unPaired.fq > sample.unPaired.sai
@@ -417,6 +422,15 @@ bwa aln MSUr7.sample.fa fq/sample.unPaired.fq > sample.unPaired.sai
 #generate SAM for unpaired reads
 bwa samse MSUr7.sample.fa  sample.unPaired.sai fq/sample.unPaired.fq > sample.unPaired.sam
 
+=======
+
+#align unparied
+bwa aln MSUr7.sample.fa fq/sample.unPaired.fq > sample.unPaired.sai
+
+#generate SAM for unpaired reads
+bwa samse MSUr7.sample.fa  sample.unPaired.sai fq/sample.unPaired.fq > sample.unPaired.sam
+
+>>>>>>> .merge_file_yAfFKy
 #generate BAM with SAMtools
 samtools view -h -b -S -T MSUr7.sample.fa sample.paired.sam > sample.paired.bam
 samtools view -h -b -S -T MSUr7.sample.fa sample.unPaired.sam > sample.unPaired.bam
