@@ -645,7 +645,8 @@ echo \$$jobName\n";
         my $existing_depend = '';
         if ( $qsub_formatGenome_cmd ) {
           $existing_depend = "-W depend=afterok:\$STEP1" if !@depend;
-          $existing_depend = ",depend=afterok:\$STEP1" if @depend;
+          $existing_depend = ",afterok:\$STEP1" if @depend;
+          #$existing_depend = ",depend=afterok:\$STEP1" if @depend;
         }
         my $job  = "$shell_dir/step_4.$ref.$TE.align.sh";
         my $desc = $TE;
