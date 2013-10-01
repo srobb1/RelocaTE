@@ -401,7 +401,7 @@ my @fa;
 open QSUBARRAY2, ">$shellscripts/step_2.fq2fa.sh"
   if $qsub_array;
 my $fq_count = 0;
-my $convert2fa = 0;
+my @convert2fa;
 if ( $fq_dir ne 'SKIP' ) {
   foreach my $fq (@fq_files) {
     my $fq_path = File::Spec->rel2abs($fq);
@@ -410,15 +410,15 @@ if ( $fq_dir ne 'SKIP' ) {
     if ( $fa =~ s/\.(fq|fastq)$/.fa/ ) {
       push @fa, $fa;
       if ( !-e $fa ) {
-        $convert2fa=1;
+        push @convert2fa , $fa;
         my $cmd = "$scripts/relocaTE_fq2fa.pl $fq_path $fa";
         if ($parallel) {
           my @fq_path   = split '/', $fq_path;
           my $fq_name   = pop @fq_path;
           my $shell_dir = "$shellscripts/step_2";
-
+          my $file_count = @convert2fa -1;
           mkdir $shell_dir;
-          my $outsh = "$shell_dir/$fq_count." . "fq2fa.sh";
+          my $outsh = "$shell_dir/$file_count." . "fq2fa.sh";
           open OUTSH, ">$outsh";
           print PARALLEL "sh $outsh\n" if !$qsub_array;
           print OUTSH "$cmd\n";
@@ -438,7 +438,7 @@ if ( $fq_dir ne 'SKIP' ) {
     $fq_count++;
   }
 
-  if ( !$convert2fa ) {
+  if ( !@convert2fa ) {
     my $shell_dir = "$shellscripts";
 
     mkdir $shell_dir;
@@ -454,9 +454,9 @@ if ( $fq_dir ne 'SKIP' ) {
 
 
   #if ( !-e "$shellscripts/step_2_not_needed_fq_already_converted_2_fa"
-  if ( $convert2fa and $qsub_array )
+  if ( @convert2fa and $qsub_array )
   {
-    my $end = $fq_count - 1;
+    my $end = @convert2fa - 1;
     my $job = "$shellscripts/step_2.fq2fa.sh";
     if ( !@depend ) {
       print QSUBARRAY
