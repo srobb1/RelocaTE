@@ -238,7 +238,6 @@ options:
 					option-2) input the file name of a tab-delimited file containing the coordinates
 					of TE insertions pre-existing in the reference sequence. [no default]
 -b2 |--bowtie2	        INT             to use bowtie2 use \'-b2 1\' else for bowtie use \'-b2 0\' [0]
--n  |--nonLTR		INT        	query TEs are LTRs, yes=1 no=0. default -n 0 [0]
 -h  |--help				this message
 
 
@@ -352,21 +351,25 @@ echo \$STEP1\n";
     }
   }
 }    ##end if($mapping)
+my $top_blat_output_dir = "$current_dir/$top_dir/blat_output";
+mkdir $top_blat_output_dir;
 my $nonLTR_blat_params = '';
 if ( $nonLTR ){
   #$nonLTR_blat_params =  '-noTrimA -stepSize=5';
   $nonLTR_blat_params =  '-noTrimA';
 }
 ##run existing TE blat against ref if the file does not exsit
+my $existingTE_blatout = "$top_blat_output_dir/existingTE.blatout";
 my $qsub_existingTE_cmd = 0;
 my $existing_blat_cmd =
-"blat $genome_path $nonLTR_blat_params $te_path $current_dir/$top_dir/existingTE.blatout 1> $current_dir/$top_dir/existingTE.blat.stdout";
+"blat $genome_path $nonLTR_blat_params $te_path $existingTE_blatout 1> $top_blat_output_dir/existingTE.blat.stdout";
 #"blat -noTrimA $genome_path $te_path $current_dir/$top_dir/existingTE.blatout 1> $current_dir/$top_dir/existingTE.blat.stdout";
 if ($existing_blat) {
   ##if running blat set existing_TE_path to blatout
-  $existing_TE_path = "$current_dir/$top_dir/existingTE.blatout";
+  $existing_TE_path = $existingTE_blatout; 
+  #$existing_TE_path = "$current_dir/$top_dir/existingTE.blatout";
   if ( $parallel
-    and !-e "$current_dir/$top_dir/existingTE.blatout" )
+    and !-e $existingTE_blatout )
   {
     my $shell_dir = "$shellscripts";
     if ( !-d $shell_dir ) {
@@ -384,7 +387,7 @@ echo \$EXISTINGTE\n";
     }
     close OUTSH;
   }
-  elsif ( !-e "$current_dir/$top_dir/existingTE.blatout" ) {
+  elsif ( !-e $existingTE_blatout ) {
     ## do it now
     print "finding TEs ($te_path) in the reference genome ($genome_path)\n";
     system($existing_blat_cmd);
@@ -852,8 +855,6 @@ echo \$$jobName\n";
 if (-e "$pre_path/bowtie-build.out" ){ 
    `mv $pre_path/bowtie-build.out $path/bowtie_aln/.`;
 }
-`mv $pre_path/existingTE.blat.stdout $path/blat_output/.`;
-`mv $pre_path/existingTE.blatout $path/blat_output/.`;
   if ( -d  "$pre_path/shellscripts"){
      `rm -rf $pre_path/shellscripts`;
    }
