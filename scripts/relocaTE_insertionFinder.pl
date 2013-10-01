@@ -247,7 +247,7 @@ foreach my $line (@sorted_bowtie) {
   {
     push @bin, $start, $end;
     @bin = sort @bin;
-    if ($TSD !~ /UNK/i){
+    if ($TSD !~ /UNK|UKN|unknown/i){
       TSD_check( $count, $seq, $start, $name, $TSD, $strand );
     }else{
       calculate_cluster_depth( $count, $seq, $start, $name, $strand );
@@ -257,7 +257,7 @@ foreach my $line (@sorted_bowtie) {
     ## if start and end do not fall within last start and end
     ## we now have a different insertion event
     $count++;
-    if ($TSD !~ /UNK/i){
+    if ($TSD !~ /UNK|UKN|unknown/i){
       TSD_check( $count, $seq, $start, $name, $TSD, $strand );
     }else{
       calculate_cluster_depth( $count, $seq, $start, $name, $strand );
@@ -270,7 +270,7 @@ foreach my $line (@sorted_bowtie) {
   }
 }
 
-if ($TSD =~ /UNK/i){
+if ($TSD =~ /UNK|UKN|unknown/i){
   ## count depth to find TSD in 
   ## if there are 5 reads (2 right, 3 left) they
   ## should only be a depth of 5 at the TSD
@@ -305,7 +305,7 @@ pop @path;    #throw out filename
 pop @path;    #throwout sam dir
 my $te_dir = join '/', @path;
 my $results_dir = "$te_dir/results";
-remove_tree ($results_dir) if -e $results_dir;
+File::Path->remove_tree ($results_dir) if -e $results_dir;
 `mkdir -p $results_dir`;
 open OUTFASTA, ">$results_dir/$usr_target.$TE.confident_nonref_genomeflank.fa"
   or die $!;
