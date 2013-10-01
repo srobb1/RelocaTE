@@ -3,7 +3,7 @@ use File::Spec;
 use Getopt::Long;
 use Cwd;
 use FindBin qw($RealBin);
-use File::Path qw(make_path);
+use File::Path qw(make_path remove_tree);
 use strict;
 
 my $scripts = $RealBin;
@@ -499,6 +499,8 @@ while ( my $line = <INFASTA> ) {
     push @te_fastas, "$te_dir/$te_file";
 
     mkdir $te_dir;
+    my $results_dir = "$te_dir/results";
+    remove_tree ($results_dir) if -e $results_dir;
     open( OUTFASTA, ">$te_dir/$te_file" ) or die "$!\n";
     print OUTFASTA $line;
     $i++;
