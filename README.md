@@ -11,7 +11,6 @@ RelocaTE-1-0-4
 <hr>
 ** Updates **
 <hr>
-=======
 - 1-0-4:
   1.fixed bug: missing existingTE.blatout file.
   2.fixed bug: convert fq to fa even when only one file needs to be converted
