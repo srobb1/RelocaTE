@@ -1,4 +1,4 @@
-RelocaTE-LIVE
+RelocaTE-1-0-4
 
 <A href="http://srobb1.github.com/RelocaTE/">RelocaTE</a>: is a collection of scripts in which short reads (paired or unpaired), a fasta containing the sequences of transposable elements and a reference genome sequence are the input and the output is a series of files containing the locations (relative to the reference genome) of TE insertions in the reference and short reads
   1. <strong>non-reference</strong> transposable element insertion events that are present in DNA short read data but absent in the reference genome sequence.
@@ -11,7 +11,10 @@ RelocaTE-LIVE
 <hr>
 ** Updates **
 <hr>
-
+- 1-0-4: 1.fixed bug: missing existingTE.blatout file.
+         2.fixed bug: convert fq to fa even when only one file needs to be converted
+         3.TSD=UNK, TSD=UKN, and TSD=UNKNOWN will all function
+         4.added count of seqs that match to unique regions to output of construcTEr.pl
 - 1-0-3: now able to use TSD=UNK in TE fasta. RelocaTE is faster if TSDs are known.
 - 1-0-2: Using "bowtie -a -m 1 -v 3". This decreases the number of false positive insertions identified. 
 
