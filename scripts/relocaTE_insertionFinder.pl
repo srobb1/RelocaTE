@@ -2,7 +2,6 @@
 use strict;
 use Data::Dumper;
 use Bio::DB::Fasta;
-use File::Path;
 
 if ( !defined @ARGV ) {
   die "Do not run directly, to be called by relocaTE.pl\n";
@@ -305,7 +304,6 @@ pop @path;    #throw out filename
 pop @path;    #throwout sam dir
 my $te_dir = join '/', @path;
 my $results_dir = "$te_dir/results";
-File::Path->remove_tree ($results_dir) if -e $results_dir;
 `mkdir -p $results_dir`;
 open OUTFASTA, ">$results_dir/$usr_target.$TE.confident_nonref_genomeflank.fa"
   or die $!;
