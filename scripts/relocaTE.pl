@@ -31,6 +31,8 @@ my $flanking_seq_len = 100;
 my $existing_TE      = 'NONE';
 my $bowtie2          = 0;
 my $nonLTR           = 0;
+my $relax_align      = 0;
+my $relax_reference      = 0;
 GetOptions(
   'p|parallel:i'         => \$parallel,
   'a|qsub_array:i'       => \$qsub_array,
@@ -49,8 +51,10 @@ GetOptions(
   'bm|blat_minScore:i'   => \$blat_minScore,
   'bt|blat_tileSize:i'   => \$blat_tileSize,
   'f|flanking_seq_len:i' => \$flanking_seq_len,
-  '-r|reference_ins:s'   => \$existing_TE,
-  '-b2|bowtie2:i'        => \$bowtie2,
+  'r|reference_ins:s'   => \$existing_TE,
+  'b2|bowtie2:i'        => \$bowtie2,
+  'ra|relax_align:i'    => \$relax_align,
+  'rr|relax_reference:i'    => \$relax_reference,
   'h|help' => \&getHelp,
 );
 my $current_dir;
@@ -410,7 +414,7 @@ if ( $fq_dir ne 'SKIP' ) {
       push @fa, $fa;
       if ( !-e $fa ) {
         push @convert2fa , $fa;
-        my $cmd = "$scripts/relocaTE_fq2fa.pl $fq_path $fa";
+        my $cmd = "perl $scripts/relocaTE_fq2fa.pl $fq_path $fa";
         if ($parallel) {
           my @fq_path   = split '/', $fq_path;
           my $fq_name   = pop @fq_path;
@@ -621,7 +625,8 @@ echo \$$jobName\n";
     open OUTREGEX, ">$outregex" or die $!;
     print OUTREGEX "$mate_file_1\t$mate_file_2\t$mate_file_unpaired\t$TSD{$TE}";
     my $cmd =
-"$scripts/relocaTE_align.pl $scripts $param_path $genome_path $outregex $TE $exper $bowtie2";
+"$scripts/relocaTE_align.pl $scripts $param_path $genome_path $outregex $TE $exper $bowtie2 $relax_align";
+#"$scripts/relocaTE_align.pl $scripts $param_path $genome_path $outregex $TE $exper $bowtie2";
     if ( !$parallel ) {
       ## run now
       print "Aligning $TE trimmed reads to the reference ($genome_path)\n";
@@ -676,7 +681,7 @@ echo \$$jobName\n";
       my $ref           = $1;
       my $merged_bowtie = "$path/bowtie_aln/$ref.$TE.bowtie.out";
       my $cmd =
-"$scripts/relocaTE_insertionFinder.pl $merged_bowtie $seq_id $genome_path $TE $outregex $exper $flanking_seq_len $existing_TE_path $mismatch_allowance $bowtie2";
+"$scripts/relocaTE_insertionFinder.pl $merged_bowtie $seq_id $genome_path $TE $outregex $exper $flanking_seq_len $existing_TE_path $mismatch_allowance $bowtie2 $relax_reference";
       if ( !$parallel ) {
         ##run it now
         print "Finding $TE insertions in $seq_id\n";
