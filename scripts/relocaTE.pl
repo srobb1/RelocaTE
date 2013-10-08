@@ -681,7 +681,7 @@ echo \$$jobName\n";
       my $ref           = $1;
       my $merged_bowtie = "$path/bowtie_aln/$ref.$TE.bowtie.out";
       my $cmd =
-"$scripts/relocaTE_insertionFinder.pl $merged_bowtie $seq_id $genome_path $TE $outregex $exper $flanking_seq_len $existing_TE_path $mismatch_allowance $bowtie2 $relax_reference";
+"$scripts/relocaTE_insertionFinder.pl $merged_bowtie $seq_id $genome_path $TE $outregex $exper $flanking_seq_len $existing_TE_path $mismatch_allowance $bowtie2 $relax_reference $relax_align";
       if ( !$parallel ) {
         ##run it now
         print "Finding $TE insertions in $seq_id\n";
