@@ -115,7 +115,10 @@ if ( $existing_TE ne 'NONE' ) {
           $qStart <= 5
           and ( $qEnd >= ( $qLen - 5 ) )
           ## mismatches should be less than 10% the alignment length
-          and ( $MM <= .1 ) ) )
+          and ( $MM <= .1 ) 
+          ## TE in reference should be less than 15kb
+          and ( ($tEnd - $tStart) < 15000)
+           ) 
       {
         $good_ref_hit = 1;
       }
