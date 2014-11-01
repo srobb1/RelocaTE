@@ -13,6 +13,7 @@ my $regex_file  = shift;
 my $TE          = shift;
 my $exper       = shift;
 my $bowtie2     = shift;
+my $relax_align = shift;
 my $bowtie_sam  = 1;
 ##get the regelar expression patterns for mates and for the TE
 ##when passed on the command line as an argument, even in single
@@ -107,9 +108,13 @@ foreach my $key ( sort keys %flanking_fq ) {
     my $fq_name = pop @fq_path;
     $fq_name =~ s/\.fq$//;
 
-    if ( !$bowtie2 and $bowtie_sam ) {
+    #if ( !$bowtie2 and $bowtie_sam) {
+    if ( !$bowtie2 and $bowtie_sam and !$relax_align) {
       ##bowtie1 with sam output
 `bowtie --sam --sam-nohead --sam-nosq -a -m 1 -v 3 -q $genome_file.bowtie_build_index $flanking_fq  1> $path/bowtie_aln/$target.$fq_name.bowtie.single.out 2>> $path/$target.stderr`;
+    }
+    elsif (!$bowtie2 and $bowtie_sam and $relax_align){
+`bowtie --sam --sam-nohead --best -a -v 1 -q $genome_file.bowtie_build_index $flanking_fq  1> $path/bowtie_aln/$target.$fq_name.bowtie.single.out 2>> $path/$target.stderr`;
     }
     elsif ($bowtie2) {
       ##bowtie2 -- need to get comparable -a -m1 -v3 arguments
@@ -139,9 +144,13 @@ foreach my $key ( sort keys %flanking_fq ) {
     if (  -s "$flanking_fq_1.matched"
       and -s "$flanking_fq_2.matched" )
     {
-      if ( !$bowtie2 and $bowtie_sam ) {
+      if ( !$bowtie2 and $bowtie_sam and !$relax_align) {
+      #if ( !$bowtie2 and $bowtie_sam) {
         ##bowtie1 and sam output
 `bowtie --sam --sam-nohead --sam-nosq -a -m 1 -v 3 -q $genome_file.bowtie_build_index -1 $flanking_fq_1.matched -2 $flanking_fq_2.matched 1> $path/bowtie_aln/$target.$fq_name.bowtie.mates.out 2>> $path/$target.stderr`;
+      }
+      elsif ( !$bowtie2 and $bowtie_sam and $relax_align) {
+`bowtie --sam --sam-nohead --best -a -v 1 -q $genome_file.bowtie_build_index -1 $flanking_fq_1.matched -2 $flanking_fq_2.matched 1> $path/bowtie_aln/$target.$fq_name.bowtie.mates.out 2>> $path/$target.stderr`; 
       }
       elsif ($bowtie2) {
         ##bowtie2
@@ -149,7 +158,7 @@ foreach my $key ( sort keys %flanking_fq ) {
       }
       else {
         ##bowtie1 with bowtie output
-`bowtie --best  -q $genome_file.bowtie_build_index -1 $flanking_fq_1.matched -2 $flanking_fq_2.matched 1> $path/bowtie_aln/$target.$fq_name.bowtie.mates.out 2>> $path/$target.stderr`;
+`bowtie --best -q $genome_file.bowtie_build_index -1 $flanking_fq_1.matched -2 $flanking_fq_2.matched 1> $path/bowtie_aln/$target.$fq_name.bowtie.mates.out 2>> $path/$target.stderr`;
       }
       push @bowtie_out_files,
         "$path/bowtie_aln/$target.$fq_name.bowtie.mates.out";
