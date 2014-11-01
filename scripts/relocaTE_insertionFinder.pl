@@ -118,7 +118,7 @@ if ( $existing_TE ne 'NONE' ) {
           and ( $MM <= .1 ) 
           ## TE in reference should be less than 15kb
           and ( ($tEnd - $tStart) < 15000)
-           ) 
+           )) 
       {
         $good_ref_hit = 1;
       }
@@ -302,7 +302,7 @@ if ( $TSD =~ /UNK|UKN|unknown/i ) {
   ## should only be a depth of 5 at the TSD
   foreach my $cluster ( sort { $a <=> $b } keys %teReadClusters ) {
     my $read_total = $teReadClusters{$cluster}{read_count};
-    my $TSD_len;
+    $TSD_len = 0; # reset to 0
     foreach my $chrom_pos ( sort { $a <=> $b }
                             keys %{ $teReadClusters{$cluster}{depth} } )
     {
