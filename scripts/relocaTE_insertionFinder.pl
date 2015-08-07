@@ -2,7 +2,6 @@
 use strict;
 use Data::Dumper;
 use Bio::DB::Fasta;
-use File::Path;
 
 if ( !defined @ARGV ) {
   die "Do not run directly, to be called by relocaTE.pl\n";
