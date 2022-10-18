@@ -1,4 +1,4 @@
-RelocaTE-1-0-5
+RelocaTE-1-0-6
 
 <A href="http://srobb1.github.com/RelocaTE/">RelocaTE</a>: is a collection of scripts in which short reads (paired or unpaired), a fasta containing the sequences of transposable elements and a reference genome sequence are the input and the output is a series of files containing the locations (relative to the reference genome) of TE insertions in the reference and short reads
   1. <strong>non-reference</strong> transposable element insertion events that are present in DNA short read data but absent in the reference genome sequence.
@@ -28,15 +28,15 @@ RelocaTE-1-0-5
 
 <hr>
 <hr>
-###Table of Contents:<br>
-#####<a href="#req">Prerequisites</a><br>
-#####<a href="#cmd">RelocaTE Command Line Options</a>
-#####<a href="#quick">RelocaTE: Quick Start Guide</a><br>
-#####<a href="#input">RelocaTE Input Files</a>
-#####<a href="#output">RelocaTE Output Files</a>
-#####<a href="#tips">RelocaTE: TIPs</a><br>
-#####<a href="#characterizer">CharacTErizer</a>
-#####<a href="#issue">Report an Issue</a>
+### Table of Contents:<br>
+##### <a href="#req">Prerequisites</a><br>
+##### <a href="#cmd">RelocaTE Command Line Options</a>
+##### <a href="#quick">RelocaTE: Quick Start Guide</a><br>
+##### <a href="#input">RelocaTE Input Files</a>
+##### <a href="#output">RelocaTE Output Files</a>
+##### <a href="#tips">RelocaTE: TIPs</a><br>
+##### <a href="#characterizer">CharacTErizer</a>
+##### <a href="#issue">Report an Issue</a>
 
 
 
@@ -45,7 +45,7 @@ RelocaTE-1-0-5
 <hr>
 <hr>
 <br>
-###<a name="req">Prerequisites</a>: These programs need to be installed and the executable should be in your path.
+### <a name="req">Prerequisites</a>: These programs need to be installed and the executable should be in your path.
 
 - <a href="http://genome.ucsc.edu/FAQ/FAQblat.html#blat3">Blat</a>
 - <a href="http://bowtie-bio.sourceforge.net/manual.shtml#obtaining-bowtie">Bowtie 1</a>
@@ -56,7 +56,7 @@ RelocaTE-1-0-5
 
 <br><hr><br>
 
-###<a name="cmd">RelocaTE Command Line Options</a>:
+### <a name="cmd">RelocaTE Command Line Options</a>:
 
 <pre>
 <a href="#t">-t  | --te_fasta</a>       Str: TE FASTA File
@@ -82,7 +82,7 @@ RelocaTE-1-0-5
                             insertions pre-existing in the reference sequence. [no default]
 </pre>
 
-####<a name="t">-t  | --te_fasta       Str: TE FASTA File</a>
+#### <a name="t">-t  | --te_fasta       Str: TE FASTA File</a>
 
 Required. No default value.
 
@@ -108,14 +108,14 @@ Example: any 4 characters: TSD=....
 Example: A or T followed by GCC: TSD=(A|T)GCC
 Example: CGA followed by any character then an A then CT or G: TSD=CGA.A(CT|G)
 </pre>
-####<a name="d">-d  | --fq_dir         Str: directory of fq files</a>
+#### <a name="d">-d  | --fq_dir         Str: directory of fq files</a>
 
 Required. No default value.
 
 The name of the directory of paired and unpaired fastq files (paired _p1.fq & _p2.fq). Both the .fq and .fastq extensions are accepted as extensions of fastq files. If something different is used RelocaTE will not recognize those files as being fastq files.
 
 
-####<a name="g">-g  | --genome_fasta   Str: reference genome fasta file</a>
+#### <a name="g">-g  | --genome_fasta   Str: reference genome fasta file</a>
 
 Optional, Recommended. No default value.
 
@@ -124,19 +124,19 @@ The file name of the fasta file containing the genome sequence of the reference.
 If the genome sequence is not provided a series of files will be generated. One set will contain the intact reads that align to the TE. The second and third set of files will be made up of trimmed reads.  The second set will be only the trimmed portion of the reads in the first set that align to the TE. The third set will contain the trimmed portion of the reads that do not align to the TE, therefore the portion of the reads that should align to the genome sequence not containing a TE insertion.
 
 
-####<a name="e">-e  | --exper          Str: Sample identifier</a>
+#### <a name="e">-e  | --exper          Str: Sample identifier</a>
 
 Optional, Recommended. The default value is not.given
 
 A short string for sample name. This string will be used in the output files to create IDs for the insert (ex. A123)
 
-####<a name="o">-o  | --outdir         Str: output directory name</a>
+#### <a name="o">-o  | --outdir         Str: output directory name</a>
 
 Optional, Recommended. The default value is outdir_teSearch
 
 A short string for the output directory name. This string will be used to create a directory to contain the output files and directories in the current working directory. The complete path is not required, only the desired name for the directory. 
 
-####<a name="1">-1  | --mate_1_id      Str: unique mate/pair 1 string</a>
+#### <a name="1">-1  | --mate_1_id      Str: unique mate/pair 1 string</a>
 
 Optional, Recommended. The default value is _p1
 
@@ -158,7 +158,7 @@ Suggestion:                     rename files to file_1_p1.fq and file_1_p2.fq.
                                 Now the string _p1 can be used to uniquely 
                                 identify all _p1 files and no _p2 files.
 </pre>
-####<a name="2">-2  | --mate_2_id      Str: unique mate/pair 2 string</a>
+#### <a name="2">-2  | --mate_2_id      Str: unique mate/pair 2 string</a>
 
 Optional, Recommended. The default value is _p2
 
@@ -169,7 +169,7 @@ Example:
 File:                            file_p2.fq
 String:                          _p2
 </pre>
-####<a name="u">-u  | --unpaired_id    Str: unique unPaired string</a>
+#### <a name="u">-u  | --unpaired_id    Str: unique unPaired string</a>
 
 Optional, Recommended. The default value is .unPaired.
 
@@ -181,7 +181,7 @@ File:                           file.unParied.fq
 String:                         .unParied
 </pre>
 
-####<a name="p">-p  | --parallel       0|1: split into many jobs</a>
+#### <a name="p">-p  | --parallel       0|1: split into many jobs</a>
 
 Optional. Default value is 1.
 
@@ -192,7 +192,7 @@ n is 0 or 1.
 
 Break down the single big job of relocaTE into as many smaller jobs as possible. If selected this option will cause the creation of shell scripts which can be manually ran or submitted to a queue. This enables the jobs to be run in parallel. The folders of shell scripts should be run as ordered. Step_1 needs to run and be complete before Step_2 jobs can be proper started.  If the genome fasta had already been split and indexed this job will be skipped. 
 
-####<a name="a">-a  | --qsub_array     0|1: create PBS array job script</a>
+#### <a name="a">-a  | --qsub_array     0|1: create PBS array job script</a>
 
 Optional. Default value is 1.
 
@@ -207,13 +207,13 @@ Submit each array job one at a time, waiting for the previous job to be complete
 
 See run_these_jobs.sh for the array jobs.
 
-####<a name="w">-w  | --workingdir     Str: working directory name</a>
+#### <a name="w">-w  | --workingdir     Str: working directory name</a>
 
 Optional. Default value is the current working directory.
 
 If a directory different form the cwd is given it needs to exist, will not create. Provide the full path. 
 
-####<a name="l">-l  | --len_cutoff       n: min length cutoff for alignment to reference</a>
+#### <a name="l">-l  | --len_cutoff       n: min length cutoff for alignment to reference</a>
 
 Optional. Default value is 10.
 
@@ -224,7 +224,7 @@ n is a value for the length cutoff. This is the minimum length that a read needs
   - The answer to the above two questions should not total more than the read length.
  
 
-####<a name="bm">-bm | --blat_minScore    n: blat minScore for alignment to TE</a>
+#### <a name="bm">-bm | --blat_minScore    n: blat minScore for alignment to TE</a>
 
 Optional. Default value is 10.
 
@@ -236,7 +236,7 @@ Excerpt directly from Blat manual:
 > -minScore=N sets minimum score.  This is the matches minus the 
 >               mismatches minus some sort of gap penalty.
 
-####<a name="m">-m  | --mismatch (n\<=0) mismatches allowed in blat alignment to TE</a>
+#### <a name="m">-m  | --mismatch (n\<=0) mismatches allowed in blat alignment to TE</a>
 
 Optional. Default value is 0.
 
@@ -245,7 +245,7 @@ Any number less than or equal to 0.
 Fraction of the bps that aligned to the TE that are allowed to not be an exact match. For example, if 10 bp align to the TE and the allowance is 0.1, 1 bp can be a mismatch.
 
  
-####<a name="bt">-bt | --blat_tileSize    n: blat tileSize for alignmetn to TE</a>
+#### <a name="bt">-bt | --blat_tileSize    n: blat tileSize for alignmetn to TE</a>
  
  Optional. Default value is 7.
 
@@ -256,13 +256,13 @@ Excerpt directly from Blat manual:
 >               Usually between 8 and 12
 >               Default is 11 for DNA and 5 for protein.
  
-####<a name="f">-f  | --flanking_seq_len n: length of the insertion site flanking seq to be returned</a>
+#### <a name="f">-f  | --flanking_seq_len n: length of the insertion site flanking seq to be returned</a>
  
  Optional. Default value is 100.
 
 n is the length of the sequence flanking the insertion site that will be returned in an output fasta file and in the output gff file. This sequence is taken from the reference genome.
 
-####<a name="x">-r  | --reference_ins  [1|File] To identify reference and shared insertions (reference and reads)</a>
+#### <a name="x">-r  | --reference_ins  [1|File] To identify reference and shared insertions (reference and reads)</a>
 
 Optional. No default value.
 
@@ -281,7 +281,7 @@ mping   Chr12:1045463..1045892
 
 <br><hr><br>
 
-###<a name="quick">Quick Start Guide</a>:
+### <a name="quick">Quick Start Guide</a>:
 
 1.&nbsp;&nbsp;Get the sequence of your TE, including the TIRs.  Create a fasta file with your sequence, TE name and the TSD. The TSD= is required. With DNA transposons, by definition, during an insertion event the target site is duplicated. Therefore the target site will be used to identify an insertion event.  The reverse complement of each read containing portions of the ends of the provided TE will also be searched for the TSD to identify insertion events. A specific sequence of nucleotides can be used or a perl regular expression. 
 For example: 
@@ -337,7 +337,7 @@ mping   Chr12:1045463..1045892
 
 <br><hr><br>
 
-###<a name="input">RelocaTE Input Files</a>:
+### <a name="input">RelocaTE Input Files</a>:
 1. Genome Fasta [FASTA format] (not required, but if not used RelocaTE will only identify and trim the reads that contain the specified TE and will not map the insertion locations)
 2. Transposable element FASTA [FASTA format with TSD= in description] (required)
 3. Paired and/or unpaired Fastq files. (ex: reads_p1.fq, reads_p2.fq, reads_unPaired.fq, reads.fq) (required)
@@ -345,7 +345,7 @@ mping   Chr12:1045463..1045892
 
 <br><hr><br>
 
-###<a name="output">RelocaTE Output Files</a>:
+### <a name="output">RelocaTE Output Files</a>:
 <pre>
 sample_name.TE_name.all_inserts.gff           
 		GFF3 file containing all reference and non-reference insertions
@@ -372,7 +372,7 @@ sample_name.TE_name.all_reference.txt
 
 <br><hr><br>
 
-###<a name="tips">RelocaTE Tips</a>:
+### <a name="tips">RelocaTE Tips</a>:
 If you have a multi-node cluster you can speed up your RelocaTE run by dividing your fastq files into many smaller files.
 Dividing your reads files into many files of 1 million reads is a nice way to improve the speed of the analysis.  A script included in the package can be used to do this. It is called fastq_split.pl.
 
@@ -390,7 +390,7 @@ perl fastq_split.pl
 
 <br><hr><br>
 
-###<a name="characterizer">CharacTErizer</a>:
+### <a name="characterizer">CharacTErizer</a>:
 <pre>
 usage:
 ./characterizer.pl [-s relocaTE table output file][-b bam file or dir of bam files][-g reference genome fasta file][-h] 
@@ -409,51 +409,51 @@ For more information see documentation: http://srobb1.github.com/RelocaTE/
 - Example BWA command line
 
 <pre>
-#create bwa index file
+# create bwa index file
 bwa index -a bwtsw MSUr7.sample.fa 
 
-#Align Pair 1 fastq
+# Align Pair 1 fastq
 bwa aln MSUr7.sample.fa fq/sample_p1.fq > sample_p1.sai
 
-#align Pair 2 fastq
+# align Pair 2 fastq
 bwa aln MSUr7.sample.fa fq/sample_p2.fq > sample_p2.sai
 
-#generate SAM for paired reads
+# generate SAM for paired reads
 bwa sampe MSUr7.sample.fa sample_p1.sai sample_p2.sai fq/sample_p1.fq fq/sample_p2.fq > sample.paired.sam
 <<<<<<< .merge_file_H6775A
 
-#align unparied
+# align unparied
 bwa aln MSUr7.sample.fa fq/sample.unPaired.fq > sample.unPaired.sai
 
-#generate SAM for unpaired reads
+# generate SAM for unpaired reads
 bwa samse MSUr7.sample.fa  sample.unPaired.sai fq/sample.unPaired.fq > sample.unPaired.sam
 
 =======
 
-#align unparied
+# align unparied
 bwa aln MSUr7.sample.fa fq/sample.unPaired.fq > sample.unPaired.sai
 
-#generate SAM for unpaired reads
+# generate SAM for unpaired reads
 bwa samse MSUr7.sample.fa  sample.unPaired.sai fq/sample.unPaired.fq > sample.unPaired.sam
 
 >>>>>>> .merge_file_yAfFKy
-#generate BAM with SAMtools
+# generate BAM with SAMtools
 samtools view -h -b -S -T MSUr7.sample.fa sample.paired.sam > sample.paired.bam
 samtools view -h -b -S -T MSUr7.sample.fa sample.unPaired.sam > sample.unPaired.bam
 
-#combine BAM
+# combine BAM
 samtools cat -o sample.bam sample.unPaired.bam sample.paired.bam 
 
-#sort BAM with SAMtools
+# sort BAM with SAMtools
 samtools sort sample.bam sample.sorted
 
-#index BAM with SAMtools
+# index BAM with SAMtools
 samtools index sample.sorted.bam
 </pre>
 
 <br><hr><br>
  
-###What does relocaTE.pl actually do?
+### What does relocaTE.pl actually do?
   1. if not already done, creates a bowtie index for the complete reference fasta.
   2. if not already done, converts the fq files to fa files.
   3. it splits the supplied TE fasta into individual files, one file for each sequence.
@@ -465,7 +465,7 @@ samtools index sample.sorted.bam
 
 <br><hr><br>
 
-###<a name="issue">Report an Issue</a>:
+### <a name="issue">Report an Issue</a>:
 For any of the listed reasons, or anything else, please leave us a <a href="https://github.com/srobb1/RelocaTE/issues?page=1&sort=comments&state=open">message here</a><br>
 - Is there a bug?
 - Did you find confusing documentation or a missing topic?

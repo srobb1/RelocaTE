@@ -1,9 +1,8 @@
 #!/usr/bin/perl -w
 use strict;
 use Data::Dumper;
-use Bio::DB::Fasta;
 
-if ( !defined @ARGV ) {
+if ( !@ARGV ) {
   die "Do not run directly, to be called by relocaTE.pl\n";
 }
 
@@ -158,8 +157,10 @@ while ( my $line = <INREGEX> ) {
 my $TSD_pattern = $TSD =~ /[\[.*+?]/ ? 1 : 0;    #does $TSD contain a pattern?
 
 ##get chromosome sequence for substr of flanking seq
-my $db_obj     = Bio::DB::Fasta->new($genome_path);
-my $genome_seq = $db_obj->seq($usr_target);
+my $genome_seq;
+
+$genome_seq = get_seq($genome_path,$usr_target);
+
 
 #remove redundant lines.
 my %bowtie;
@@ -544,4 +545,30 @@ sub TSD_check {
       push @{ $teInsertions{$event}{$TSD}{$start}{reads} }, $read_name;
     }
   }
+}
+
+sub get_seq {
+  my ($genome_file, $target) = @_;  
+  my $seq;
+  ##get chromosome sequence for substr of flanking seq
+  open GENOME, "$genome_file" or die "Cannot open genome fasta: $genome_file $!";
+  while ( my $line = <GENOME> ) {
+    chomp $line;
+    if ( $line =~ />(\S+)/ ) {
+        my $id = $1;
+        if ( $id ne $target ) {
+          next;
+        }else{
+          while ( my $seq_line = <GENOME> ){
+            chomp $seq_line;
+            last if $seq_line  =~ />(\S+)/ ;
+            $seq .= $seq_line;
+          }
+        }
+    }
+    else {
+      next;
+    }
+  }
+  return $seq;
 }

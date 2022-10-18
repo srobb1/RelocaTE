@@ -8,7 +8,7 @@ use strict;
 
 my $scripts = $RealBin;
 
-if ( !defined @ARGV ) {
+if ( ! @ARGV ) {
   &getHelp();
 }
 my $genome_fasta = 'NONE';
