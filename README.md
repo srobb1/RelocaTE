@@ -9,25 +9,34 @@ RelocaTE-1-0-6
 
 <a href="http://srobb1.github.com/RelocaTE/#characterizer">CharacTErizer</a> is a companion tool that compares the numbers of reads that flank the TE sequence and contain genomic sequence to the number of reads that span a predicted insertion site with no gaps. These spanners contain no TE sequence. The ratio of spanners to flankers is used to classify the insertion as homozygous, heterozygous, or new (somatic). Somatic excision events can also be predicted.
 <hr>
-** Updates **
-<hr>
-- 1-0-5: 
-  1. fixed bug: incorrect coordinate positions when using TSD=UNK0
-  2. added -rr relaxed reference align:allow variable sized fulllen matches of TEs (but must be less than 15kb).
-  3. allow more relaxed alignment of flankers to reference. Reads that do not map uniquely are now used. Finds more inserts but many may be false positives [option -ra 1]
-    -  when -ra 1: "bowtie --sam --sam-nohead --sam-nosq -a -m 1 -v 3" is change to "bowtie --sam --sam-nohead --best -a -v 1"
-- 1-0-4: 
-  1. fixed bug: missing existingTE.blatout file.
-  2. fixed bug: convert fq to fa even when only one file needs to be converted
-  3. fixed bug: qsub -W with multiple dependencies now is functioning
-  4. TSD=UNK, TSD=UKN, and TSD=UNKNOWN will all function
-  5. added count of seqs that match to unique regions to output of construcTEr.pl
-- 1-0-3: now able to use TSD=UNK in TE fasta. RelocaTE is faster if TSDs are known.
-- 1-0-2: Using "bowtie -a -m 1 -v 3". This decreases the number of false positive insertions identified. 
+
+**Updates**
 
 
 <hr>
-<hr>
+
+- 1-0-6:  
+1. fixed bug: ! defined @Array, no longer allowed, changed to !@Array   
+2. removed requirment for Bio::DB::Fasta. 
+3. fixed markdown formatting
+
+- 1-0-5:  
+1. fixed bug: incorrect coordinate positions when using TSD=UNK0.  
+2. added -rr relaxed reference align:allow variable sized fulllen matches of TEs (but must be less than 15kb).  
+3. allow more relaxed alignment of flankers to reference. Reads that do not map uniquely are now used. Finds more inserts but many may be false positives [option -ra 1]. 
+    -  when -ra 1: "bowtie --sam --sam-nohead --sam-nosq -a -m 1 -v 3" is change to "bowtie --sam --sam-nohead --best -a -v 1". 
+- 1-0-4:  
+1. fixed bug: missing existingTE.blatout file.  
+2. fixed bug: convert fq to fa even when only one file needs to be converted. 
+3. fixed bug: qsub -W with multiple dependencies now is functioning. 
+4. TSD=UNK, TSD=UKN, and TSD=UNKNOWN will all function. 
+5. added count of seqs that match to unique regions to output of construcTEr.pl.  
+
+- 1-0-3: now able to use TSD=UNK in TE fasta. RelocaTE is faster if TSDs are known.  
+
+- 1-0-2: Using "bowtie -a -m 1 -v 3". This decreases the number of false positive insertions identified.   
+
+
 ### Table of Contents:<br>
 ##### <a href="#req">Prerequisites</a><br>
 ##### <a href="#cmd">RelocaTE Command Line Options</a>
@@ -45,6 +54,7 @@ RelocaTE-1-0-6
 <hr>
 <hr>
 <br>
+
 ### <a name="req">Prerequisites</a>: These programs need to be installed and the executable should be in your path.
 
 - <a href="http://genome.ucsc.edu/FAQ/FAQblat.html#blat3">Blat</a>
