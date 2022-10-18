@@ -485,3 +485,14 @@ For any of the listed reasons, or anything else, please leave us a <a href="http
 <a href="https://github.com/srobb1/RelocaTE/issues?page=1&sort=comments&state=open">Leave a message here</a>
 
 
+
+
+# Installation PreReq Tips
+
+Use conda to install prereqs. It is nice to create an environment, but is not necessary. Just run the install steps for bowtie and blat. No Python is used in RelocaTE, but conda is great for managing the prerequisites  
+
+```
+conda create -n relocate python=3.9
+conda install -c bioconda bowtie
+conda install -c bioconda blat
+```
