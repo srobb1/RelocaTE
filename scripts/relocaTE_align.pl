@@ -38,16 +38,19 @@ my @files_1;
 my @files_2;
 my @files_unpaired;
 my @flanking_files = <$path/flanking_seq/*flankingReads.fq>;
-foreach my $file (@flanking_files) {
-  next if -z $file;    ##next file if size is 0
+foreach my $filepath (@flanking_files) {
+  next if -z $filepath;    ##next file if size is 0
+  my @filepath = split "/", $filepath;
+  my $file = pop @filepath;
+  
   if ( $file =~ /$mate_file_unpaired/ ) {
-    push( @files_unpaired, $file );
+    push( @files_unpaired, join("/", @filepath, $file ));
   }
   elsif ( $file =~ /$mate_file_1/ ) {
-    push( @files_1, $file );
+    push( @files_1, join("/", @filepath, $file ));
   }
   elsif ( $file =~ /$mate_file_2/ ) {
-    push( @files_2, $file );
+    push( @files_2, join("/", @filepath, $file ));
   }
 }
 if ( @files_1 and @files_2 ) {
