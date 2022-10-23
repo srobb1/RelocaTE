@@ -430,7 +430,6 @@ bwa aln MSUr7.sample.fa fq/sample_p2.fq > sample_p2.sai
 
 # generate SAM for paired reads
 bwa sampe MSUr7.sample.fa sample_p1.sai sample_p2.sai fq/sample_p1.fq fq/sample_p2.fq > sample.paired.sam
-<<<<<<< .merge_file_H6775A
 
 # align unparied
 bwa aln MSUr7.sample.fa fq/sample.unPaired.fq > sample.unPaired.sai
@@ -438,15 +437,6 @@ bwa aln MSUr7.sample.fa fq/sample.unPaired.fq > sample.unPaired.sai
 # generate SAM for unpaired reads
 bwa samse MSUr7.sample.fa  sample.unPaired.sai fq/sample.unPaired.fq > sample.unPaired.sam
 
-=======
-
-# align unparied
-bwa aln MSUr7.sample.fa fq/sample.unPaired.fq > sample.unPaired.sai
-
-# generate SAM for unpaired reads
-bwa samse MSUr7.sample.fa  sample.unPaired.sai fq/sample.unPaired.fq > sample.unPaired.sam
-
->>>>>>> .merge_file_yAfFKy
 # generate BAM with SAMtools
 samtools view -h -b -S -T MSUr7.sample.fa sample.paired.sam > sample.paired.bam
 samtools view -h -b -S -T MSUr7.sample.fa sample.unPaired.sam > sample.unPaired.bam
@@ -455,7 +445,7 @@ samtools view -h -b -S -T MSUr7.sample.fa sample.unPaired.sam > sample.unPaired.
 samtools cat -o sample.bam sample.unPaired.bam sample.paired.bam 
 
 # sort BAM with SAMtools
-samtools sort sample.bam sample.sorted
+samtools sort -o sample.sorted.bam sample.bam 
 
 # index BAM with SAMtools
 samtools index sample.sorted.bam
