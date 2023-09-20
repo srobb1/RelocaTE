@@ -2,7 +2,7 @@
 use strict;
 ##converts fq to fa
 
-if (!defined @ARGV){
+if (! @ARGV){
   die "Do not run directly, to be called by relocaTE.pl\n";
 }
 
